@@ -4,124 +4,170 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Admin — Morocco Secrets{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --darkred: #8B0000;
+            --darkred-deep: #6b0000;
             --gold: #C9A84C;
-            --beige: #F5F0E8;
+            --gold-light: rgba(201,168,76,0.15);
+            --beige: #F7F3EE;
+            --beige-dark: #EDE6DB;
             --white: #FFFFFF;
-            --text: #1f1a16;
-            --muted: #6c5e54;
-            --border: rgba(139, 0, 0, 0.12);
+            --text: #1a1410;
+            --muted: #7c6e62;
+            --border: rgba(139,0,0,0.10);
+            --border-light: rgba(0,0,0,0.07);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+            --radius: 10px;
         }
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--beige);
             color: var(--text);
+            font-size: 14px;
+            line-height: 1.5;
         }
         .admin-layout {
             display: grid;
-            grid-template-columns: 240px 1fr;
+            grid-template-columns: 250px 1fr;
             min-height: 100vh;
         }
+
+        /* ── SIDEBAR ── */
         .sidebar {
-            background: var(--darkred);
+            background: linear-gradient(180deg, #6b0000 0%, #8B0000 60%, #7a0000 100%);
             color: var(--white);
             display: flex;
             flex-direction: column;
-            padding: 24px 0;
+            padding: 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.15);
         }
         .sidebar-brand {
-            padding: 16px 24px;
+            padding: 22px 24px 18px;
             display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 700;
-            font-size: 1.05rem;
-            letter-spacing: 0.5px;
-            color: var(--gold);
-            border-bottom: 1px solid rgba(255,255,255,0.12);
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.10);
         }
         .sidebar-logo {
-            height: 50px;
+            height: 46px;
             width: auto;
             object-fit: contain;
-            margin-bottom: 5px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+        }
+        .sidebar-brand span {
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+            color: var(--gold);
         }
         .sidebar-nav {
             display: flex;
             flex-direction: column;
-            padding: 12px 0;
+            padding: 10px 0;
             flex: 1;
         }
         .sidebar-nav a {
-            color: var(--white);
+            color: rgba(255,255,255,0.78);
             text-decoration: none;
-            padding: 12px 24px;
-            font-size: 0.95rem;
+            padding: 11px 24px;
+            font-size: 0.875rem;
+            font-weight: 500;
             border-left: 3px solid transparent;
-            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            transition: all 0.18s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .sidebar-nav a:hover {
-            background: rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.08);
+            color: var(--white);
+            border-left-color: rgba(201,168,76,0.5);
         }
         .sidebar-nav a.active {
-            background: rgba(201, 168, 76, 0.15);
+            background: rgba(201,168,76,0.18);
             border-left-color: var(--gold);
             color: var(--gold);
+            font-weight: 600;
         }
         .sidebar-section {
-            padding: 14px 24px 6px;
-            font-size: 0.72rem;
+            padding: 16px 24px 6px;
+            font-size: 0.68rem;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: rgba(255,255,255,0.45);
+            letter-spacing: 1.8px;
+            color: rgba(255,255,255,0.35);
+            font-weight: 600;
         }
         .sidebar-footer {
             padding: 16px 24px;
-            border-top: 1px solid rgba(255,255,255,0.12);
+            border-top: 1px solid rgba(255,255,255,0.10);
         }
         .sidebar-footer a {
-            color: rgba(255,255,255,0.75);
+            color: rgba(255,255,255,0.60);
             text-decoration: none;
-            font-size: 0.9rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.15s;
         }
         .sidebar-footer a:hover { color: var(--gold); }
+
+        /* ── MAIN ── */
         .main {
             padding: 32px 40px;
             min-width: 0;
+            background: var(--beige);
         }
         .page-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding-bottom: 16px;
+            padding-bottom: 20px;
+            margin-bottom: 28px;
             border-bottom: 2px solid var(--gold);
-            margin-bottom: 24px;
         }
         .page-header h1 {
             margin: 0;
-            font-size: 1.6rem;
+            font-size: 1.55rem;
+            font-weight: 700;
             color: var(--darkred);
+            letter-spacing: -0.3px;
         }
         .card {
             background: var(--white);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 22px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
         }
+
         @media (max-width: 720px) {
             .admin-layout { grid-template-columns: 1fr; }
-            .sidebar { flex-direction: row; padding: 12px; align-items: center; }
-            .sidebar-brand { border: none; padding: 0 12px 0 0; }
-            .sidebar-nav { flex-direction: row; padding: 0; flex: 1; }
-            .sidebar-nav a { padding: 8px 12px; border-left: none; border-bottom: 3px solid transparent; }
+            .sidebar {
+                position: relative;
+                height: auto;
+                flex-direction: row;
+                padding: 12px;
+                align-items: center;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            }
+            .sidebar-brand { border: none; padding: 0 16px 0 0; flex-direction: row; align-items: center; gap: 10px; }
+            .sidebar-brand span { font-size: 0.88rem; }
+            .sidebar-logo { height: 36px; }
+            .sidebar-nav { flex-direction: row; padding: 0; flex: 1; overflow-x: auto; }
+            .sidebar-nav a { padding: 8px 12px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+            .sidebar-nav a:hover { border-left-color: transparent; border-bottom-color: rgba(201,168,76,0.5); }
             .sidebar-nav a.active { border-left: none; border-bottom-color: var(--gold); }
+            .sidebar-section { display: none; }
             .sidebar-footer { border: none; padding: 0 12px; }
-            .main { padding: 20px; }
+            .main { padding: 20px 16px; }
         }
     </style>
     {% block head_extra %}{% endblock %}
