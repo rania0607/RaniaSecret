@@ -378,7 +378,7 @@ def details_ville(nom):
             # Use the canonical name from the DB for all sub-queries
             nom = ville['nom_ville']
 
-            cur.execute("SELECT nom, description, image_path FROM attractions WHERE nom_ville = %s", (nom,))
+            cur.execute("SELECT nom, description, type_attraction, image_path FROM attractions WHERE nom_ville = %s", (nom,))
             attractions = cur.fetchall()
 
             cur.execute("SELECT description FROM activites WHERE nom_ville = %s", (nom,))

@@ -149,7 +149,7 @@ def retrieve_context(message: str) -> dict:
 
                 if intent in ('attractions', 'general'):
                     cur.execute(
-                        "SELECT nom, description FROM attractions "
+                        "SELECT nom, description, type_attraction FROM attractions "
                         "WHERE nom_ville = %s LIMIT 6", (ville,)
                     )
                     context['data']['attractions'] = cur.fetchall()
@@ -320,7 +320,8 @@ Coordonnées : {vi.get('latitude', '')}, {vi.get('longitude', '')}
     if data.get('attractions'):
         ctx = "\n=== ATTRACTIONS TOURISTIQUES ===\n"
         for a in data['attractions']:
-            ctx += f"• {a['nom']}"
+            type_str = f" ({a['type_attraction']})" if a.get('type_attraction') else ""
+            ctx += f"• {a['nom']}{type_str}"
             if a.get('description'):
                 ctx += f" : {a['description'][:150]}"
             ctx += "\n"

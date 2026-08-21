@@ -347,6 +347,17 @@
                 <input type="text" id="attr-nom" name="nom" maxlength="120" required>
             </div>
             <div class="field full-width">
+                <label for="attr-type">Type d'attraction</label>
+                <select id="attr-type" name="type_attraction">
+                    <option value="">Non spécifié</option>
+                    <option value="Zoo">Zoo</option>
+                    <option value="Parc de jeux pour enfants">Parc de jeux pour enfants</option>
+                    <option value="Historique">Historique</option>
+                    <option value="Naturelle">Naturelle</option>
+                    <option value="Culturelle">Culturelle</option>
+                </select>
+            </div>
+            <div class="field full-width">
                 <label for="attr-description">Description</label>
                 <textarea id="attr-description" name="description" rows="5"></textarea>
             </div>
@@ -370,6 +381,7 @@
         <thead><tr>
             <th style="width:80px;">Image</th>
             <th>Name</th>
+            <th>Type</th>
             <th>Description</th>
             <th style="width:160px; text-align:right;">Actions</th>
         </tr></thead>
@@ -378,9 +390,11 @@
             <tr data-id="{{ a.id }}"
                 data-nom="{{ a.nom or '' }}"
                 data-description="{{ a.description or '' }}"
+                data-type-attraction="{{ a.type_attraction or '' }}"
                 data-image-path="{{ a.image_path or '' }}">
                 <td>{{ thumb(a.image_path, 'attractions') }}</td>
                 <td><span class="item-name">{{ a.nom or '—' }}</span></td>
+                <td><span class="item-type" style="font-weight: 500; color: var(--grona);">{{ a.type_attraction or 'Non spécifié' }}</span></td>
                 <td><span class="item-desc">{{ truncate_desc(a.description) }}</span></td>
                 <td class="row-actions" style="text-align:right;">
                     <button type="button" class="btn-row-edit">Edit</button>
@@ -885,6 +899,7 @@
         const btnSave = document.getElementById('btn-save-attraction');
         const inputNom = document.getElementById('attr-nom');
         const inputDesc = document.getElementById('attr-description');
+        const inputType = document.getElementById('attr-type');
         const inputFile = document.getElementById('attr-image');
         const currentWrap = document.getElementById('attr-current-image');
         const currentImg = document.getElementById('attr-current-img');
@@ -923,6 +938,7 @@
                     clearForm();
                     inputNom.value = tr.dataset.nom || '';
                     inputDesc.value = tr.dataset.description || '';
+                    if (inputType) inputType.value = tr.dataset.typeAttraction || '';
                     if (tr.dataset.imagePath) {
                         currentImg.src = `${CDN}${tr.dataset.imagePath}`;
                         currentWrap.style.display = 'flex';

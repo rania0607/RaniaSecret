@@ -46,6 +46,12 @@ try:
                 cur.execute(f"ALTER TABLE users ADD COLUMN {col} {definition}")
                 print(f"Added column {col} to users")
 
+        # 4. Add type_attraction to attractions
+        cur.execute("SHOW COLUMNS FROM attractions LIKE 'type_attraction'")
+        if not cur.fetchone():
+            cur.execute("ALTER TABLE attractions ADD COLUMN type_attraction VARCHAR(60) DEFAULT NULL")
+            print("Added type_attraction to attractions")
+
     conn.commit()
     print("Database normalization complete.")
 except Exception as e:

@@ -379,7 +379,7 @@ def villes_detail(nom_ville):
                 return redirect(url_for("admin.villes_list"))
 
             cur.execute(
-                "SELECT id, nom, description, image_path FROM attractions "
+                "SELECT id, nom, description, type_attraction, image_path FROM attractions "
                 "WHERE nom_ville = %s ORDER BY id", (nom_ville,))
             attractions = cur.fetchall()
 
@@ -456,18 +456,24 @@ def villes_delete(nom_ville):
 def _validate_attraction(form):
     nom = (form.get("nom") or "").strip()
     description = (form.get("description") or "").strip() or None
+    type_attraction = (form.get("type_attraction") or "").strip() or None
+    
+    allowed_types = ["Zoo", "Parc de jeux pour enfants", "Historique", "Naturelle", "Culturelle"]
+    if type_attraction and type_attraction not in allowed_types:
+        type_attraction = None
+        
     if not nom:
-        return None, None, "Le nom est requis."
+        return None, None, None, "Le nom est requis."
     if len(nom) > 120:
-        return None, None, "Le nom dépasse 120 caractères."
-    return nom, description, None
+        return None, None, None, "Le nom dépasse 120 caractères."
+    return nom, description, type_attraction, None
 
 
 @admin_bp.route("/villes/<nom_ville>/attractions/new", methods=["POST"])
 @admin_required
 def attractions_new(nom_ville):
     nom_ville = unquote(nom_ville)
-    nom, description, err = _validate_attraction(request.form)
+    nom, description, type_attraction, err = _validate_attraction(request.form)
     if err:
         flash(err, "error")
         return _detail_redirect(nom_ville, "attractions")
@@ -484,9 +490,9 @@ def attractions_new(nom_ville):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO attractions (nom_ville, nom, description, image_path) "
-                "VALUES (%s, %s, %s, %s)",
-                (nom_ville, nom, description, image_path),
+                "INSERT INTO attractions (nom_ville, nom, description, type_attraction, image_path) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (nom_ville, nom, description, type_attraction, image_path),
             )
         conn.commit()
     finally:
@@ -499,7 +505,7 @@ def attractions_new(nom_ville):
 @admin_required
 def attractions_edit(nom_ville, id):
     nom_ville = unquote(nom_ville)
-    nom, description, err = _validate_attraction(request.form)
+    nom, description, type_attraction, err = _validate_attraction(request.form)
     if err:
         flash(err, "error")
         return _detail_redirect(nom_ville, "attractions")
@@ -527,9 +533,9 @@ def attractions_edit(nom_ville, id):
             image_path = new_image or current["image_path"]
 
             cur.execute(
-                "UPDATE attractions SET nom=%s, description=%s, image_path=%s "
+                "UPDATE attractions SET nom=%s, description=%s, type_attraction=%s, image_path=%s "
                 "WHERE id=%s AND nom_ville=%s",
-                (nom, description, image_path, id, nom_ville),
+                (nom, description, type_attraction, image_path, id, nom_ville),
             )
         conn.commit()
     finally:
