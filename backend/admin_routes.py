@@ -458,7 +458,7 @@ def _validate_attraction(form):
     description = (form.get("description") or "").strip() or None
     type_attraction = (form.get("type_attraction") or "").strip() or None
     
-    allowed_types = ["Zoo", "Parc de jeux pour enfants", "Historique", "Naturelle", "Culturelle"]
+    allowed_types = ["Zoo", "Parc de jeux pour enfants", "Historique", "Naturelle", "Culturelle", "Plage"]
     if type_attraction and type_attraction not in allowed_types:
         type_attraction = None
         
