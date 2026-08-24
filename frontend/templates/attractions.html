@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Attractions — Morocco Secrets</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700;900&family=Playfair+Display:ital,wght@0,900;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Jost:wght@200;300;400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* Reuse common styles from villes.html but scoped for attractions */
+        :root {
+            --grona: #6b1d1d;
+            --desert-gold: #c59d5f;
+            --soft-beige: #f2e6d9;
+            --white-silk: #fdfaf7;
+        }
+
+        body {
+            background-color: var(--soft-beige);
+            color: var(--grona);
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        /* ══ NAV ══ */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 2000;
+            padding: 18px clamp(20px, 5vw, 60px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--grona);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav.scrolled {
+            padding: 12px clamp(20px, 5vw, 60px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.1rem, 2vw, 1.4rem);
+            font-weight: 900;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-logo {
+            height: 65px;
+            width: auto;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .nav-link {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: white;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            background: var(--desert-gold);
+        }
+
+        /* ══ HERO ══ */
+        .page-hero {
+            position: relative;
+            padding: 180px 60px 90px;
+            text-align: center;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background-size: cover;
+            background-position: center;
+            background-image: url('{{ cdn_url }}villes/maroc_bg.png');
+        }
+
+        .page-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(107, 29, 29, 0.5) 100%);
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .page-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.8rem, 5.5vw, 4.5rem);
+            font-weight: 900;
+            color: #FFFFFF;
+            margin-bottom: 18px;
+        }
+
+        .page-hero h1 em {
+            font-style: italic;
+            color: var(--desert-gold);
+            font-weight: 400;
+        }
+
+        /* ══ FILTER BAR ══ */
+        .filter-bar {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            background: var(--grona);
+            padding: 10px 0;
+        }
+
+        .filter-tab {
+            font-size: 0.66rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .filter-tab:hover, .filter-tab.active {
+            color: white;
+            background: var(--desert-gold);
+            border-color: var(--desert-gold);
+        }
+
+        /* ══ ATTRACTIONS GRID ══ */
+        .attractions-section {
+            padding: 80px clamp(20px, 5vw, 60px);
+        }
+
+        .attractions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .attraction-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .attraction-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .attraction-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .attraction-body {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .attraction-type {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--desert-gold);
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .attraction-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            color: var(--grona);
+            margin-bottom: 10px;
+        }
+
+        .attraction-city {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .attraction-desc {
+            font-size: 0.9rem;
+            color: #444;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .explore-link {
+            margin-top: auto;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--grona);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: gap 0.3s;
+        }
+
+        .explore-link:hover {
+            gap: 10px;
+            color: var(--desert-gold);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+            .nav { padding: 15px 20px; }
+            .page-hero { padding: 130px 24px 70px; }
+            .attractions-section { padding: 40px 20px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="nav" id="mainNav">
+        <a href="/" class="nav-brand">
+            <img src="{{ logo_url }}" alt="Logo" class="nav-logo">
+            <span>Morocco <em>Secrets</em></span>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Accueil</a>
+            <a href="/villes" class="nav-link">Villes</a>
+            <a href="/attractions" class="nav-link">Attractions</a>
+            <a href="/pricing" class="nav-link">Offres</a>
+        </div>
+    </nav>
+
+    <div class="page-hero">
+        <div class="hero-content">
+            <h1>Découvrez les <em>Attractions</em></h1>
+            <p style="color: white; opacity: 0.9; letter-spacing: 2px; text-transform: uppercase; font-size: 0.8rem;">
+                Les trésors cachés du Royaume
+            </p>
+        </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+        <a href="/attractions?type=All" class="filter-tab {% if current_type == 'All' %}active{% endif %}">Tout voir</a>
+        {% for t in types %}
+        <a href="/attractions?type={{ t }}" class="filter-tab {% if current_type == t %}active{% endif %}">{{ t }}</a>
+        {% endfor %}
+    </div>
+
+    <section class="attractions-section">
+        <div class="attractions-grid">
+            {% for att in attractions %}
+            <div class="attraction-card">
+                <img src="{{ cdn_url }}{{ att.image_path or 'villes/default.jpg' }}" alt="{{ att.nom }}" class="attraction-img" onerror="this.src='https://via.placeholder.com/400x300/852E1E/FFFFFF?text={{ att.nom|urlencode }}'">
+                <div class="attraction-body">
+                    <span class="attraction-type">{{ att.type_attraction }}</span>
+                    <h2 class="attraction-name">{{ att.nom }}</h2>
+                    <div class="attraction-city">
+                        <i class="fa-solid fa-location-dot"></i> {{ att.nom_ville }}
+                    </div>
+                    <p class="attraction-desc">{{ att.description }}</p>
+                    <a href="{{ url_for('attraction_detail', att_id=att.id) }}" class="explore-link">
+                        Explorer {{ att.nom }} <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>🌙 Aucune attraction trouvée pour cette catégorie.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <footer class="footer" style="background: var(--grona); color: white; padding: 40px; text-align: center; margin-top: 60px;">
+        <p>&copy; 2026 Morocco Secrets. Tous droits réservés.</p>
+    </footer>
+
+    <script>
+        window.addEventListener('scroll', function () {
+            document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 50);
+        });
+    </script>
+
+</body>
+
+</html>

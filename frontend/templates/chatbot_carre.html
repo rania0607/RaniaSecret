@@ -1998,1171 +1998,989 @@
                 </div>
                 <button class="cb-btn-close" onclick="toggleChat()">✕</button>
             </div>
+
+        <!-- SIDEBAR PANNEAU -->
+        <div class="mobile-sidebar" id="mobileSidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand-m" style="flex-direction: column; align-items: flex-start; gap: 12px; padding: 10px 0;">
+                    <img src="{{ logo_url }}" alt="Logo" class="nav-logo" style="height: 65px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));">
+                    <span style="font-size: 1.4rem;">Morocco <em>Secrets</em></span>
+                </div>
+                <button class="sidebar-close" onclick="closeSidebar()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="sidebar-links">
+                <a href="/" onclick="closeSidebar()" data-ar="<i class='fa-solid fa-house'></i>الرئيسية"><i
+                        class="fa-solid fa-house"></i>Accueil</a>
+                <a href="/villes" onclick="closeSidebar()" data-ar="<i class='fa-solid fa-map'></i>المدن"><i
+                        class="fa-solid fa-map"></i>Villes</a>
+                <a href="/attractions" onclick="closeSidebar()" data-ar="<i class='fa-solid fa-mountain-sun'></i>جاذبات"><i
+                        class="fa-solid fa-mountain-sun"></i>Attractions</a>
+                <a href="/pricing" onclick="closeSidebar()" data-ar="<i class='fa-solid fa-tag'></i>العروض"><i
+                        class="fa-solid fa-tag"></i>Offres</a>
+            </div>
+
+            <div class="sidebar-lang-selector">
+                <span class="sidebar-lang-label">Langue</span>
+                <div class="custom-lang-selector" id="sidebarLangDropdown">
+                    <div class="custom-lang-btn">
+                        <i class="fa-solid fa-globe"></i>
+                        <span id="currentLangTextSidebar">FR</span>
+                    </div>
+                    <ul class="custom-lang-list">
+                        <li data-lang="fr">Français</li>
+                        <li data-lang="ar">العربية</li>
+                        <li data-lang="en">English</li>
+                    </ul>
+                </div>
+            </div>
+
         </div>
 
-        <!-- ── Content wrapper ── -->
-        <div class="cb-content-wrapper" id="cbContentWrapper">
+        <!-- ── Image Zoom Modal ── -->
+        <div id="cbImageModal" onclick="closeZoom()">
+            <div class="cb-modal-content">
+                <img src="" alt="Zoomed image" id="zoomedImage">
+            </div>
+        </div>
 
-            <!-- CHAT VIEW -->
-            <div id="cbChatView" class="cb-messages-area">
+        <!-- ── Chat Content Wrapper ── -->
+        <div class="cb-content-wrapper" id="chatContent">
+            <div class="cb-messages-area" id="messagesArea">
+                <!-- Initial bot message and suggestions will be here -->
+
                 <div class="bot-wrapper">
-                    <div class="bot-avatar" onclick="openZoom()">
-                        <img src="{{ cdn_url }}villes/trippy.jpg" alt="Trippy"
+                    <div class="bot-avatar">
+                        <img src="{{ cdn_url }}villes/trippy.jpg" alt="Trippy" class="cb-toggle-img"
                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2745%27 fill=%27%23ffffff%27/%3E%3Ctext x=%2750%27 y=%2770%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%236b1d1d%27%3ET%3C/text%3E%3C/svg%3E'">
                     </div>
                     <div class="bot-content">
-                        <div class="bot-name">Trippy</div>
-                        <div class="msg bot">✨ <strong>Marhaba !</strong> 🌟<br><br>Je suis <strong>Trippy</strong>,
-                            votre guide intelligent pour le Maroc.<br><br>🗺️ Villes historiques &nbsp;·&nbsp; 🍽️
-                            Restaurants<br>🏛️ Attractions &nbsp;·&nbsp; 🏨 Hébergements<br>🎨 Artisanat
-                            traditionnel<br><br>Que souhaitez-vous explorer aujourd'hui ?</div>
+                        <div class="bot-name">Trippy Bot</div>
+                        <div class="msg bot">Bonjour ! Je suis Trippy, votre guide virtuel pour explorer les merveilles
+                            du Maroc. Comment puis-je vous aider aujourd'hui ?</div>
+                        <div class="msg bot">
+                            Explorez nos différentes catégories pour trouver votre prochaine aventure !
+                        </div>
+                        <div class="msg-btn-container">
+                            <button class="msg-btn msg-btn-explorer" onclick="showCities()">
+                                <i class="fa-solid fa-city"></i> Explorer les villes
+                            </button>
+                            <button class="msg-btn msg-btn-map" onclick="showAttractions()">
+                                <i class="fa-solid fa-map-marked-alt"></i> Voir les attractions
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- PROFILE VIEW -->
-            <div id="cbProfileView">
-                <div class="profile-avatar" onclick="openZoom()">
-                    <img src="{{ cdn_url }}villes/trippy.jpg" alt="Trippy"
-                        onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2745%27 fill=%27%23ffffff%27/%3E%3Ctext x=%2750%27 y=%2770%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%236b1d1d%27%3ET%3C/text%3E%3C/svg%3E'">
-                </div>
-                <div class="profile-name" id="profileName">Trippy Bot</div>
-                <div class="profile-tier" id="profileTier">🌟 Votre Guide Marocain</div>
-                <div class="profile-info">
-                    <div class="profile-row">
-                        <span class="profile-label">👤 Prénom</span>
-                        <span class="profile-value" id="infoNom">Visiteur</span>
-                    </div>
-                    <div class="profile-row">
-                        <span class="profile-label">📧 Email</span>
-                        <span class="profile-value" id="infoEmail">Non connecté</span>
-                    </div>
-                    <div class="profile-row">
-                        <span class="profile-label">🏷️ Pack</span>
-                        <span class="profile-value explorer" id="infoTier">Explorateur</span>
-                    </div>
-                    <div class="profile-row">
-                        <span class="profile-label">💬 Messages restants</span>
-                        <span class="profile-value" id="infoMsgCount">10 / 10</span>
-                    </div>
-                </div>
-                <div class="profile-actions">
-                    <button id="registerBtnProfile" class="profile-btn primary" onclick="showAuthTab('register')">✨
-                        S'inscrire</button>
-                    <button id="loginBtnProfile" class="profile-btn secondary" onclick="showAuthTab('login')">🔐
-                        Connexion</button>
-                    <button class="profile-btn secondary" onclick="switchToView('chat')">💬 Chat</button>
-                    <button id="logoutBtnProfile" class="profile-btn danger" onclick="doLogout()"
-                        style="display:none;">🚪 Déco</button>
-                    <button id="clearChatBtnProfile" class="profile-btn danger" onclick="doClearChat()"
-                        style="display:none; margin-top:6px;">🗑️ Effacer l'historique</button>
-                    <button class="profile-btn upgrade" onclick="switchToView('pack')"
-                        style="margin-top:10px; width:100%;">✦ Changer de pack</button>
-                </div>
+            <div class="typing-indicator" id="typingIndicator">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
             </div>
-
-            <!-- PACK SELECTOR VIEW -->
-            <div id="cbPackView">
-                <div class="pack-view-header">
-                    <div class="pack-view-title">✦ Morocco Secrets</div>
-                    <div class="pack-view-h2">Choisissez votre <em>aventure</em></div>
-                    <div class="pack-view-sub">Débloquez toutes les fonctionnalités</div>
-                </div>
-
-                <div class="pack-billing-row">
-                    <span class="pack-billing-label active" id="packLabelM">Mensuel</span>
-                    <div class="pack-toggle-sw" id="packToggle" onclick="togglePackBilling()"></div>
-                    <span class="pack-billing-label" id="packLabelA">Annuel</span>
-                    <span class="pack-save-pill">−20%</span>
-                </div>
-
-                <div class="pack-cards-list">
-                    <!-- Explorateur -->
-                    <div class="pack-card explorer-card selected" id="packCard0" onclick="selectPack('explorer')">
-                        <div class="pack-selected-check">✓</div>
-                        <div class="pack-card-inner">
-                            <img class="pack-card-img" src="{{ cdn_url }}villes/chefchaouen.jpg" alt="Chefchaouen"
-                                onerror="this.style.display='none'">
-                            <div class="pack-card-info">
-                                <div class="pack-card-name">Explorateur</div>
-                                <div class="pack-card-desc">Découverte gratuite · 10 messages IA</div>
-                            </div>
-                            <div class="pack-card-price">
-                                <div class="pack-card-amount explorer" id="price0">0</div>
-                                <div class="pack-card-period" data-ar="درهم/شهرياً">MAD/mois</div>
-                            </div>
-                        </div>
-                        <div class="pack-card-feats">
-                            <span class="pack-feat-chip">✓ Toutes les villes</span>
-                            <span class="pack-feat-chip">✓ Carte interactive</span>
-                            <span class="pack-feat-chip">✓ 10 langues</span>
-                            <span class="pack-feat-chip">✓ Hôtels & restos</span>
-                        </div>
-                    </div>
-
-                    <!-- Voyageur Pro -->
-                    <div class="pack-card popular" id="packCard1" onclick="selectPack('standard')">
-                        <div class="pack-popular-badge">✦ Populaire</div>
-                        <div class="pack-selected-check">✓</div>
-                        <div class="pack-card-inner">
-                            <img class="pack-card-img" src="{{ cdn_url }}villes/aventure.jpg" alt="Aventure"
-                                onerror="this.style.display='none'">
-                            <div class="pack-card-info">
-                                <div class="pack-card-name">Voyageur Pro</div>
-                                <div class="pack-card-desc">IA illimitée · Circuits personnalisés</div>
-                            </div>
-                            <div class="pack-card-price">
-                                <div class="pack-card-amount standard" id="price1">87</div>
-                                <div class="pack-card-period" data-ar="درهم/شهرياً">MAD/mois</div>
-                            </div>
-                        </div>
-                        <div class="pack-card-feats">
-                            <span class="pack-feat-chip star">★ IA illimitée</span>
-                            <span class="pack-feat-chip star">★ Circuits IA</span>
-                            <span class="pack-feat-chip star">★ Alertes festivals</span>
-                            <span class="pack-feat-chip star">★ Favoris & itinéraires</span>
-                        </div>
-                    </div>
-
-                    <!-- Partenaire -->
-                    <div class="pack-card premium-card" id="packCard2" onclick="selectPack('premium')">
-                        <div class="pack-selected-check">✓</div>
-                        <div class="pack-card-inner">
-                            <img class="pack-card-img" src="{{ cdn_url }}villes/casablanca.webp" alt="Casablanca"
-                                onerror="this.style.display='none'">
-                            <div class="pack-card-info">
-                                <div class="pack-card-name">Partenaire</div>
-                                <div class="pack-card-desc">Pour professionnels · Badge officiel</div>
-                            </div>
-                            <div class="pack-card-price">
-                                <div class="pack-card-amount premium" id="price2">495</div>
-                                <div class="pack-card-period" data-ar="درهم/شهرياً">MAD/mois</div>
-                            </div>
-                        </div>
-                        <div class="pack-card-feats">
-                            <span class="pack-feat-chip star">★ Page mise en avant</span>
-                            <span class="pack-feat-chip star">★ Badge Officiel</span>
-                            <span class="pack-feat-chip star">★ Statistiques</span>
-                            <span class="pack-feat-chip star">★ Support prioritaire</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pack-cta-bar">
-                    <button class="pack-cta-main" id="packCtaBtn" onclick="onPackCta()">Commencer gratuitement</button>
-                    <div class="pack-cta-skip" onclick="switchToView('chat')">Continuer sans changer · Explorer d'abord
-                        →</div>
-                </div>
-            </div>
-
-            <!-- PAYMENT VIEW -->
-            <div id="cbPaymentView">
-                <div class="payment-header">
-                    <button class="payment-back-btn" onclick="switchToView('pack')">←</button>
-                    <div class="payment-header-title" id="payTitle">Paiement · Voyageur Pro</div>
-                    <div class="payment-header-sub">Paiement sécurisé par virement bancaire</div>
-                </div>
-
-                <div class="payment-summary">
-                    <div class="payment-sum-row">
-                        <span class="payment-sum-label">Pack choisi</span>
-                        <span class="payment-sum-val" id="payPackName">Voyageur Pro</span>
-                    </div>
-                    <div class="payment-sum-row">
-                        <span class="payment-sum-label">Facturation</span>
-                        <span class="payment-sum-val gold" id="payBilling">Mensuelle</span>
-                    </div>
-                    <div class="payment-sum-row">
-                        <span class="payment-sum-label">Prix unitaire</span>
-                        <span class="payment-sum-val" id="payUnit" data-ar="87 درهم">87 MAD</span>
-                    </div>
-                    <div class="payment-total-row">
-                        <span class="payment-total-label">Total</span>
-                        <span class="payment-total-amount" id="payTotal" data-ar="87 درهم">87 MAD</span>
-                    </div>
-                </div>
-
-                <div class="payment-steps">
-                    <div class="payment-step">
-                        <div class="payment-step-num">1</div>
-                        <div class="payment-step-text">
-                            <div class="payment-step-title">Effectuez le virement</div>
-                            <div class="payment-step-desc">
-                                Transférez le montant exact vers notre compte :<br>
-                                <div class="rib-block" style="margin-top:8px;">
-                                    <div>
-                                        <div style="font-size:0.6rem;color:#aaa;margin-bottom:4px;">RIB / IBAN</div>
-                                        <div class="rib-number" id="payRib">007 640 0002962300401057 08</div>
-                                    </div>
-                                    <button class="rib-copy-btn" onclick="copyRib()">📋 Copier</button>
-                                </div>
-                                <div style="margin-top:8px; font-size:0.68rem; color:#888;">
-                                    <strong>Référence virement :</strong>
-                                    <span id="payRef"
-                                        style="font-family:monospace; color:var(--cb-grona); font-weight:700;"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="payment-step">
-                        <div class="payment-step-num">2</div>
-                        <div class="payment-step-text">
-                            <div class="payment-step-title">Confirmez via WhatsApp</div>
-                            <div class="payment-step-desc">Envoyez-nous une capture du virement avec votre référence.
-                                Activation sous <strong>2h</strong>.</div>
-                        </div>
-                    </div>
-
-                    <div class="payment-step">
-                        <div class="payment-step-num">3</div>
-                        <div class="payment-step-text">
-                            <div class="payment-step-title">Accès instantané</div>
-                            <div class="payment-step-desc">Votre pack est activé après confirmation. Profitez de toutes
-                                les fonctionnalités !</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="wa-cta-block">
-                    <div class="wa-cta-title">💬 Confirmer via WhatsApp</div>
-                    <div class="wa-cta-sub">Envoyez la preuve de paiement pour activer votre pack</div>
-                    <a class="wa-cta-btn" id="waCta" href="#" target="_blank">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                        </svg>
-                        Envoyer sur WhatsApp
-                    </a>
-                    <div class="wa-cta-hint">Réponse garantie sous 2h · Paiement 100% sécurisé</div>
-                </div>
-            </div>
-
-        </div><!-- /cb-content-wrapper -->
-
-        <!-- Suggestions -->
-        <div class="suggestions" id="cbSuggestions"></div>
-
-        <!-- Typing indicator -->
-        <div class="typing-indicator" id="typingIndicator">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
         </div>
 
-        <!-- ── Auth Panel ── -->
-        <div class="cb-auth-panel" id="cbAuthPanel">
-            <div class="cb-auth-header-buttons">
-                <button class="cb-auth-back-btn" onclick="hideAuth()" title="Retour">←</button>
-                <span style="font-weight:600; font-size:14px;">Mon compte</span>
-                <button class="cb-auth-close-btn" onclick="hideAuth()" title="Fermer">✕</button>
-            </div>
-            <div class="cb-auth-tabs">
-                <button class="cb-auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">🔐 Connexion</button>
-                <button class="cb-auth-tab" id="tabRegister" onclick="switchAuthTab('register')">✨ Inscription</button>
-                <button class="cb-auth-tab" id="tabForgot" onclick="switchAuthTab('forgot')">🔁 Oublié</button>
-            </div>
-
-            <!-- Login -->
-            <div id="loginForm" class="cb-auth-form">
-                <h4>Bon retour ! 👋</h4>
-                <p style="font-size:13px;color:#666;margin-top:-8px;">Connectez-vous pour continuer</p>
-                <div class="cb-input-group">
-                    <span class="cb-input-icon">📧</span>
-                    <input type="email" id="loginEmail" placeholder="Votre email" autocomplete="email"
-                        inputmode="email">
-                </div>
-                <div class="cb-input-group">
-                    <span class="cb-input-icon">🔑</span>
-                    <input type="password" id="loginPass" placeholder="Mot de passe" autocomplete="current-password"
-                        onkeydown="if(event.key==='Enter') doLogin()">
-                </div>
-                <div class="cb-auth-err" id="loginErr"></div>
-                <button class="cb-auth-submit" onclick="doLogin()" id="loginBtn">Se connecter →</button>
-                <div class="cb-auth-skip" onclick="switchAuthTab('forgot')">Mot de passe oublié ?</div>
-                <div class="cb-auth-skip" onclick="hideAuth()">Continuer sans compte →</div>
-            </div>
-
-            <!-- Register Step 1 -->
-            <div id="registerStep1" class="cb-auth-form" style="display:none;">
-                <div class="cb-step-indicator">
-                    <div class="cb-step-dot active"></div>
-                    <div class="cb-step-dot"></div>
-                    <div class="cb-step-dot"></div>
-                </div>
-                <h4>Créer un compte 📧</h4>
-                <p style="font-size:13px;color:#666;">Email → code de vérification</p>
-                <div class="cb-input-group">
-                    <span class="cb-input-icon">📧</span>
-                    <input type="email" id="regEmail" placeholder="Votre email" inputmode="email"
-                        onkeydown="if(event.key==='Enter') sendRegCode()">
-                </div>
-                <div class="cb-auth-err" id="regErr"></div>
-                <div class="cb-auth-ok" id="regOk"></div>
-                <button class="cb-auth-submit" onclick="sendRegCode()" id="regStep1Btn">Envoyer le code →</button>
-                <div class="cb-auth-skip" onclick="hideAuth()">Continuer sans compte →</div>
-            </div>
-
-            <!-- Register Step 2 -->
-            <div id="registerStep2" class="cb-auth-form" style="display:none;">
-                <div class="cb-step-indicator">
-                    <div class="cb-step-dot done"></div>
-                    <div class="cb-step-dot active"></div>
-                    <div class="cb-step-dot"></div>
-                </div>
-                <h4>Code de vérification 🔐</h4>
-                <p style="font-size:13px;color:#666;">Code à 6 chiffres reçu par email</p>
-                <input type="text" id="regCode" placeholder="• • • • • •" class="cb-code-input" maxlength="6"
-                    inputmode="numeric" autocomplete="one-time-code"
-                    onkeydown="if(event.key==='Enter') verifyRegCode()">
-                <div class="cb-auth-err" id="regCodeErr"></div>
-                <button class="cb-auth-submit" onclick="verifyRegCode()" id="regStep2Btn">Vérifier →</button>
-                <div class="cb-auth-skip" onclick="switchAuthTab('register')">← Changer d'email</div>
-            </div>
-
-            <!-- Register Step 3 -->
-            <div id="registerStep3" class="cb-auth-form" style="display:none;">
-                <div class="cb-step-indicator">
-                    <div class="cb-step-dot done"></div>
-                    <div class="cb-step-dot done"></div>
-                    <div class="cb-step-dot active"></div>
-                </div>
-                <h4>Finalisez votre compte ✅</h4>
-                <div class="cb-input-group">
-                    <span class="cb-input-icon">👤</span>
-                    <input type="text" id="regName" placeholder="Votre prénom" autocomplete="given-name">
-                </div>
-                <div class="cb-input-group">
-                    <span class="cb-input-icon">🔑</span>
-                    <input type="password" id="regPass" placeholder="Mot de passe (min. 6)" autocomplete="new-password"
-                        onkeydown="if(event.key==='Enter') finalRegister()">
-                </div>
-                <div class="cb-auth-err" id="regFinalErr"></div>
-                <button class="cb-auth-submit" onclick="finalRegister()" id="regStep3Btn">🎉 Créer mon compte</button>
-            </div>
-
-            <!-- Forgot Step 1 -->
-            <div id="forgotStep1" class="cb-auth-form" style="display:none;">
-                <h4>Mot de passe oublié 🔁</h4>
-                <div class="cb-input-group">
-                    <span class="cb-input-icon">📧</span>
-                    <input type="email" id="forgotEmail" placeholder="Votre email" inputmode="email"
-                        onkeydown="if(event.key==='Enter') sendForgotCode()">
-                </div>
-                <div class="cb-auth-err" id="forgotErr"></div>
-                <button class="cb-auth-submit" onclick="sendForgotCode()">Envoyer le code →</button>
-                <div class="cb-auth-skip" onclick="switchAuthTab('login')">← Retour connexion</div>
-            </div>
-
-            <!-- Forgot Step 2 -->
-            <div id="forgotStep2" class="cb-auth-form" style="display:none;">
-                <h4>Code reçu ? 📬</h4>
-                <input type="text" id="forgotCode" placeholder="• • • • • •" class="cb-code-input" maxlength="6"
-                    inputmode="numeric" autocomplete="one-time-code"
-                    onkeydown="if(event.key==='Enter') verifyForgotCode()">
-                <div class="cb-auth-err" id="forgotCodeErr"></div>
-                <button class="cb-auth-submit" onclick="verifyForgotCode()">Vérifier →</button>
-            </div>
-
-            <!-- Forgot Step 3 -->
-            <div id="forgotStep3" class="cb-auth-form" style="display:none;">
-                <h4>Nouveau mot de passe 🔄</h4>
-                <div class="cb-input-group">
-                    <span class="cb-input-icon">🔑</span>
-                    <input type="password" id="newPass" placeholder="Nouveau mot de passe (min. 6)"
-                        autocomplete="new-password" onkeydown="if(event.key==='Enter') resetPassword()">
-                </div>
-                <div class="cb-auth-err" id="newPassErr"></div>
-                <button class="cb-auth-submit" onclick="resetPassword()">Réinitialiser →</button>
-            </div>
-
-        </div><!-- /cb-auth-panel -->
+        <!-- ── Suggestions ── -->
+        <div class="suggestions" id="suggestionsArea">
+            <button class="suggestion-chip" onclick="sendSuggestion('Quelles sont les villes côtières ?')">Villes
+                côtières</button>
+            <button class="suggestion-chip" onclick="sendSuggestion('Activités à Marrakech')">Activités à
+                Marrakech</button>
+            <button class="suggestion-chip" onclick="sendSuggestion('Meilleure période pour visiter')">Meilleure période
+                ?</button>
+            <button class="suggestion-chip" onclick="sendSuggestion('Informations sur le désert')">Désert</button>
+            <button class="suggestion-chip" onclick="sendSuggestion('Gastronomie marocaine')">Gastronomie</button>
+            <button class="suggestion-chip" onclick="sendSuggestion('Comment puis-je me déplacer au Maroc ?')">Transport
+                ?</button>
+        </div>
 
         <!-- ── Footer Input ── -->
-        <div class="cb-footer" id="cbFooter">
-            <input type="text" id="cbInput" placeholder="Posez votre question sur le Maroc…" inputmode="text"
-                autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="true"
-                onkeypress="if(event.key==='Enter') sendMsg()">
-            <button onclick="sendMsg()" aria-label="Envoyer">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                </svg>
+        <div class="cb-footer">
+            <input type="text" id="userInput" placeholder="Votre message..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">
+                <i class="fa-solid fa-paper-plane"></i>
             </button>
         </div>
 
-    </div><!-- /chatWin -->
-</div><!-- /chatbot-container -->
+        <!-- ── Auth Panel ── -->
+        <div class="cb-auth-panel" id="authPanel">
+            <div class="cb-auth-header-buttons">
+                <button class="cb-auth-back-btn" onclick="hideAuthPanel()"><i class="fa-solid fa-arrow-left"></i></button>
+                <button class="cb-auth-close-btn" onclick="closeChat()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
 
-<!-- Zoom Modal -->
-<div id="cbImageModal" onclick="closeZoom()">
-    <div class="cb-modal-content">
-        <img src="{{ cdn_url }}villes/trippy.jpg" alt="Zoom Trippy"
-            onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2745%27 fill=%27%23ffffff%27/%3E%3Ctext x=%2750%27 y=%2770%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%236b1d1d%27%3ET%3C/text%3E%3C/svg%3E'">
+            <div class="cb-auth-tabs">
+                <button class="cb-auth-tab active" id="loginTab" onclick="showAuthTab('login')">Connexion</button>
+                <button class="cb-auth-tab" id="registerTab" onclick="showAuthTab('register')">Inscription</button>
+            </div>
+
+            <!-- Login Form -->
+            <div class="cb-auth-form" id="loginForm">
+                <h4>Connectez-vous</h4>
+                <div class="cb-input-group">
+                    <i class="fa-solid fa-envelope cb-input-icon"></i>
+                    <input type="email" id="loginEmail" placeholder="Email" required>
+                </div>
+                <div class="cb-input-group">
+                    <i class="fa-solid fa-lock cb-input-icon"></i>
+                    <input type="password" id="loginPassword" placeholder="Mot de passe" required>
+                </div>
+                <div class="cb-auth-err" id="loginError"></div>
+                <button class="cb-auth-submit" onclick="performLogin()">Se connecter</button>
+                <a href="#" class="cb-auth-skip" onclick="switchToView('chat'); hideAuthPanel()">Continuer en invité</a>
+            </div>
+
+            <!-- Register Form -->
+            <div class="cb-auth-form" id="registerForm" style="display: none;">
+                <h4>Créez votre compte</h4>
+                <div class="cb-input-group">
+                    <i class="fa-solid fa-user cb-input-icon"></i>
+                    <input type="text" id="registerName" placeholder="Nom d'utilisateur" required>
+                </div>
+                <div class="cb-input-group">
+                    <i class="fa-solid fa-envelope cb-input-icon"></i>
+                    <input type="email" id="registerEmail" placeholder="Email" required>
+                </div>
+                <div class="cb-input-group">
+                    <i class="fa-solid fa-lock cb-input-icon"></i>
+                    <input type="password" id="registerPassword" placeholder="Mot de passe" required>
+                </div>
+                <div class="cb-auth-err" id="registerError"></div>
+                <button class="cb-auth-submit" onclick="performRegister()">S'inscrire</button>
+                <a href="#" class="cb-auth-skip" onclick="switchToView('chat'); hideAuthPanel()">Continuer en invité</a>
+            </div>
+        </div>
+
+        <!-- ── Profile View ── -->
+        <div id="cbProfileView">
+            <div class="cb-auth-header-buttons" style="padding-left: 0; padding-right: 0;">
+                <button class="cb-auth-back-btn" onclick="switchToView('chat')"><i
+                        class="fa-solid fa-arrow-left"></i></button>
+                <button class="cb-auth-close-btn" onclick="toggleChat()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="profile-avatar">
+                <img src="{{ cdn_url }}villes/trippy.jpg" alt="Trippy" id="profileAvatarImg"
+                    onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2745%27 fill=%27%23ffffff%27/%3E%3Ctext x=%2750%27 y=%2770%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%236b1d1d%27%3ET%3C/text%3E%3C/svg%3E'">
+            </div>
+            <div class="profile-name" id="profileName">Utilisateur</div>
+            <div class="profile-tier explorer" id="profileTier">Explorateur</div>
+
+            <div class="profile-actions">
+                <button class="profile-btn primary" onclick="showAuthPanel(); showAuthTab('login');">Se
+                    déconnecter</button>
+                <button class="profile-btn upgrade" onclick="switchToView('pack')">Améliorer</button>
+            </div>
+
+            <div class="profile-info">
+                <div class="profile-row">
+                    <span class="profile-label">Email</span>
+                    <span class="profile-value" id="profileEmail"></span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">Statut</span>
+                    <span class="profile-value" id="profileStatus"></span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">Pack actuel</span>
+                    <span class="profile-value standard" id="profilePack"></span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">Requêtes restantes</span>
+                    <span class="profile-value" id="profileQueriesRemaining">Illimité</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Pack Selector View ── -->
+        <div id="cbPackView">
+            <div class="pack-view-header">
+                <div class="pack-view-title">Packs Premium</div>
+                <h2 class="pack-view-h2">Améliorez votre <em>expérience</em></h2>
+                <p class="pack-view-sub">Débloquez des fonctionnalités exclusives et un accès illimité.</p>
+            </div>
+
+            <div class="pack-billing-row">
+                <span class="pack-billing-label monthly active">Mensuel</span>
+                <div class="pack-toggle-sw" id="billingToggle">
+                    <div class="pack-save-pill">20% OFF</div>
+                </div>
+                <span class="pack-billing-label annual">Annuel</span>
+            </div>
+
+            <div class="pack-cards-list">
+                <!-- PACK: EXPLORER -->
+                <div class="pack-card selected" data-pack-id="1">
+                    <div class="pack-card-inner">
+                        <img src="{{ cdn_url }}icons/pack-explorer.png" alt="Explorer Pack" class="pack-card-img">
+                        <div class="pack-card-info">
+                            <div class="pack-card-name">Pack Explorateur</div>
+                            <p class="pack-card-desc">Accès de base aux fonctionnalités IA</p>
+                        </div>
+                        <div class="pack-card-price">
+                            <div class="pack-card-amount explorer">Gratuit</div>
+                            <div class="pack-card-period">À vie</div>
+                        </div>
+                        <div class="pack-selected-check"><i class="fa-solid fa-check"></i></div>
+                    </div>
+                    <div class="pack-card-feats">
+                        <span class="pack-feat-chip">50 requêtes/jour</span>
+                        <span class="pack-feat-chip">Support Communautaire</span>
+                    </div>
+                </div>
+
+                <!-- PACK: STANDARD -->
+                <div class="pack-card" data-pack-id="2">
+                    <div class="pack-card-inner">
+                        <img src="{{ cdn_url }}icons/pack-standard.png" alt="Standard Pack" class="pack-card-img">
+                        <div class="pack-card-info">
+                            <div class="pack-card-name">Pack Standard</div>
+                            <p class="pack-card-desc">Idéal pour les voyageurs réguliers</p>
+                        </div>
+                        <div class="pack-card-price">
+                            <div class="pack-card-amount standard" data-monthly="49" data-annual="39">49 DHS</div>
+                            <div class="pack-card-period">/mois</div>
+                        </div>
+                        <div class="pack-popular-badge">Populaire</div>
+                        <div class="pack-selected-check"><i class="fa-solid fa-check"></i></div>
+                    </div>
+                    <div class="pack-card-feats">
+                        <span class="pack-feat-chip star"><i class="fa-solid fa-star"></i> Populaire</span>
+                        <span class="pack-feat-chip">Accès Illimité</span>
+                        <span class="pack-feat-chip">Support Prioritaire</span>
+                        <span class="pack-feat-chip">Mises à jour exclusives</span>
+                    </div>
+                </div>
+
+                <!-- PACK: PREMIUM -->
+                <div class="pack-card" data-pack-id="3">
+                    <div class="pack-card-inner">
+                        <img src="{{ cdn_url }}icons/pack-premium.png" alt="Premium Pack" class="pack-card-img">
+                        <div class="pack-card-info">
+                            <div class="pack-card-name">Pack Premium</div>
+                            <p class="pack-card-desc">L'expérience ultime de voyage</p>
+                        </div>
+                        <div class="pack-card-price">
+                            <div class="pack-card-amount premium" data-monthly="99" data-annual="79">99 DHS</div>
+                            <div class="pack-card-period">/mois</div>
+                        </div>
+                        <div class="pack-selected-check"><i class="fa-solid fa-check"></i></div>
+                    </div>
+                    <div class="pack-card-feats">
+                        <span class="pack-feat-chip star"><i class="fa-solid fa-star"></i> VIP Support</span>
+                        <span class="pack-feat-chip">Accès Illimité</span>
+                        <span class="pack-feat-chip">Consultation Experte</span>
+                        <span class="pack-feat-chip">Contenu Exclusif</span>
+                        <span class="pack-feat-chip">Expériences Personnalisées</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pack-cta-bar">
+                <button class="pack-cta-main" onclick="proceedToPayment()">Payer maintenant</button>
+                <span class="pack-cta-skip" onclick="switchToView('chat')">Retour au chat</span>
+            </div>
+        </div>
+
+        <!-- ── Payment View ── -->
+        <div id="cbPaymentView">
+            <div class="payment-header">
+                <button class="payment-back-btn" onclick="switchToView('pack')"><i
+                        class="fa-solid fa-arrow-left"></i></button>
+                <h3 class="payment-header-title">Finaliser votre <em>Paiement</em></h3>
+                <p class="payment-header-sub">Virement bancaire ou espèces</p>
+            </div>
+
+            <div class="payment-summary">
+                <div class="payment-sum-row">
+                    <span class="payment-sum-label">Pack</span>
+                    <span class="payment-sum-val" id="paymentPackName">Pack Standard</span>
+                </div>
+                <div class="payment-sum-row">
+                    <span class="payment-sum-label">Période</span>
+                    <span class="payment-sum-val" id="paymentPeriod">Mensuel</span>
+                </div>
+                <div class="payment-total-row">
+                    <span class="payment-total-label">Total</span>
+                    <span class="payment-total-amount" id="paymentTotal">49 DHS</span>
+                </div>
+            </div>
+
+            <div class="payment-steps">
+                <div class="payment-step">
+                    <span class="payment-step-num">1</span>
+                    <div class="payment-step-text">
+                        <div class="payment-step-title">Effectuez votre virement</div>
+                        <div class="payment-step-desc">Veuillez effectuer un virement du <strong>montant
+                                total</strong> au RIB suivant :</div>
+                        <div class="rib-block">
+                            <span class="rib-number" id="ribNumber">007 640 0001042000216503 64</span>
+                            <button class="rib-copy-btn" onclick="copyRib()">Copier</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="payment-step">
+                    <span class="payment-step-num">2</span>
+                    <div class="payment-step-text">
+                        <div class="payment-step-title">Confirmez sur WhatsApp</div>
+                        <div class="payment-step-desc">Envoyez une capture d'écran du virement au support via
+                            WhatsApp pour validation.</div>
+                        <div class="wa-cta-block">
+                            <p class="wa-cta-title">Confirmer via WhatsApp</p>
+                            <p class="wa-cta-sub">Cliquez ci-dessous pour ouvrir la discussion.</p>
+                            <a href="https://wa.me/212661854898?text=Bonjour,%20je%20viens%20d%27effectuer%20un%20virement%20pour%20le%20pack%20[Nom_du_Pack]%20[Période_du_Pack].%20Voici%20la%20capture%20d%27écran%20de%20mon%20paiement."
+                                target="_blank" class="wa-cta-btn">
+                                <i class="fa-brands fa-whatsapp"></i> Envoyer le reçu
+                            </a>
+                            <p class="wa-cta-hint">Support disponible de 9h à 18h GMT+1</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
+
 <script>
-    (function () {
-        'use strict';
+    // GESTION ETATS CHATBOT
+    const chatWin = document.getElementById('chatWin');
+    const cbBadge = document.getElementById('cbBadge');
+    const cbImageModal = document.getElementById('cbImageModal');
+    const zoomedImage = document.getElementById('zoomedImage');
 
-        /* ─── CONSTANTS ─── */
-        // Configuration de l'URL Backend (Laissez vide '' si hébergé ensemble. Mettez l'URL Railway si le frontend est séparé)
-        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? 'http://127.0.0.1:5001' 
-            : ''; // Ex: 'https://votre-backend.up.railway.app'
-        
-        const SUGG_DEFAULT = ["🏙️ Marrakech", "🍽️ Restaurants Casablanca", "🏛️ Que visiter à Fès", "🏜️ Villes du désert", "🎨 Artisanat marocain"];
-        const LIMITS = { explorer: 10, standard: 50, premium: 999999 };
-        const WA_NUM = '212625902686';
-        const RIB = '007 640 0002962300401057 08';
+    const authPanel = document.getElementById('authPanel');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const loginTab = document.getElementById('loginTab');
+    const registerTab = document.getElementById('registerTab');
+    const loginError = document.getElementById('loginError');
+    const registerError = document.getElementById('registerError');
 
-        /* ─── STATE ─── */
-        let currentView = 'chat';
-        let curUser = null;
-        let userLat = null, userLng = null;
-        let selectedPack = 'explorer';
-        let packIsAnnual = false;
-        let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        let sessionMsgCount = 0;
+    const cbProfileView = document.getElementById('cbProfileView');
+    const cbPackView = document.getElementById('cbPackView');
+    const cbPaymentView = document.getElementById('cbPaymentView');
+    const chatContent = document.getElementById('chatContent');
+    const mobileSidebar = document.getElementById('mobileSidebar');
+    const mainNav = document.getElementById('mainNav'); // This is from the main page, not chatbot
 
-        /* ─── SESSION STORAGE ─── */
-        const STORAGE_KEY = 'trippy_chat_messages';
-        function saveMsgToStorage(text, role, ville) {
-            try {
-                const msgs = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]');
-                msgs.push({ text, role, ville: ville || null });
-                if (msgs.length > 60) msgs.splice(0, msgs.length - 60);
-                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(msgs));
-            } catch (e) { }
-        }
-        function loadMsgsFromStorage() {
-            try { return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]'); } catch (e) { return []; }
-        }
-        function clearMsgStorage() {
-            try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) { }
-        }
+    let currentView = 'chat'; // 'chat', 'profile', 'pack', 'payment'
+    let currentAuthTab = 'login'; // 'login', 'register'
 
-        /* ─── UTILS ─── */
-        function maskEmail(email) {
-            if (!email || !email.includes('@')) return email;
-            let [local, domain] = email.split('@');
-            local = local.length <= 2 ? local[0] + '***' : local[0] + '***' + local.slice(-1);
-            return local + '@' + domain;
-        }
-        function genRef(pack) {
-            return 'MS-' + (pack.toUpperCase().slice(0, 3)) + '-' + Math.floor(10000 + Math.random() * 89999);
-        }
-        function showErr(id, msg) {
-            const e = document.getElementById(id);
-            if (e) { e.textContent = msg; e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 4500); }
-        }
-        function showOk(id, msg) {
-            const e = document.getElementById(id);
-            if (e) { e.textContent = msg; e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 3500); }
-        }
-        function setBtnLoading(id, loading, txt = '') {
-            const b = document.getElementById(id);
-            if (!b) return;
-            b.disabled = loading;
-            if (loading) b.textContent = '⏳ En cours…';
-            else if (txt) b.textContent = txt;
-        }
-
-        /* ═══════════════════════════════════════
-           MOBILE KEYBOARD FIX — visualViewport API
-        ═══════════════════════════════════════ */
-        function updateChatPosition() {
-            const win = document.getElementById('chatWin');
-            if (!win || !win.classList.contains('visible')) return;
-            if (!isMobile) return;
-
-            if (window.visualViewport) {
-                const vv = window.visualViewport;
-                const fullH = window.screen.height;
-                const visibleH = vv.height;
-                const keyboardH = Math.max(0, window.innerHeight - visibleH);
-
-                if (keyboardH > 80) {
-                    // Keyboard ouvert → remonter la fenêtre
-                    const newBottom = keyboardH + 8;
-                    const newHeight = visibleH - newBottom - 10;
-                    win.style.bottom = newBottom + 'px';
-                    win.style.height = Math.max(300, newHeight) + 'px';
-                } else {
-                    // Keyboard fermé → position normale
-                    win.style.bottom = '85px';
-                    win.style.height = '72vh';
-                }
-            }
-        }
-
-        // Écouter les changements du visualViewport
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', updateChatPosition);
-            window.visualViewport.addEventListener('scroll', updateChatPosition);
-        }
-
-        /* ─── TOGGLE CHAT ─── */
-        window.toggleChat = function () {
-            const win = document.getElementById('chatWin');
-            win.classList.toggle('visible');
-            document.getElementById('cbBadge').classList.remove('show');
-            // Reset position quand on ouvre
-            if (win.classList.contains('visible')) {
-                win.style.bottom = '';
-                win.style.height = '';
-            }
-        };
-
-        /* ─── ZOOM ─── */
-        window.openZoom = function () {
-            // Fermer le keyboard AVANT d'ouvrir le zoom
-            const input = document.getElementById('cbInput');
-            if (input) input.blur();
-            // Petit délai pour laisser le keyboard se fermer
+    function toggleChat() {
+        chatWin.classList.toggle('visible');
+        if (chatWin.classList.contains('visible')) {
+            cbBadge.classList.remove('show');
+            // Always start in chat view when opening
+            switchToView('chat');
+            hideAuthPanel();
+            closeSidebar();
+            // Auto-scroll to bottom on open
             setTimeout(() => {
-                const modal = document.getElementById('cbImageModal');
-                modal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-                document.documentElement.style.overflow = 'hidden';
-            }, 150);
-        };
-
-        window.closeZoom = function () {
-            document.getElementById('cbImageModal').style.display = 'none';
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        };
-
-        /* ─── INPUT FOCUS — keyboard events ─── */
-        function setupInputKeyboard() {
-            const input = document.getElementById('cbInput');
-            if (!input) return;
-
-            input.addEventListener('focus', function () {
-                if (!isMobile) return;
-                // Attendre que le keyboard soit ouvert
-                setTimeout(() => {
-                    updateChatPosition();
-                    // Scroller vers le bas pour voir les messages
-                    const w = document.getElementById('cbContentWrapper');
-                    if (w) w.scrollTop = w.scrollHeight;
-                }, 350);
-            });
-
-            input.addEventListener('blur', function () {
-                if (!isMobile) return;
-                // Attendre que le keyboard soit fermé
-                setTimeout(() => {
-                    updateChatPosition();
-                }, 150);
-            });
+                chatContent.scrollTop = chatContent.scrollHeight;
+            }, 100);
+        } else {
+            // Close all sub-panels when closing main chat
+            hideAuthPanel();
+            closeSidebar();
         }
+    }
 
-        /* ─── VIEW SWITCHER ─── */
-        const ALL_VIEWS = ['cbChatView', 'cbProfileView', 'cbPackView', 'cbPaymentView'];
+    function switchToView(view) {
+        currentView = view;
+        // Hide all views
+        chatContent.style.display = 'none';
+        cbProfileView.style.display = 'none';
+        cbPackView.style.display = 'none';
+        cbPaymentView.style.display = 'none';
+        // Hide auth panel by default for other views
+        authPanel.classList.remove('visible');
 
-        window.switchToView = function (view) {
-            // Fermer keyboard si ouvert
-            if (document.activeElement) document.activeElement.blur();
-
-            ALL_VIEWS.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.style.display = 'none';
-            });
-
-            const footer = document.getElementById('cbFooter');
-            const suggestions = document.getElementById('cbSuggestions');
-            const typingEl = document.getElementById('typingIndicator');
-            const navBtn = document.getElementById('navBtn');
-
-            footer.style.display = 'none';
-            suggestions.style.display = 'none';
-            if (typingEl) typingEl.classList.remove('visible');
-
-            if (view === 'chat') {
-                document.getElementById('cbChatView').style.display = 'flex';
-                footer.style.display = 'flex';
-                suggestions.style.display = 'flex';
-                navBtn.innerHTML = '👤 Profil';
-                currentView = 'chat';
-                setTimeout(() => {
-                    const w = document.getElementById('cbContentWrapper');
-                    w.scrollTop = w.scrollHeight;
-                }, 50);
-
-            } else if (view === 'profile') {
-                document.getElementById('cbProfileView').style.display = 'block';
-                navBtn.innerHTML = '💬 Chat';
-                currentView = 'profile';
-                updateProfileView();
-
-            } else if (view === 'pack') {
-                document.getElementById('cbPackView').style.display = 'flex';
-                navBtn.innerHTML = '💬 Chat';
-                currentView = 'pack';
-                updatePackCta();
-
-            } else if (view === 'payment') {
-                document.getElementById('cbPaymentView').style.display = 'flex';
-                navBtn.innerHTML = '✦ Packs';
-                currentView = 'payment';
-                populatePayment();
-            }
-
-            // Re-route navBtn
-            document.getElementById('navBtn').onclick = function () {
-                if (currentView === 'chat') switchToView('profile');
-                else switchToView('chat');
-            };
-
-            // Reset position fenêtre après changement de vue
-            if (isMobile) {
-                const win = document.getElementById('chatWin');
-                if (win) { win.style.bottom = '85px'; win.style.height = '72vh'; }
-            }
-        };
-
-        window.toggleView = () => {
-            if (currentView === 'chat') switchToView('profile');
-            else switchToView('chat');
-        };
-
-        /* ─── PACK SELECTOR ─── */
-        window.selectPack = function (pack) {
-            selectedPack = pack;
-            ['packCard0', 'packCard1', 'packCard2'].forEach(id => {
-                document.getElementById(id).classList.remove('selected');
-            });
-            const map = { explorer: 'packCard0', standard: 'packCard1', premium: 'packCard2' };
-            document.getElementById(map[pack]).classList.add('selected');
-            updatePackCta();
-        };
-
-        window.togglePackBilling = function () {
-            packIsAnnual = !packIsAnnual;
-            document.getElementById('packToggle').classList.toggle('annual', packIsAnnual);
-            document.getElementById('packLabelM').classList.toggle('active', !packIsAnnual);
-            document.getElementById('packLabelA').classList.toggle('active', packIsAnnual);
-            const billing = packIsAnnual ? 'annual' : 'monthly';
-            document.getElementById('price0').textContent = PACK_PRICES[billing].explorer;
-            document.getElementById('price1').textContent = PACK_PRICES[billing].standard;
-            document.getElementById('price2').textContent = PACK_PRICES[billing].premium;
-        };
-
-        function updatePackCta() {
-            const btn = document.getElementById('packCtaBtn');
-            if (!btn) return;
-            if (selectedPack === 'explorer') {
-                btn.textContent = '✓ Rester sur Explorateur (Gratuit)';
-                btn.classList.remove('wa');
-            } else if (selectedPack === 'standard') {
-                btn.textContent = "💬 S'abonner — Voyageur Pro";
-                btn.classList.add('wa');
-            } else {
-                btn.textContent = '💬 Devenir Partenaire';
-                btn.classList.add('wa');
-            }
-        }
-
-        window.onPackCta = function () {
-            if (selectedPack === 'explorer') {
-                fetch(API_BASE_URL + '/set-tier/explorer', { credentials: 'include' }).catch(() => { });
-                switchToView('chat');
-                addMessage('✅ Pack Explorateur actif. Bonne exploration !', 'bot');
-            } else {
-                switchToView('payment');
-            }
-        };
-
-        /* ─── PAYMENT ─── */
-        function populatePayment() {
-            const billing = packIsAnnual ? 'annual' : 'monthly';
-            const price = PACK_PRICES[billing][selectedPack];
-            const label = PACK_LABELS[selectedPack];
-            const ref = genRef(selectedPack);
-
-            document.getElementById('payTitle').textContent = `Paiement · ${label}`;
-            document.getElementById('payPackName').textContent = label;
-            document.getElementById('payBilling').textContent = packIsAnnual ? 'Annuelle (−20%)' : 'Mensuelle';
-            const isAr = document.body.classList.contains('lang-ar');
-            document.getElementById('payUnit').textContent = `${price} ${isAr ? 'درهم' : 'MAD'}`;
-            document.getElementById('payTotal').textContent = `${price} ${isAr ? 'درهم' : 'MAD'}`;
-            document.getElementById('payRef').textContent = ref;
-            document.getElementById('payRib').textContent = RIB;
-
-            const waMsg = `Bonjour Morocco Secrets 👋\n\nJe souhaite m'abonner au pack *${label}* (${price} MAD/${packIsAnnual ? 'an' : 'mois'}).\n\n📋 Référence : *${ref}*\n\nJe vous envoie la preuve de virement. Merci !`;
-            document.getElementById('waCta').href = `https://wa.me/${WA_NUM}?text=${encodeURIComponent(waMsg)}`;
-        }
-
-        window.copyRib = function () {
-            navigator.clipboard.writeText(RIB).then(() => {
-                const btn = document.querySelector('.rib-copy-btn');
-                btn.textContent = '✓ Copié !';
-                btn.style.background = 'var(--cb-desert-gold)';
-                btn.style.color = 'white';
-                setTimeout(() => {
-                    btn.textContent = '📋 Copier';
-                    btn.style.background = '';
-                    btn.style.color = '';
-                }, 2000);
-            }).catch(() => {
-                const el = document.getElementById('payRib');
-                const range = document.createRange();
-                range.selectNode(el);
-                window.getSelection().removeAllRanges();
-                window.getSelection().addRange(range);
-            });
-        };
-
-        /* ─── HEADER + PROFILE ─── */
-        function updateHeader() {
-            document.getElementById('cbHeaderName').textContent = 'Trippy';
-
-            const packBtn = document.getElementById('upgradeNavBtn');
-            navBtn.classList.toggle('active', currentView === 'profile');
-            packBtn.classList.toggle('active', currentView === 'pack');
-        }
-
-        function updateProfileView() {
-            const logoutBtn = document.getElementById('logoutBtnProfile');
-            const clearChatBtn = document.getElementById('clearChatBtnProfile');
-            const loginBtn = document.getElementById('loginBtnProfile');
-            const registerBtn = document.getElementById('registerBtnProfile');
-            if (curUser) {
-                document.getElementById('profileName').textContent = curUser.nom;
-                document.getElementById('profileTier').textContent = PACK_LABELS[curUser.tier] || curUser.tier;
-                document.getElementById('profileTier').style.background = (PACK_COLORS[curUser.tier] || '#ddd') + '20';
-                document.getElementById('profileTier').style.color = PACK_COLORS[curUser.tier] || '#666';
-                document.getElementById('infoNom').textContent = curUser.nom;
-                document.getElementById('infoEmail').textContent = maskEmail(curUser.email);
-                document.getElementById('infoTier').textContent = PACK_LABELS[curUser.tier] || curUser.tier;
-                document.getElementById('infoTier').className = `profile-value ${curUser.tier}`;
-                const limit = LIMITS[curUser.tier] || 10;
-                const remaining = Math.max(0, limit - (curUser.msg_count || 0));
-                document.getElementById('infoMsgCount').textContent = `${remaining} / ${limit >= 999000 ? '∞' : limit}`;
-                logoutBtn.style.display = 'inline-block';
-                if (clearChatBtn) clearChatBtn.style.display = 'inline-block';
-                loginBtn.style.display = 'none';
-                if (registerBtn) registerBtn.style.display = 'none';
-            } else {
-                document.getElementById('profileName').textContent = 'Trippy Bot';
-                document.getElementById('profileTier').textContent = '🌟 Votre Guide Marocain';
-                document.getElementById('profileTier').style.background = '#f0f2f5';
-                document.getElementById('profileTier').style.color = '#666';
-                document.getElementById('infoNom').textContent = 'Visiteur';
-                document.getElementById('infoEmail').textContent = 'Non connecté';
-                document.getElementById('infoTier').textContent = 'Explorateur';
-                document.getElementById('infoTier').className = 'profile-value explorer';
-                document.getElementById('infoMsgCount').textContent = '10 / 10';
-                logoutBtn.style.display = 'none';
-                if (clearChatBtn) clearChatBtn.style.display = 'none';
-                loginBtn.style.display = 'inline-block';
-                if (registerBtn) registerBtn.style.display = 'inline-block';
-            }
-        }
-
-        /* ─── AUTH ─── */
-        window.showAuth = function () {
-            document.getElementById('cbAuthPanel').classList.add('visible');
-            document.getElementById('cbFooter').style.opacity = '0.35';
-            document.getElementById('cbFooter').style.pointerEvents = 'none';
-        };
-        window.showAuthTab = function (tab) { window.showAuth(); window.switchAuthTab(tab); };
-        window.hideAuth = function () {
-            document.getElementById('cbAuthPanel').classList.remove('visible');
-            document.getElementById('cbFooter').style.opacity = '1';
-            document.getElementById('cbFooter').style.pointerEvents = 'auto';
-        };
-
-        function switchAuthTab(tab) {
-            ['tabLogin', 'tabRegister', 'tabForgot'].forEach(id => document.getElementById(id).classList.remove('active'));
-            const tabMap = { login: 'tabLogin', register: 'tabRegister', forgot: 'tabForgot' };
-            if (tabMap[tab]) document.getElementById(tabMap[tab]).classList.add('active');
-            const forms = ['loginForm', 'registerStep1', 'registerStep2', 'registerStep3', 'forgotStep1', 'forgotStep2', 'forgotStep3'];
-            forms.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-            if (tab === 'login') document.getElementById('loginForm').style.display = 'flex';
-            else if (tab === 'register') document.getElementById('registerStep1').style.display = 'flex';
-            else if (tab === 'forgot') document.getElementById('forgotStep1').style.display = 'flex';
-            document.querySelectorAll('.cb-auth-err,.cb-auth-ok').forEach(el => {
-                el.classList.remove('show'); el.textContent = '';
-            });
-        }
-        window.switchAuthTab = switchAuthTab;
-
-        /* ─── LOGIN ─── */
-        window.doLogin = async function () {
-            const email = document.getElementById('loginEmail').value.trim();
-            const pass = document.getElementById('loginPass').value.trim();
-            if (!email || !pass) { showErr('loginErr', 'Email et mot de passe requis'); return; }
-            setBtnLoading('loginBtn', true);
-            try {
-                const res = await fetch(API_BASE_URL + '/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ email, password: pass }) });
-                const data = await res.json();
-                setBtnLoading('loginBtn', false, 'Se connecter →');
-                if (data.success) {
-                    curUser = { nom: data.nom, tier: data.tier, email: data.email, msg_count: data.msg_count || 0 };
-                    updateHeader(); hideAuth();
-                    document.getElementById('cbChatView').innerHTML = '';
-                    clearMsgStorage();
-                    if (data.history && data.history.length) {
-                        data.history.forEach(m => addMessage(m.message, m.role === 'user' ? 'user' : 'bot', false));
-                    }
-                    addMessage(`👋 Bon retour <strong>${data.nom}</strong> ! Pack : <strong>${PACK_LABELS[data.tier]}</strong>`, 'bot');
-                    renderSugg(SUGG_DEFAULT);
-                    if (currentView === 'profile') updateProfileView();
-                } else { showErr('loginErr', data.message); }
-            } catch (e) { setBtnLoading('loginBtn', false, 'Se connecter →'); showErr('loginErr', 'Erreur réseau'); }
-        };
-
-        /* ─── REGISTER ─── */
-        window.sendRegCode = async function () {
-            const email = document.getElementById('regEmail').value.trim();
-            if (!email) { showErr('regErr', 'Email requis'); return; }
-            setBtnLoading('regStep1Btn', true);
-            try {
-                const res = await fetch(API_BASE_URL + '/send-verification', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ email }) });
-                const data = await res.json();
-                setBtnLoading('regStep1Btn', false, 'Envoyer le code →');
-                if (data.success) {
-                    showOk('regOk', data.message);
-                    setTimeout(() => {
-                        document.getElementById('registerStep1').style.display = 'none';
-                        document.getElementById('registerStep2').style.display = 'flex';
-                    }, 600);
-                } else { showErr('regErr', data.message); }
-            } catch (e) { setBtnLoading('regStep1Btn', false, 'Envoyer le code →'); showErr('regErr', 'Erreur réseau'); }
-        };
-
-        window.verifyRegCode = async function () {
-            const email = document.getElementById('regEmail').value.trim();
-            const code = document.getElementById('regCode').value.trim();
-            if (!code) { showErr('regCodeErr', 'Code requis'); return; }
-            setBtnLoading('regStep2Btn', true);
-            try {
-                const res = await fetch(API_BASE_URL + '/verify-code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ email, code }) });
-                const data = await res.json();
-                setBtnLoading('regStep2Btn', false, 'Vérifier →');
-                if (data.success) {
-                    document.getElementById('registerStep2').style.display = 'none';
-                    document.getElementById('registerStep3').style.display = 'flex';
-                } else { showErr('regCodeErr', data.message); }
-            } catch (e) { setBtnLoading('regStep2Btn', false, 'Vérifier →'); showErr('regCodeErr', 'Erreur réseau'); }
-        };
-
-        window.finalRegister = async function () {
-            const nom = document.getElementById('regName').value.trim();
-            const pass = document.getElementById('regPass').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
-            if (!nom || !pass) { showErr('regFinalErr', 'Nom et mot de passe requis'); return; }
-            if (pass.length < 6) { showErr('regFinalErr', 'Mot de passe trop court (min. 6)'); return; }
-            setBtnLoading('regStep3Btn', true);
-            try {
-                const res = await fetch(API_BASE_URL + '/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ nom, email, password: pass }) });
-                const data = await res.json();
-                setBtnLoading('regStep3Btn', false, '🎉 Créer mon compte');
-                if (data.success) {
-                    curUser = { nom: data.nom, tier: data.tier, email: data.email, msg_count: 0 };
-                    updateHeader(); hideAuth();
-                    clearMsgStorage();
-                    document.getElementById('cbChatView').innerHTML = '';
-                    addMessage(`🎉 Bienvenue <strong>${data.nom}</strong> ! Votre compte est actif.`, 'bot');
-                    setTimeout(() => {
-                        addMessage('✦ Voulez-vous découvrir nos packs premium pour une expérience illimitée ?', 'bot');
-                        renderLimitBanner('Envie de plus ?', '10 messages inclus — Upgrader pour illimité');
-                    }, 800);
-                    if (currentView === 'profile') updateProfileView();
-                } else { showErr('regFinalErr', data.message); }
-            } catch (e) { setBtnLoading('regStep3Btn', false, '🎉 Créer mon compte'); showErr('regFinalErr', 'Erreur réseau'); }
-        };
-
-        /* ─── FORGOT ─── */
-        window.sendForgotCode = async function () {
-            const email = document.getElementById('forgotEmail').value.trim();
-            if (!email) { showErr('forgotErr', 'Email requis'); return; }
-            try {
-                const res = await fetch(API_BASE_URL + '/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ email }) });
-                const data = await res.json();
-                if (data.success) {
-                    showOk('forgotErr', data.message);
-                    setTimeout(() => {
-                        document.getElementById('forgotStep1').style.display = 'none';
-                        document.getElementById('forgotStep2').style.display = 'flex';
-                    }, 600);
-                } else { showErr('forgotErr', data.message); }
-            } catch (e) { showErr('forgotErr', 'Erreur réseau'); }
-        };
-
-        window.verifyForgotCode = async function () {
-            const email = document.getElementById('forgotEmail').value.trim();
-            const code = document.getElementById('forgotCode').value.trim();
-            if (!code) { showErr('forgotCodeErr', 'Code requis'); return; }
-            try {
-                const res = await fetch(API_BASE_URL + '/verify-code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ email, code }) });
-                const data = await res.json();
-                if (data.success) {
-                    document.getElementById('forgotStep2').style.display = 'none';
-                    document.getElementById('forgotStep3').style.display = 'flex';
-                } else { showErr('forgotCodeErr', data.message); }
-            } catch (e) { showErr('forgotCodeErr', 'Erreur réseau'); }
-        };
-
-        window.resetPassword = async function () {
-            const email = document.getElementById('forgotEmail').value.trim();
-            const newPass = document.getElementById('newPass').value.trim();
-            if (!newPass || newPass.length < 6) { showErr('newPassErr', 'Trop court (min. 6)'); return; }
-            try {
-                const res = await fetch(API_BASE_URL + '/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ email, password: newPass }) });
-                const data = await res.json();
-                if (data.success) {
-                    showOk('newPassErr', data.message);
-                    setTimeout(() => switchAuthTab('login'), 1600);
-                } else { showErr('newPassErr', data.message); }
-            } catch (e) { showErr('newPassErr', 'Erreur réseau'); }
-        };
-
-        window.doLogout = async function () {
-            await fetch(API_BASE_URL + '/logout', { method: 'POST', credentials: 'include' });
-            curUser = null;
-            clearMsgStorage();
-            document.getElementById('cbChatView').innerHTML = '';
-            updateHeader();
+        // Show the requested view
+        if (view === 'chat') {
+            chatContent.style.display = 'flex';
+            chatContent.scrollTop = chatContent.scrollHeight; // Scroll to bottom
+        } else if (view === 'profile') {
+            cbProfileView.style.display = 'flex';
             updateProfileView();
-            switchToView('chat');
-            addMessage('👋 À bientôt ! Vous êtes déconnecté.', 'bot');
-            renderSugg(SUGG_DEFAULT);
-        };
-
-        /* ─── CLEAR CHAT ─── */
-        window.doClearChat = async function () {
-            if (!confirm('Voulez-vous effacer tout l\'historique de conversation ?')) return;
-            try {
-                const res = await fetch(API_BASE_URL + '/chat/clear', { method: 'POST', credentials: 'include' });
-                const data = await res.json();
-                if (data.success) {
-                    document.getElementById('cbChatView').innerHTML = '';
-                    clearMsgStorage();
-                    sessionMsgCount = 0;
-                    const input = document.getElementById('cbInput');
-                    if (input) { input.disabled = false; input.placeholder = 'Posez votre question sur le Maroc…'; }
-                    const banner = document.getElementById('cbLimitBanner');
-                    if (banner) banner.remove();
-                    switchToView('chat');
-                    addMessage('🗑️ Historique effacé. Comment puis-je vous aider ?', 'bot');
-                    renderSugg(SUGG_DEFAULT);
-                }
-            } catch (e) { alert('Erreur lors de l\'effacement de l\'historique.'); }
-        };
-
-        /* ─── MESSAGES ─── */
-        function showTyping(show) {
-            const el = document.getElementById('typingIndicator');
-            if (show) el.classList.add('visible');
-            else el.classList.remove('visible');
+        } else if (view === 'pack') {
+            cbPackView.style.display = 'flex';
+            updatePackPrices(); // Ensure prices are correct
+        } else if (view === 'payment') {
+            cbPaymentView.style.display = 'flex';
         }
+    }
 
-        function addMessage(text, side, withAvatar = true, ville = null, skipStorage = false) {
-            const area = document.getElementById('cbChatView');
-            if (!area) return;
-            if (!skipStorage) saveMsgToStorage(text, side, ville);
-            if (side === 'bot') {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'bot-wrapper';
-                const avatar = document.createElement('div');
-                avatar.className = 'bot-avatar';
-                avatar.onclick = () => openZoom();
-                avatar.innerHTML = `<img src="{{ cdn_url }}villes/trippy.jpg" alt="Trippy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2745%27 fill=%27%23ffffff%27/%3E%3Ctext x=%2750%27 y=%2770%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%236b1d1d%27%3ET%3C/text%3E%3C/svg%3E'">`;
-                const content = document.createElement('div');
-                content.className = 'bot-content';
-                const name = document.createElement('div');
-                name.className = 'bot-name';
-                name.textContent = 'Trippy';
-                const msgDiv = document.createElement('div');
-                msgDiv.className = 'msg bot';
-                msgDiv.innerHTML = text
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n/g, '<br>');
+    function openZoom(imgSrc) {
+        zoomedImage.src = imgSrc;
+        cbImageModal.style.display = 'flex';
+    }
 
-                // Ajout des boutons si une ville est détectée
-                if (ville) {
-                    const btnContainer = document.createElement('div');
-                    btnContainer.className = 'msg-btn-container';
+    function closeZoom() {
+        cbImageModal.style.display = 'none';
+        zoomedImage.src = '';
+    }
 
-                    // Bouton Explorer
-                    const btnExp = document.createElement('a');
-                    btnExp.className = 'msg-btn msg-btn-explorer';
-                    btnExp.href = `/ville/${encodeURIComponent(ville)}`;
-                    btnExp.innerHTML = `✨ Explorer ${ville}`;
+    function showAuthPanel() {
+        authPanel.classList.add('visible');
+        switchToView('auth'); // Temporarily change view for styling
+    }
 
-                    // Bouton Carte
-                    const btnMap = document.createElement('a');
-                    btnMap.className = 'msg-btn msg-btn-map';
-                    let mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(ville + ', Maroc')}`;
-                    if (userLat && userLng) mapUrl += `&origin=${userLat},${userLng}`;
-                    btnMap.href = mapUrl;
-                    btnMap.target = '_blank';
-                    btnMap.innerHTML = `📍 Carte`;
+    function hideAuthPanel() {
+        authPanel.classList.remove('visible');
+        switchToView('chat'); // Go back to chat view
+    }
 
-                    btnContainer.appendChild(btnExp);
-                    btnContainer.appendChild(btnMap);
-                    msgDiv.appendChild(btnContainer);
-                }
+    function showAuthTab(tab) {
+        currentAuthTab = tab;
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'none';
+        loginTab.classList.remove('active');
+        registerTab.classList.remove('active');
 
-                content.appendChild(name);
-                content.appendChild(msgDiv);
-                wrapper.appendChild(avatar);
-                wrapper.appendChild(content);
-                area.appendChild(wrapper);
-            } else {
-                const msgDiv = document.createElement('div');
-                msgDiv.className = 'msg user';
-                msgDiv.textContent = text;
-                area.appendChild(msgDiv);
-            }
-            const w = document.getElementById('cbContentWrapper');
-            w.scrollTop = w.scrollHeight;
+        if (tab === 'login') {
+            loginForm.style.display = 'flex';
+            loginTab.classList.add('active');
+        } else {
+            registerForm.style.display = 'flex';
+            registerTab.classList.add('active');
         }
+        loginError.classList.remove('show');
+        registerError.classList.remove('show');
+    }
 
-        function renderLimitBanner(title, sub) {
-            const old = document.getElementById('cbLimitBanner');
-            if (old) old.remove();
-            const area = document.getElementById('cbChatView');
-            const banner = document.createElement('div');
-            banner.id = 'cbLimitBanner';
-            banner.className = 'cb-limit-banner';
-            banner.innerHTML = `
-            <div class="cb-limit-icon">🔓</div>
-            <div class="cb-limit-text">
-                <div class="cb-limit-title">${title}</div>
-                <div class="cb-limit-sub">${sub}</div>
-            </div>
-            <button class="cb-limit-upgrade" onclick="switchToView('pack')">Voir les packs →</button>
-        `;
-            area.appendChild(banner);
-            const w = document.getElementById('cbContentWrapper');
-            w.scrollTop = w.scrollHeight;
-        }
+    function openSidebar() {
+        mobileSidebar.classList.add('active');
+    }
 
-        function renderSugg(list) {
-            const c = document.getElementById('cbSuggestions');
-            if (!c) return;
-            c.innerHTML = '';
+    function closeSidebar() {
+        mobileSidebar.classList.remove('active');
+    }
 
-            // Cacher les suggestions après les 2 premières questions
-            if (sessionMsgCount >= 2) {
-                c.style.display = 'none';
-                return;
-            }
+    // LANGUAGE DROPDOWNS (outside chatbot interaction for global site)
+    document.addEventListener('DOMContentLoaded', function () {
+        const customLangDropdowns = document.querySelectorAll('.custom-lang-selector');
 
-            c.style.display = 'flex';
-            list.forEach(t => {
-                const s = document.createElement('span');
-                s.className = 'suggestion-chip';
-                s.textContent = t;
-                s.onclick = () => {
-                    document.getElementById('cbInput').value = t.replace(/^[\p{Emoji}\s]+/u, '').trim();
-                    sendMsg();
-                };
-                c.appendChild(s);
-            });
-        }
+        customLangDropdowns.forEach(dropdown => {
+            const btn = dropdown.querySelector('.custom-lang-btn');
+            const list = dropdown.querySelector('.custom-lang-list');
+            const currentLangText = dropdown.querySelector('#currentLangText') || dropdown.querySelector('#currentLangTextSidebar');
 
-        /* ─── SEND MESSAGE ─── */
-        window.sendMsg = async function () {
-            const input = document.getElementById('cbInput');
-            const msg = input.value.trim();
-            if (!msg) return;
+            if (btn && list) {
+                btn.addEventListener('click', function (event) {
+                    list.classList.toggle('show');
+                    event.stopPropagation();
+                });
 
-            if (currentView !== 'chat') switchToView('chat');
-
-            addMessage(msg, 'user');
-            sessionMsgCount++; // Incrémenter le compteur de questions
-            input.value = '';
-            // Garder le focus sur mobile pour que le keyboard reste ouvert
-            if (!isMobile) input.focus();
-
-            showTyping(true);
-            try {
-                const res = await fetch(API_BASE_URL + '/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ message: msg }) });
-                const data = await res.json();
-                showTyping(false);
-
-                if (data.need_register) {
-                    addMessage(`🔐 Vous avez utilisé tous vos messages gratuits.<br><br>Inscrivez-vous pour continuer — ou passez au <strong>Voyageur Pro</strong> pour un accès illimité !`, 'bot');
-                    setTimeout(() => renderLimitBanner('Limite atteinte', 'Inscrivez-vous ou choisissez un pack premium'), 300);
-                    document.getElementById('cbInput').disabled = true;
-                    document.getElementById('cbInput').placeholder = "Limite atteinte 🔒";
-                    return;
-                }
-                if (data.limit_reached) {
-                    addMessage(`🔐 Limite quotidienne atteinte.<br><br>Revenez demain ou passez au <strong>Voyageur Pro</strong> pour un accès illimité !`, 'bot');
-                    setTimeout(() => renderLimitBanner('Limite atteinte', 'Passez au pack Voyageur Pro pour illimité'), 300);
-                    document.getElementById('cbInput').disabled = true;
-                    document.getElementById('cbInput').placeholder = "Limite atteinte 🔒";
-                    return;
-                }
-                if (data.response) {
-                    addMessage(data.response, 'bot', true, data.ville);
-                    if (data.ville) renderSugg([`🍽️ Restaurants à ${data.ville}`, `🏛️ Attractions à ${data.ville}`, `🏨 Hôtels à ${data.ville}`, `🧵 Artisanat à ${data.ville}`]);
-                    else renderSugg(SUGG_DEFAULT);
-                }
-                if (data.msg_count !== undefined && curUser) {
-                    curUser.msg_count = data.msg_count;
-                    const tier = curUser.tier || 'explorer';
-                    const limit = LIMITS[tier];
-                    const remaining = Math.max(0, limit - curUser.msg_count);
-                    if (remaining === 2 && tier === 'explorer') {
-                        setTimeout(() => renderLimitBanner('Plus que 2 messages gratuits', 'Passez au Voyageur Pro pour illimité !'), 400);
+                list.addEventListener('click', function (event) {
+                    const lang = event.target.dataset.lang;
+                    if (lang) {
+                        setLanguage(lang);
+                        if (currentLangText) currentLangText.textContent = lang.toUpperCase();
+                        list.classList.remove('show');
+                        event.stopPropagation();
                     }
-                    if (currentView === 'profile') updateProfileView();
-                }
-            } catch (e) {
-                showTyping(false);
-                addMessage('⚠️ Erreur de connexion. Réessayez.', 'bot');
-            }
-        };
+                });
 
-        /* ─── INIT ─── */
-        document.addEventListener('DOMContentLoaded', function () {
-            // Setup keyboard events pour mobile
-            setupInputKeyboard();
-
-            // Fetch user session
-            fetch(API_BASE_URL + '/me', { credentials: 'include' }).then(r => r.json()).then(d => {
-                if (d.logged) {
-                    curUser = { nom: d.nom, tier: d.tier, email: d.email, msg_count: d.msg_count || 0 };
-                    updateHeader();
-                    updateProfileView();
-                    selectedPack = d.tier || 'explorer';
-                    selectPack(selectedPack);
-                    const storedMsgs = loadMsgsFromStorage();
-                    if (storedMsgs.length) {
-                        document.getElementById('cbChatView').innerHTML = '';
-                        storedMsgs.forEach(m => addMessage(m.text, m.role, false, m.ville, true));
-                    } else {
-                        fetch(API_BASE_URL + '/chat/history', { credentials: 'include' }).then(r => r.json()).then(h => {
-                            if (h.history && h.history.length) {
-                                document.getElementById('cbChatView').innerHTML = '';
-                                h.history.forEach(m => addMessage(m.message, m.role === 'user' ? 'user' : 'bot', false));
-                            }
-                        }).catch(() => { });
+                // Close dropdown if clicked outside
+                document.addEventListener('click', function (event) {
+                    if (list.classList.contains('show') && !dropdown.contains(event.target)) {
+                        list.classList.remove('show');
                     }
-                }
-                renderSugg(SUGG_DEFAULT);
-            }).catch(() => { renderSugg(SUGG_DEFAULT); });
-
-            // Geolocation
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    pos => { userLat = pos.coords.latitude; userLng = pos.coords.longitude; },
-                    () => { }
-                );
+                });
             }
-
-            switchToView('chat');
         });
 
-    })();
+        // Close sidebar if clicked outside
+        document.addEventListener('click', function (event) {
+            const sidebar = document.getElementById('mobileSidebar');
+            const toggleBtn = document.querySelector('.sidebar-toggle-btn');
+            if (sidebar && toggleBtn && sidebar.classList.contains('active') && !sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
+                closeSidebar();
+            }
+        });
+    });
+
+
+    // GOOGLE TRANSLATE LOGIC
+    function setLanguage(lang) {
+        const googleTranslateElement = document.querySelector('#google_translate_element select');
+        if (googleTranslateElement) {
+            googleTranslateElement.value = lang;
+            googleTranslateElement.dispatchEvent(new Event('change'));
+        }
+        // Update body class for custom styles
+        document.body.classList.remove('lang-fr', 'lang-ar', 'lang-en'); // Clear existing
+        document.body.classList.add('lang-' + lang);
+
+        // Update static text
+        document.querySelectorAll('[data-ar]').forEach(el => {
+            if (lang === 'ar') {
+                el.innerHTML = el.dataset.ar;
+                document.body.classList.add('rtl');
+            } else {
+                // Restore original content
+                if (el.dataset.originalHtml) {
+                    el.innerHTML = el.dataset.originalHtml;
+                } else {
+                    el.dataset.originalHtml = el.innerHTML; // Store original
+                }
+                document.body.classList.remove('rtl');
+            }
+        });
+
+        // Specific update for chatbot header status
+        const cbHeaderStatus = document.getElementById('cbHeaderStatus');
+        if (cbHeaderStatus) {
+            cbHeaderStatus.textContent = lang === 'ar' ? 'متصل' : 'En ligne';
+        }
+        const profileStatus = document.getElementById('profileStatus');
+        if (profileStatus) {
+            profileStatus.textContent = lang === 'ar' ? 'نشط' : 'Actif';
+        }
+    }
+
+    // Initialize language to French if not set
+    if (!localStorage.getItem('selectedLanguage')) {
+        setLanguage('fr');
+    }
+
+    // Call setLanguage on load to apply styles and text based on stored preference
+    document.addEventListener('DOMContentLoaded', () => {
+        const storedLang = localStorage.getItem('selectedLanguage');
+        if (storedLang) {
+            setLanguage(storedLang);
+            const currentLangText = document.getElementById('currentLangText');
+            if (currentLangText) currentLangText.textContent = storedLang.toUpperCase();
+            const currentLangTextSidebar = document.getElementById('currentLangTextSidebar');
+            if (currentLangTextSidebar) currentLangTextSidebar.textContent = storedLang.toUpperCase();
+
+        }
+    });
+
+
+    // CHATBOT DIALOG & API INTERACTION
+    const messagesArea = document.getElementById('messagesArea');
+    const userInput = document.getElementById('userInput');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const suggestionsArea = document.getElementById('suggestionsArea');
+    let isBotTyping = false;
+
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        if (message === '') return;
+
+        appendMessage(message, 'user');
+        userInput.value = '';
+        showTypingIndicator();
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Session-ID': getSessionId() // Add session ID header
+                },
+                body: JSON.stringify({
+                    message: message,
+                    session_id: getSessionId()
+                })
+            });
+
+            const data = await response.json();
+            hideTypingIndicator();
+
+            if (data.status === 'success') {
+                appendMessage(data.response, 'bot');
+                if (data.actions && data.actions.length > 0) {
+                    displayActionButtons(data.actions);
+                }
+                if (data.new_session_id) {
+                    setSessionId(data.new_session_id);
+                }
+            } else {
+                appendMessage('Désolé, je n'ai pas pu traiter votre requête pour le moment.', 'bot');
+            }
+        } catch (error) {
+            console.error('Erreur lors de l'envoi du message :', error);
+            hideTypingIndicator();
+            appendMessage('Une erreur est survenue. Veuillez réessayer plus tard.', 'bot');
+        }
+    }
+
+    function appendMessage(text, sender) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('msg', sender);
+
+        // Process special commands for image or button
+        if (text.startsWith('/img')) {
+            const imgSrc = text.substring(5).trim();
+            const imgElement = document.createElement('img');
+            imgElement.src = imgSrc;
+            imgElement.alt = 'Image';
+            imgElement.style.maxWidth = '100%';
+            imgElement.style.borderRadius = '12px';
+            imgElement.style.marginTop = '10px';
+            imgElement.style.cursor = 'pointer';
+            imgElement.onclick = () => openZoom(imgSrc);
+            messageElement.appendChild(imgElement);
+        } else if (text.startsWith('/button')) {
+            const [_, label, link] = text.split('|').map(s => s.trim());
+            const buttonElement = document.createElement('a');
+            buttonElement.href = link;
+            buttonElement.target = '_blank';
+            buttonElement.classList.add('msg-btn', 'msg-btn-explorer'); // Default style
+            buttonElement.textContent = label;
+            messageElement.appendChild(buttonElement);
+        } else {
+            messageElement.textContent = text;
+        }
+
+        // If bot message, add avatar and name
+        if (sender === 'bot') {
+            const botWrapper = document.createElement('div');
+            botWrapper.classList.add('bot-wrapper');
+
+            const botAvatar = document.createElement('div');
+            botAvatar.classList.add('bot-avatar');
+            botAvatar.innerHTML = '<img src="{{ cdn_url }}villes/trippy.jpg" alt="Trippy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2745%27 fill=%27%23ffffff%27/%3E%3Ctext x=%2750%27 y=%2770%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%236b1d1d%27%3ET%3C/text%3E%3C/svg%3E'">'
+            botAvatar.onclick = () => openZoom('{{ cdn_url }}villes/trippy.jpg');
+
+            const botContent = document.createElement('div');
+            botContent.classList.add('bot-content');
+            const botName = document.createElement('div');
+            botName.classList.add('bot-name');
+            botName.textContent = 'Trippy Bot';
+            botContent.appendChild(botName);
+            botContent.appendChild(messageElement);
+
+            botWrapper.appendChild(botAvatar);
+            botWrapper.appendChild(botContent);
+            messagesArea.appendChild(botWrapper);
+        } else {
+            messagesArea.appendChild(messageElement);
+        }
+
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    function showTypingIndicator() {
+        isBotTyping = true;
+        typingIndicator.classList.add('visible');
+        messagesArea.scrollTop = messagesArea.scrollHeight; // Keep scrolling to show indicator
+    }
+
+    function hideTypingIndicator() {
+        isBotTyping = false;
+        typingIndicator.classList.remove('visible');
+    }
+
+    function sendSuggestion(suggestion) {
+        userInput.value = suggestion;
+        sendMessage();
+    }
+
+    function displayActionButtons(actions) {
+        const btnContainer = document.createElement('div');
+        btnContainer.classList.add('msg-btn-container');
+
+        actions.forEach(action => {
+            const button = document.createElement('button');
+            button.classList.add('msg-btn');
+            if (action.type === 'city') {
+                button.classList.add('msg-btn-explorer');
+                button.innerHTML = `<i class="fa-solid fa-city"></i> ${action.label}`;
+                button.onclick = () => window.location.href = `/villes/${action.city_id}`;
+            } else if (action.type === 'attraction') {
+                button.classList.add('msg-btn-map');
+                button.innerHTML = `<i class="fa-solid fa-map-marked-alt"></i> ${action.label}`;
+                button.onclick = () => window.location.href = `/attraction/${action.attraction_id}`;
+            } else if (action.type === 'link') {
+                button.classList.add('msg-btn-explorer');
+                button.innerHTML = `<i class="fa-solid fa-link"></i> ${action.label}`;
+                button.onclick = () => window.open(action.url, '_blank');
+            }
+            btnContainer.appendChild(button);
+        });
+        // Append buttons to the last bot message or as a new message
+        const lastBotMessage = messagesArea.lastElementChild.querySelector('.msg.bot');
+        if (lastBotMessage) {
+            lastBotMessage.parentNode.insertBefore(btnContainer, lastBotMessage.nextSibling);
+        } else {
+            appendMessage(btnContainer.outerHTML, 'bot'); // Fallback if no bot message
+        }
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    function showCities() {
+        sendSuggestion('Montre-moi les villes');
+    }
+
+    function showAttractions() {
+        sendSuggestion('Montre-moi les attractions');
+    }
+
+    // SESSION MANAGEMENT
+    function getSessionId() {
+        let sessionId = sessionStorage.getItem('chatSessionId');
+        if (!sessionId) {
+            sessionId = 'session_' + Math.random().toString(36).substring(2, 15);
+            sessionStorage.setItem('chatSessionId', sessionId);
+        }
+        return sessionId;
+    }
+
+    function setSessionId(newSessionId) {
+        sessionStorage.setItem('chatSessionId', newSessionId);
+    }
+
+
+    // AUTHENTICATION LOGIC (Dummy functions for now)
+    async function performLogin() {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        loginError.classList.remove('show');
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                // Simulate successful login
+                localStorage.setItem('isAuthenticated', 'true');
+                localStorage.setItem('userName', data.user.name);
+                localStorage.setItem('userEmail', data.user.email);
+                localStorage.setItem('userTier', data.user.tier);
+                localStorage.setItem('userQueriesRemaining', data.user.queries_remaining);
+
+                hideAuthPanel();
+                switchToView('profile'); // Go to profile on successful login
+                appendMessage(`Bienvenue de retour, \${data.user.name}!`, 'bot');
+            } else {
+                loginError.textContent = data.message || 'Email ou mot de passe incorrect.';
+                loginError.classList.add('show');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            loginError.textContent = 'Une erreur est survenue lors de la connexion.';
+            loginError.classList.add('show');
+        }
+    }
+
+    async function performRegister() {
+        const name = document.getElementById('registerName').value;
+        const email = document.getElementById('registerEmail').value;
+        const password = document.getElementById('registerPassword').value;
+
+        registerError.classList.remove('show');
+        try {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password })
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                localStorage.setItem('isAuthenticated', 'true');
+                localStorage.setItem('userName', data.user.name);
+                localStorage.setItem('userEmail', data.user.email);
+                localStorage.setItem('userTier', data.user.tier);
+                localStorage.setItem('userQueriesRemaining', data.user.queries_remaining);
+                hideAuthPanel();
+                switchToView('profile');
+                appendMessage(`Bienvenue, \${data.user.name}! Votre compte a été créé.`, 'bot');
+            } else {
+                registerError.textContent = data.message || 'Erreur lors de l'inscription.';
+                registerError.classList.add('show');
+            }
+        } catch (error) {
+            console.error('Register error:', error);
+            registerError.textContent = 'Une erreur est survenue lors de l'inscription.';
+            registerError.classList.add('show');
+        }
+    }
+
+    function updateProfileView() {
+        const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+        document.getElementById('profileName').textContent = localStorage.getItem('userName') || 'Utilisateur';
+        document.getElementById('profileEmail').textContent = localStorage.getItem('userEmail') || 'N/A';
+        document.getElementById('profileTier').textContent = localStorage.getItem('userTier') || 'Explorateur';
+        document.getElementById('profilePack').textContent = localStorage.getItem('userTier') || 'Explorateur';
+        document.getElementById('profileQueriesRemaining').textContent = localStorage.getItem('userQueriesRemaining') || 'Illimité';
+
+        // Toggle login/logout button
+        const loginBtn = document.querySelector('#cbProfileView .profile-actions .primary');
+        if (loginBtn) {
+            loginBtn.textContent = isAuthenticated ? 'Se déconnecter' : 'Se connecter';
+            loginBtn.onclick = isAuthenticated ? performLogout : () => {
+                showAuthPanel();
+                showAuthTab('login');
+            };
+        }
+        // Show/hide upgrade button based on tier (simple logic)
+        const upgradeBtn = document.querySelector('#cbProfileView .profile-actions .upgrade');
+        if (upgradeBtn) {
+            if (localStorage.getItem('userTier') === 'Premium') {
+                upgradeBtn.style.display = 'none';
+            } else {
+                upgradeBtn.style.display = 'inline-block';
+            }
+        }
+    }
+
+    function performLogout() {
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userTier');
+        localStorage.removeItem('userQueriesRemaining');
+        // Clear session ID on logout to force new session for next interaction
+        sessionStorage.removeItem('chatSessionId');
+        hideAuthPanel();
+        switchToView('chat'); // Go back to chat view
+        appendMessage('Vous avez été déconnecté.', 'bot');
+    }
+
+    // PACK SELECTION LOGIC
+    const billingToggle = document.getElementById('billingToggle');
+    let isAnnualBilling = false;
+
+    if (billingToggle) {
+        billingToggle.addEventListener('click', function () {
+            isAnnualBilling = !isAnnualBilling;
+            this.classList.toggle('annual', isAnnualBilling);
+            updatePackPrices();
+        });
+    }
+
+    function updatePackPrices() {
+        document.querySelectorAll('.pack-card').forEach(card => {
+            const amountSpan = card.querySelector('.pack-card-amount');
+            const periodSpan = card.querySelector('.pack-card-period');
+            if (amountSpan && periodSpan) {
+                if (card.dataset.packId === '1') { // Free Pack
+                    amountSpan.textContent = 'Gratuit';
+                    periodSpan.textContent = 'À vie';
+                } else {
+                    const monthlyPrice = amountSpan.dataset.monthly;
+                    const annualPrice = amountSpan.dataset.annual;
+                    amountSpan.textContent = isAnnualBilling ? `\${annualPrice} DHS` : `\${monthlyPrice} DHS`;
+                    periodSpan.textContent = isAnnualBilling ? '/an' : '/mois';
+                }
+            }
+        });
+    }
+
+    // PAYMENT LOGIC
+    function proceedToPayment() {
+        const selectedPack = document.querySelector('.pack-card.selected');
+        if (!selectedPack || selectedPack.dataset.packId === '1') { // Cannot pay for free pack
+            alert('Veuillez sélectionner un pack payant pour procéder au paiement.');
+            return;
+        }
+
+        const packName = selectedPack.querySelector('.pack-card-name').textContent;
+        const totalAmount = selectedPack.querySelector('.pack-card-amount').textContent;
+        const period = selectedPack.querySelector('.pack-card-period').textContent;
+
+        document.getElementById('paymentPackName').textContent = packName;
+        document.getElementById('paymentPeriod').textContent = period;
+        document.getElementById('paymentTotal').textContent = totalAmount;
+
+        switchToView('payment');
+    }
+
+    function copyRib() {
+        const ribNumber = document.getElementById('ribNumber').textContent;
+        navigator.clipboard.writeText(ribNumber).then(() => {
+            alert('RIB copié dans le presse-papiers !');
+        }).catch(err => {
+            console.error('Erreur lors de la copie du RIB: ', err);
+            alert('Impossible de copier le RIB.');
+        });
+    }
+
+    // PACK CARD SELECTION
+    document.querySelectorAll('.pack-card').forEach(card => {
+        card.addEventListener('click', function () {
+            document.querySelectorAll('.pack-card').forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+        });
+    });
+
+
+    // Initial state setup on load
+    document.addEventListener('DOMContentLoaded', () => {
+        // Check if user is authenticated and update UI
+        updateProfileView();
+
+        // Ensure the correct tab is shown if authPanel is visible on load (e.g., after refresh with validation errors)
+        if (authPanel.classList.contains('visible')) {
+            showAuthTab(currentAuthTab);
+        }
+    });
+
+
+    // AMBIENT MUSIC INTEGRATION (from main site)
+    // This part should be consistent with how main site handles audio
+    // For chatbot, we might want to pause/resume or control separately.
+    // Assuming audioManager.js exists on the main page.
+    const backgroundAudio = document.getElementById('background-audio');
+
+    function playAudio(filename) {
+        if (backgroundAudio) {
+            backgroundAudio.src = `{{ url_for('static', filename='sounds/') }}${filename}`;
+            backgroundAudio.play().catch(e => console.error("Error playing audio:", e));
+        }
+    }
+
+    // Example of how you might trigger sounds from chatbot actions
+    // This would need to be integrated with the chatbot's response logic
+    function chatbotTriggerAudio(type) {
+        if (type === 'accueil') {
+            playAudio('accueil.mpeg');
+        } else if (type === 'ville') {
+            playAudio('ville.mp3'); // Assuming a generic city sound
+        }
+        // ... other types
+    }
+
+    // Initial setup for the language dropdowns
+    document.addEventListener('DOMContentLoaded', function () {
+        const customLangDropdown = document.getElementById('customLangDropdown');
+        const customLangList = customLangDropdown.querySelector('.custom-lang-list');
+        const customLangBtn = customLangDropdown.querySelector('.custom-lang-btn');
+
+        if (customLangBtn) {
+            customLangBtn.addEventListener('click', function (event) {
+                customLangList.classList.toggle('show');
+                event.stopPropagation();
+            });
+        }
+
+        if (customLangList) {
+            customLangList.addEventListener('click', function (event) {
+                const lang = event.target.dataset.lang;
+                if (lang) {
+                    setLanguage(lang);
+                    document.getElementById('currentLangText').textContent = lang.toUpperCase();
+                    customLangList.classList.remove('show');
+                }
+            });
+        }
+
+        document.addEventListener('click', function (event) {
+            if (customLangList && customLangList.classList.contains('show') && !customLangDropdown.contains(event.target)) {
+                customLangList.classList.remove('show');
+            }
+        });
+    });
 </script>

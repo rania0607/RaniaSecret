@@ -420,6 +420,68 @@ def details_ville(nom):
         vetements=vetements, evenements=evenements,
         transports=transports, cdn_url=CDN_URL)
 
+@app.route('/attractions')
+def attractions_list():
+    type_filter = request.args.get('type', '').strip()
+    conn = None
+    attractions = []
+    types = []
+    try:
+        conn = pymysql.connect(**DB_CONFIG)
+        with conn.cursor() as cur:
+            # Fetch distinct types
+            cur.execute("SELECT DISTINCT type_attraction FROM attractions WHERE type_attraction IS NOT NULL AND type_attraction != ''")
+            types = [row['type_attraction'] for row in cur.fetchall()]
+            
+            # Fetch attractions
+            if type_filter and type_filter.lower() != 'all':
+                cur.execute(
+                    "SELECT id, nom, nom_ville, description, type_attraction, image_path "
+                    "FROM attractions WHERE type_attraction = %s ORDER BY nom",
+                    (type_filter,)
+                )
+            else:
+                cur.execute(
+                    "SELECT id, nom, nom_ville, description, type_attraction, image_path "
+                    "FROM attractions ORDER BY nom"
+                )
+            attractions = cur.fetchall()
+    except Exception as e:
+        print(f"Erreur attractions_list : {e}")
+    finally:
+        if conn: conn.close()
+    
+    return render_template('attractions.html', 
+                           attractions=attractions, 
+                           types=types, 
+                           current_type=type_filter or 'All',
+                           cdn_url=CDN_URL)
+
+@app.route('/attraction/<int:att_id>')
+def attraction_detail(att_id):
+    conn = None
+    attraction = None
+    try:
+        conn = pymysql.connect(**DB_CONFIG)
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT * FROM attractions WHERE id = %s",
+                (att_id,)
+            )
+            attraction = cur.fetchone()
+            
+            if not attraction:
+                abort(404)
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur attraction_detail : {e}")
+        abort(500)
+    finally:
+        if conn: conn.close()
+
+    return render_template('attraction_detail.html', attraction=attraction, cdn_url=CDN_URL)
+
 @app.route('/pricing')
 def pricing():
     return render_template('pricing.html', cdn_url=CDN_URL)

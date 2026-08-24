@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{{ attraction.nom }} — Morocco Secrets</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700;900&family=Playfair+Display:ital,wght@0,900;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root {
+            --grona: #6b1d1d;
+            --desert-gold: #c59d5f;
+            --soft-beige: #f2e6d9;
+            --white-silk: #fdfaf7;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--soft-beige);
+            color: var(--grona);
+        }
+
+        /* ── NAVIGATION ── */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 2000;
+            padding: 18px clamp(20px, 5vw, 60px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--grona);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav.scrolled {
+            padding: 12px clamp(20px, 5vw, 60px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            padding: 10px 16px;
+            border-radius: 6px;
+            transition: 0.3s;
+        }
+
+        .nav-link:hover {
+            background: var(--desert-gold);
+        }
+
+        /* ── HERO ── */
+        .attraction-hero {
+            height: 60vh;
+            min-height: 400px;
+            background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6)),
+            url('{{ cdn_url }}{{ attraction.image_path or "villes/default.jpg" }}') center/cover no-repeat;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .attraction-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            margin: 0;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .attraction-hero .city-badge {
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            background: var(--desert-gold);
+            padding: 8px 20px;
+            border-radius: 30px;
+            margin-top: 20px;
+            font-weight: 700;
+        }
+
+        /* ── CONTENT ── */
+        .content-wrapper {
+            max-width: 900px;
+            margin: -50px auto 60px;
+            background: white;
+            padding: 50px clamp(20px, 5vw, 60px);
+            border-radius: 30px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        .att-type-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--desert-gold);
+            border: 1px solid var(--desert-gold);
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+        }
+
+        .att-title-main {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            color: var(--grona);
+            margin-bottom: 30px;
+            line-height: 1.2;
+        }
+
+        .att-description {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            line-height: 1.8;
+            color: #444;
+            white-space: pre-line;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 40px;
+            color: var(--grona);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            text-decoration: none;
+            transition: gap 0.3s;
+        }
+
+        .back-link:hover {
+            gap: 15px;
+            color: var(--desert-gold);
+        }
+
+        footer {
+            background: var(--grona);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .content-wrapper { margin-top: -30px; padding: 40px 20px; }
+            .att-title-main { font-size: 1.8rem; }
+            .att-description { font-size: 1.15rem; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="nav" id="mainNav">
+        <a href="/" class="nav-brand">
+            <img src="{{ logo_url }}" alt="Logo" class="nav-logo">
+            <span>Morocco <em>Secrets</em></span>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Accueil</a>
+            <a href="/villes" class="nav-link">Villes</a>
+            <a href="/attractions" class="nav-link">Attractions</a>
+            <a href="/pricing" class="nav-link">Offres</a>
+        </div>
+    </nav>
+
+    <header class="attraction-hero">
+        <h1>{{ attraction.nom }}</h1>
+        <div class="city-badge">{{ attraction.nom_ville }}</div>
+    </header>
+
+    <main class="content-wrapper">
+        <span class="att-type-tag">{{ attraction.type_attraction }}</span>
+        <h2 class="att-title-main">À propos de {{ attraction.nom }}</h2>
+        
+        <div class="att-description">
+            {{ attraction.description }}
+        </div>
+
+        <a href="/attractions" class="back-link">
+            <i class="fa-solid fa-arrow-left"></i> Retour aux attractions
+        </a>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Morocco Secrets. Tous droits réservés.</p>
+    </footer>
+
+    <script>
+        window.addEventListener('scroll', function () {
+            document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 50);
+        });
+    </script>
+
+</body>
+
+</html>
