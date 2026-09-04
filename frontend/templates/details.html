@@ -638,318 +638,12 @@
         }
 
         /* ════════════════════════════════════════════════════
-           ATTRACTIONS SLIDESHOW
-           Même mécanique que doc2, palette doc3
+           SECTION MONUMENTS (titre uniquement)
         ════════════════════════════════════════════════════ */
         .att-section {
             padding: clamp(30px, 5vw, 50px) 0;
             border-radius: 40px;
             margin: 20px 0;
-        }
-
-        /* Image card */
-        .att-image-card {
-            position: relative;
-            width: 100%;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 16px 48px rgba(107, 29, 29, 0.18);
-        }
-
-        @media (min-width: 701px) {
-            .att-image-card {
-                height: 550px;
-            }
-        }
-
-        @media (max-width: 700px) {
-            .att-image-card {
-                height: auto;
-                border-radius: 18px;
-                overflow: visible;
-                box-shadow: none;
-            }
-        }
-
-        .att-img-slide {
-            width: 100%;
-            object-fit: cover;
-            display: block;
-            transition: transform 0.7s ease, opacity 0.25s ease;
-        }
-
-        @media (min-width: 701px) {
-            .att-img-slide {
-                height: 100%;
-            }
-        }
-
-        @media (max-width: 700px) {
-            .att-img-slide {
-                height: 280px;
-                border-radius: 18px;
-                box-shadow: 0 12px 30px rgba(107, 29, 29, 0.16);
-            }
-        }
-
-        .att-image-card:hover .att-img-slide {
-            transform: scale(1.03);
-        }
-
-        /* Nom flottant */
-        .att-img-label {
-            position: absolute;
-            bottom: 22px;
-            left: 24px;
-            font-family: 'Playfair Display', serif;
-            font-size: clamp(1rem, 2.5vw, 1.4rem);
-            font-style: italic;
-            color: white;
-            text-shadow: 1px 1px 8px rgba(0, 0, 0, 0.7);
-            z-index: 4;
-            transition: opacity 0.18s;
-            pointer-events: none;
-        }
-
-        @media (max-width: 700px) {
-            .att-img-label {
-                bottom: auto;
-                top: 14px;
-                left: 16px;
-            }
-        }
-
-        /* Overlay en bas à droite */
-        .att-overlay {
-            position: absolute;
-            bottom: 22px;
-            right: 22px;
-            width: clamp(240px, 38%, 420px);
-            background: rgba(253, 250, 247, 0.88);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border-radius: 18px;
-            padding: clamp(16px, 2.5vw, 24px) clamp(18px, 2.5vw, 28px) clamp(12px, 2vw, 18px);
-            border: 1px solid rgba(197, 157, 95, 0.3);
-            box-shadow: 0 8px 32px rgba(107, 29, 29, 0.12);
-            z-index: 4;
-        }
-
-        @media (max-width: 700px) {
-            .att-overlay {
-                position: relative;
-                bottom: auto;
-                right: auto;
-                width: 100%;
-                max-width: none;
-                margin: -44px auto 0;
-                border-radius: 16px;
-                background: rgba(253, 250, 247, 0.96);
-                box-shadow: 0 12px 32px rgba(107, 29, 29, 0.18);
-            }
-        }
-
-        .att-tag {
-            font-size: 0.58rem;
-            letter-spacing: 0.28em;
-            text-transform: uppercase;
-            color: var(--desert-gold);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .att-tag::before {
-            content: '';
-            width: 22px;
-            height: 1px;
-            background: var(--desert-gold);
-            flex-shrink: 0;
-        }
-
-        .att-overlay-title {
-            font-family: 'Playfair Display', serif;
-            font-size: clamp(1.2rem, 2.5vw, 1.55rem);
-            color: var(--grona);
-            line-height: 1.2;
-            margin-bottom: 10px;
-            transition: opacity 0.18s;
-        }
-
-        .att-rule {
-            width: 44px;
-            height: 2px;
-            background: linear-gradient(90deg, var(--desert-gold), var(--grona));
-            margin-bottom: 12px;
-            border-radius: 2px;
-        }
-
-        .att-overlay-desc {
-            font-family: 'Cormorant Garamond', serif;
-            font-style: italic;
-            font-size: 1.12rem;
-            color: #444;
-            line-height: 1.5;
-            margin-bottom: 16px;
-            transition: opacity 0.18s;
-            text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.05);
-        }
-
-        /* Nav dans l'overlay */
-        .att-nav {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-top: 1px solid rgba(107, 29, 29, 0.1);
-            padding-top: 14px;
-        }
-
-        .att-nav-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: white;
-            border: 1px solid rgba(107, 29, 29, 0.15);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.25s;
-            flex-shrink: 0;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
-        }
-
-        .att-nav-btn:hover {
-            background: var(--desert-gold);
-            border-color: var(--desert-gold);
-            transform: scale(1.06);
-        }
-
-        .att-nav-btn svg {
-            width: 14px;
-            height: 14px;
-        }
-
-        .att-nav-btn svg path {
-            stroke: var(--grona);
-            stroke-width: 2;
-            fill: none;
-            stroke-linecap: round;
-        }
-
-        .att-nav-btn:hover svg path {
-            stroke: white;
-        }
-
-        .att-dots {
-            display: flex;
-            gap: 7px;
-            flex: 1;
-            justify-content: center;
-        }
-
-        .att-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: rgba(107, 29, 29, 0.2);
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s;
-            padding: 0;
-        }
-
-        .att-dot.active {
-            background: var(--desert-gold);
-            transform: scale(1.4);
-            box-shadow: 0 0 6px rgba(197, 157, 95, 0.5);
-        }
-
-        .att-counter {
-            font-family: 'Playfair Display', serif;
-            font-size: 0.78rem;
-            color: #888;
-            letter-spacing: 0.1em;
-            flex-shrink: 0;
-        }
-
-        .att-counter strong {
-            color: var(--grona);
-        }
-
-        /* Progress bar */
-        .att-progress {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: rgba(107, 29, 29, 0.07);
-            z-index: 3;
-            border-radius: 0 0 20px 20px;
-        }
-
-        .att-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--desert-gold), var(--grona));
-            width: 0%;
-            transition: width 0.4s linear;
-            border-radius: 0 0 20px 20px;
-        }
-
-        @media (max-width: 700px) {
-            .att-progress {
-                display: none;
-            }
-        }
-
-        /* Miniatures */
-        .att-thumbs {
-            display: flex;
-            gap: 10px;
-            margin-top: 18px;
-            justify-content: center;
-            flex-wrap: wrap;
-            max-width: 1250px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .att-thumb {
-            width: 62px;
-            height: 46px;
-            border-radius: 10px;
-            overflow: hidden;
-            cursor: pointer;
-            opacity: 0.5;
-            border: 2px solid transparent;
-            transition: all 0.25s;
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
-        }
-
-        .att-thumb.active {
-            opacity: 1;
-            border-color: var(--desert-gold);
-            box-shadow: 0 6px 14px rgba(197, 157, 95, 0.28);
-        }
-
-        .att-thumb:hover {
-            opacity: 0.8;
-            transform: translateY(-3px);
-        }
-
-        .att-thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        @media (max-width: 700px) {
-            .att-thumb {
-                width: 50px;
-                height: 38px;
-            }
         }
 
         /* ── RESPONSIVE GÉNÉRAL ── */
@@ -1108,82 +802,223 @@
     </section>
 
     <!-- ══════════════════════════════════
-         MONUMENTS — SLIDESHOW INTERACTIF
+         MONUMENTS — TITRE (slideshow retiré, remplacé par la bannière promo ci-dessous)
     ══════════════════════════════════ -->
     {% if attractions and attractions|length > 0 %}
     <section class="att-section">
         <h2 class="section-heading" data-ar="<i class='fa-solid fa-landmark'></i>معالم <span>بارزة</span>"><i
                 class="fa-solid fa-landmark"></i>Monuments <span>Iconiques</span></h2>
+    </section>
+    {% endif %}
 
-        <!-- Image principale -->
-        <div style="max-width: 100%; margin: 0; padding: 0 clamp(8px, 1.5vw, 20px);">
-            <div class="att-image-card" id="attSlideshow">
-
-                <img class="att-img-slide" id="attMainImage" src="" alt="">
-                <div class="att-img-label" id="attImgLabel"></div>
-
-                <!-- Overlay -->
-                <div class="att-overlay">
-                    <div class="att-tag"
-                        data-ar="معلم — {{ city_map[ville.nom_ville] if ville.nom_ville in city_map else ville.nom_ville }}">
-                        Monument — {{ ville.nom_ville }}</div>
-                    <h3 class="att-overlay-title" id="attTitle"></h3>
-                    <div class="att-rule"></div>
-                    <p class="att-overlay-desc" id="attDesc"></p>
-
-                    <div class="att-nav">
-                        <button class="att-nav-btn" id="attPrev" aria-label="Précédent">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M15 18l-6-6 6-6" />
-                            </svg>
-                        </button>
-                        <div class="att-dots" id="attDots">
-                            {% for att in attractions %}
-                            <button class="att-dot {% if loop.first %}active{% endif %}"
-                                data-i="{{ loop.index0 }}"></button>
-                            {% endfor %}
-                        </div>
-                        <button class="att-nav-btn" id="attNext" aria-label="Suivant">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M9 18l6-6-6-6" />
-                            </svg>
-                        </button>
-                        <span class="att-counter"><strong id="attCur">1</strong> / {{ attractions|length }}</span>
-                    </div>
-                </div>
-
-                <div class="att-progress">
-                    <div class="att-progress-fill" id="attFill"></div>
-                </div>
+    <!-- ══════════════════════════════════
+         BANNIÈRE PROMO — Explorer toutes les attractions par type
+    ══════════════════════════════════ -->
+    {% if attractions and attractions|length > 0 %}
+    <section class="att-promo-section">
+        <a href="{{ url_for('attractions_list', type_name='all', ville=ville.nom_ville) }}" class="att-promo-main">
+            <div class="att-promo-media"></div>
+            <div class="att-promo-overlay"></div>
+            <div class="att-promo-content">
+                <span class="att-promo-eyebrow">Morocco Secrets</span>
+                <h2 class="att-promo-title">Attractions à <em>{{ ville.nom_ville }}</em></h2>
+                <p class="att-promo-sub">Zoos, sites historiques, plages, nature & culture — explorez {{ ville.nom_ville }} par catégorie.</p>
+                <span class="att-promo-btn">Découvrir <i class="fa-solid fa-arrow-right"></i></span>
             </div>
-        </div>
+        </a>
 
-        <!-- Miniatures -->
-        <div class="att-thumbs" id="attThumbs">
-            {% for att in attractions %}
-            <div class="att-thumb {% if loop.first %}active{% endif %}" data-i="{{ loop.index0 }}">
-                {% if att.image_path %}
-                <img src="{{ cdn_url }}{{ att.image_path }}" alt="{{ att.nom }}"
-                    onerror="this.parentElement.style.background='rgba(197,157,95,0.3)';">
-                {% else %}
-                <div class="img-placeholder" style="font-size:1.1rem;">🖼️</div>
+        <div class="att-promo-side">
+            {% for type_name, atts in attractions|groupby('type_attraction') %}
+            {% if type_name and type_name|lower not in ['non spécifié', 'non specifie', ''] %}
+            <a href="{{ url_for('attractions_list', type_name=type_name, ville=ville.nom_ville) }}" class="att-promo-thumb">
+                {% set sample = atts[0] %}
+                {% if sample.image_path %}
+                <img src="{{ cdn_url }}{{ sample.image_path }}" alt="{{ type_name }}"
+                    onerror="this.style.display='none'; this.parentElement.classList.add('no-img');">
                 {% endif %}
-            </div>
+                <div class="att-promo-thumb-label">
+                    <span>{{ type_name }}</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </a>
+            {% endif %}
             {% endfor %}
         </div>
     </section>
 
-    <script>
-        var ATTRACTIONS = [
-            {% for att in attractions %}
-        {
-            nom: {{ att.nom | tojson }},
-            desc: {{ att.description | tojson }},
-            img: {% if att.image_path %}"{{ cdn_url }}{{ att.image_path }}"{% else %}""{% endif %}
-        } {% if not loop.last %}, {% endif %}
-        {% endfor %}
-    ];
-    </script>
+    <style>
+        .att-promo-section {
+            display: flex;
+            gap: 18px;
+            max-width: 1250px;
+            margin: 10px auto 50px;
+            padding: 0 clamp(8px, 1.5vw, 20px);
+        }
+
+        .att-promo-main {
+            position: relative;
+            flex: 1 1 68%;
+            min-height: 340px;
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            isolation: isolate;
+            box-shadow: 0 16px 40px rgba(107, 29, 29, 0.18);
+        }
+
+        .att-promo-media {
+            position: absolute;
+            inset: 0;
+            z-index: -2;
+            background-image: url('{{ cdn_url }}villes/maroc_bg.png');
+            background-size: cover;
+            background-position: center;
+            transform: scale(1.05);
+            transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .att-promo-main:hover .att-promo-media { transform: scale(1.13); }
+
+        .att-promo-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(100deg, rgba(20, 6, 6, 0.88) 20%, rgba(74, 20, 20, 0.55) 55%, rgba(74, 20, 20, 0.15) 100%);
+        }
+
+        .att-promo-content {
+            position: relative;
+            z-index: 2;
+            padding: clamp(28px, 4vw, 55px);
+            max-width: 480px;
+        }
+
+        .att-promo-eyebrow {
+            display: block;
+            font-size: 0.65rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--desert-gold);
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+
+        .att-promo-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.7rem, 3.2vw, 2.6rem);
+            color: white;
+            line-height: 1.15;
+            margin: 0 0 14px;
+        }
+
+        .att-promo-title em {
+            font-style: italic;
+            font-weight: 400;
+            color: var(--desert-gold);
+        }
+
+        .att-promo-sub {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.05rem;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.5;
+            margin: 0 0 22px;
+        }
+
+        .att-promo-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            color: var(--grona);
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 13px 24px;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .att-promo-main:hover .att-promo-btn {
+            background: var(--desert-gold);
+            color: white;
+            gap: 14px;
+        }
+
+        .att-promo-side {
+            flex: 1 1 32%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            max-height: 340px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            padding-right: 2px;
+        }
+
+        .att-promo-thumb {
+            position: relative;
+            min-height: 96px;
+            flex: 1;
+            border-radius: 16px;
+            overflow: hidden;
+            text-decoration: none;
+            background: var(--grona);
+            display: flex;
+            align-items: flex-end;
+            box-shadow: 0 8px 20px rgba(107, 29, 29, 0.12);
+        }
+
+        .att-promo-thumb img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .att-promo-thumb:hover img { transform: scale(1.1); }
+
+        .att-promo-thumb::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, rgba(20, 6, 6, 0.82), transparent 65%);
+        }
+
+        .att-promo-thumb-label {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .att-promo-thumb-label i {
+            font-size: 0.7rem;
+            color: var(--gold-light, #e6cfa0);
+            transition: transform 0.3s ease;
+        }
+
+        .att-promo-thumb:hover .att-promo-thumb-label i { transform: translateX(4px); }
+
+        @media (max-width: 800px) {
+            .att-promo-section { flex-direction: column; }
+            .att-promo-side { flex-direction: row; max-height: none; overflow-x: auto; overflow-y: visible; }
+            .att-promo-thumb { min-width: 150px; min-height: 110px; }
+        }
+    </style>
     {% endif %}
 
     <!-- SPÉCIALITÉS CULINAIRES -->
@@ -1345,110 +1180,6 @@
             document.body.style.overflow = '';
         }
         document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSidebar(); });
-
-        /* Attractions slideshow */
-        if (typeof ATTRACTIONS !== 'undefined' && ATTRACTIONS.length) {
-            var cur = 0;
-            var total = ATTRACTIONS.length;
-            var titleEl = document.getElementById('attTitle');
-            var descEl = document.getElementById('attDesc');
-            var imgEl = document.getElementById('attMainImage');
-            var labelEl = document.getElementById('attImgLabel');
-            var curEl = document.getElementById('attCur');
-            var fill = document.getElementById('attFill');
-            var dots = document.querySelectorAll('#attDots .att-dot');
-            var thumbs = document.querySelectorAll('#attThumbs .att-thumb');
-            var timer = null;
-            var DELAY = 5500;
-
-            function goTo(n) {
-                if (!dots[cur]) return;
-                dots[cur].classList.remove('active');
-                if (thumbs[cur]) thumbs[cur].classList.remove('active');
-                cur = ((n % total) + total) % total;
-                if (dots[cur]) dots[cur].classList.add('active');
-                if (thumbs[cur]) thumbs[cur].classList.add('active');
-
-                /* Fade */
-                if (titleEl) titleEl.style.opacity = '0';
-                if (descEl) descEl.style.opacity = '0';
-                if (imgEl) imgEl.style.opacity = '0.45';
-                if (labelEl) labelEl.style.opacity = '0';
-
-                setTimeout(function () {
-                    const att = ATTRACTIONS[cur];
-                    if (titleEl) titleEl.textContent = att.nom;
-                    if (descEl) descEl.textContent = att.desc;
-                    if (imgEl) {
-                        imgEl.src = att.img;
-                        imgEl.onerror = function () { this.src = '{{ cdn_url }}villes/default.jpg'; };
-                    }
-                    if (labelEl) labelEl.textContent = att.nom;
-                    if (curEl) curEl.textContent = cur + 1;
-                    titleEl.style.opacity = '1';
-                    descEl.style.opacity = '1';
-                    imgEl.style.opacity = '1';
-                    if (labelEl) labelEl.style.opacity = '1';
-                }, 180);
-
-                /* Progress */
-                if (fill) {
-                    fill.style.transition = 'none';
-                    fill.style.width = '0%';
-                    void fill.offsetWidth;
-                    fill.style.transition = 'width ' + DELAY + 'ms linear';
-                    fill.style.width = '100%';
-                }
-            }
-
-            function startAuto() { timer = setInterval(function () { goTo(cur + 1); }, DELAY); }
-            function stopAuto() { clearInterval(timer); }
-            function restart() { stopAuto(); startAuto(); }
-
-            document.getElementById('attPrev').addEventListener('click', function () { goTo(cur - 1); restart(); });
-            document.getElementById('attNext').addEventListener('click', function () { goTo(cur + 1); restart(); });
-            dots.forEach(function (d, i) { d.addEventListener('click', function () { goTo(i); restart(); }); });
-            thumbs.forEach(function (t, i) { t.addEventListener('click', function () { goTo(i); restart(); }); });
-
-            /* Pause hover / swipe touch */
-            var container = document.getElementById('attSlideshow');
-            container.addEventListener('mouseenter', stopAuto);
-            container.addEventListener('mouseleave', restart);
-
-            var tx = 0;
-            container.addEventListener('touchstart', function (e) { tx = e.touches[0].clientX; stopAuto(); }, { passive: true });
-            container.addEventListener('touchend', function (e) {
-                var dx = e.changedTouches[0].clientX - tx;
-                if (Math.abs(dx) > 40) goTo(dx < 0 ? cur + 1 : cur - 1);
-                restart();
-            }, { passive: true });
-
-            goTo(0);
-            startAuto();
-        }
-
-        // ── Sidebar mobile ──
-        function toggleSidebar() {
-            var s = document.getElementById('mobileSidebar');
-            var o = document.getElementById('sidebarOverlay');
-            var b = document.getElementById('hamburgerBtn');
-            var isOpen = s.classList.contains('open');
-            s.classList.toggle('open');
-            o.classList.toggle('open');
-            b.classList.toggle('open');
-            document.body.style.overflow = !isOpen ? 'hidden' : '';
-        }
-        function closeSidebar() {
-            document.getElementById('mobileSidebar').classList.remove('open');
-            document.getElementById('sidebarOverlay').classList.remove('open');
-            document.getElementById('hamburgerBtn').classList.remove('open');
-            document.body.style.overflow = '';
-        }
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSidebar(); });
-
-        window.addEventListener('scroll', function () {
-            document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 50);
-        });
 
         function changeLang(lang) {
             var sel = document.querySelector('.goog-te-combo');

@@ -378,7 +378,7 @@ def details_ville(nom):
             # Use the canonical name from the DB for all sub-queries
             nom = ville['nom_ville']
 
-            cur.execute("SELECT nom, description, type_attraction, image_path FROM attractions WHERE nom_ville = %s", (nom,))
+            cur.execute("SELECT id, nom, description, type_attraction, image_path FROM attractions WHERE nom_ville = %s", (nom,))
             attractions = cur.fetchall()
 
             cur.execute("SELECT description FROM activites WHERE nom_ville = %s", (nom,))
@@ -420,41 +420,123 @@ def details_ville(nom):
         vetements=vetements, evenements=evenements,
         transports=transports, cdn_url=CDN_URL)
 
+def _guess_type_icon(type_name):
+    """Devine une icône FontAwesome pertinente à partir du nom du type (dynamique, venant de la DB)."""
+    t = (type_name or '').strip().lower()
+    # Ordre important : les correspondances spécifiques doivent être testées
+    # avant les correspondances génériques (ex: "parc de jeux" avant "parc").
+    keywords = [
+        (['zoo', 'animalier', 'safari'], 'fa-paw'),
+        (['parc de jeux', 'jeux pour enfants', 'aire de jeux', 'enfant'], 'fa-child-reaching'),
+        (['plage', 'mer', 'côte', 'ocean', 'océan'], 'fa-umbrella-beach'),
+        (['désert', 'desert', 'dune', 'sahara'], 'fa-sun'),
+        (['montagne', 'atlas', 'randonnée', 'rando', 'trek'], 'fa-mountain'),
+        (['médina', 'medina', 'souk', 'marché'], 'fa-store'),
+        (['historique', 'monument', 'palais', 'kasbah', 'fort', 'remparts'], 'fa-landmark'),
+        (['religieu', 'mosqu', 'zaouia', 'spirituel'], 'fa-mosque'),
+        (['culturelle', 'culture', 'musée', 'musee', 'art', 'galerie'], 'fa-palette'),
+        (['naturelle', 'nature', 'jardin', 'cascade', 'forêt', 'foret'], 'fa-leaf'),
+        (['parc'], 'fa-tree'),
+        (['gastronomie', 'culinaire', 'food', 'restaurant'], 'fa-utensils'),
+        (['aventure', 'sport', 'activité', 'activite'], 'fa-person-hiking'),
+        (['village', 'ville', 'quartier'], 'fa-city'),
+        (['spa', 'bien-être', 'bien-etre', 'hammam', 'détente', 'detente'], 'fa-spa'),
+    ]
+    for kws, icon in keywords:
+        if any(k in t for k in kws):
+            return icon
+    return 'fa-gem'
+
+
+def _is_unspecified_type(type_name):
+    """Filtre les valeurs 'placeholder' type Non spécifié, N/A, etc. hors de la galerie."""
+    t = (type_name or '').strip().lower()
+    return t in ('non spécifié', 'non specifie', 'non spécifiée', 'non specifiee',
+                 'non défini', 'non defini', 'n/a', 'na', 'undefined', '')
+
+
 @app.route('/attractions')
-def attractions_list():
-    type_filter = request.args.get('type', '').strip()
+def attractions_gallery():
+    """Page galerie : une grande carte par type d'attraction (dynamique depuis la DB)."""
+    conn = None
+    type_cards = []
+    total_count = 0
+    try:
+        conn = pymysql.connect(**DB_CONFIG)
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT type_attraction, COUNT(*) AS cnt, MIN(image_path) AS sample_image
+                FROM attractions
+                WHERE type_attraction IS NOT NULL AND type_attraction != ''
+                GROUP BY type_attraction
+                ORDER BY type_attraction
+            """)
+            rows = cur.fetchall()
+            for row in rows:
+                if _is_unspecified_type(row['type_attraction']):
+                    total_count += row['cnt']
+                    continue
+                type_cards.append({
+                    'nom': row['type_attraction'],
+                    'count': row['cnt'],
+                    'image': row['sample_image'],
+                    'icon': _guess_type_icon(row['type_attraction']),
+                })
+                total_count += row['cnt']
+    except Exception as e:
+        print(f"Erreur attractions_gallery : {e}")
+    finally:
+        if conn: conn.close()
+
+    return render_template('attractions_gallery.html',
+                           type_cards=type_cards,
+                           total_count=total_count,
+                           cdn_url=CDN_URL)
+
+
+@app.route('/attractions/type/<path:type_name>')
+def attractions_list(type_name):
+    """Page liste : attractions filtrées par type (et optionnellement par ville), avec possibilité de changer de filtre sur place."""
+    type_filter = unquote(type_name).strip()
+    ville_filter = request.args.get('ville', '').strip()
     conn = None
     attractions = []
     types = []
     try:
         conn = pymysql.connect(**DB_CONFIG)
         with conn.cursor() as cur:
-            # Fetch distinct types
+            # Fetch distinct types (pour la barre de filtre)
             cur.execute("SELECT DISTINCT type_attraction FROM attractions WHERE type_attraction IS NOT NULL AND type_attraction != ''")
             types = [row['type_attraction'] for row in cur.fetchall()]
-            
-            # Fetch attractions
+
+            # Construction dynamique de la requête (type + ville optionnels)
+            conditions = []
+            params = []
             if type_filter and type_filter.lower() != 'all':
-                cur.execute(
-                    "SELECT id, nom, nom_ville, description, type_attraction, image_path "
-                    "FROM attractions WHERE type_attraction = %s ORDER BY nom",
-                    (type_filter,)
-                )
-            else:
-                cur.execute(
-                    "SELECT id, nom, nom_ville, description, type_attraction, image_path "
-                    "FROM attractions ORDER BY nom"
-                )
+                conditions.append("type_attraction = %s")
+                params.append(type_filter)
+            if ville_filter:
+                conditions.append("nom_ville = %s")
+                params.append(ville_filter)
+
+            base_query = ("SELECT id, nom, nom_ville, description, type_attraction, image_path "
+                          "FROM attractions")
+            if conditions:
+                base_query += " WHERE " + " AND ".join(conditions)
+            base_query += " ORDER BY nom"
+
+            cur.execute(base_query, tuple(params))
             attractions = cur.fetchall()
     except Exception as e:
         print(f"Erreur attractions_list : {e}")
     finally:
         if conn: conn.close()
-    
-    return render_template('attractions.html', 
-                           attractions=attractions, 
-                           types=types, 
+
+    return render_template('attractions_list.html',
+                           attractions=attractions,
+                           types=types,
                            current_type=type_filter or 'All',
+                           current_ville=ville_filter,
                            cdn_url=CDN_URL)
 
 @app.route('/attraction/<int:att_id>')
