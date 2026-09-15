@@ -16,6 +16,10 @@ from datetime import datetime, timedelta
 from functools import wraps
 from urllib.parse import unquote
 from dotenv import load_dotenv
+from recommendation_engine import (
+    get_recommendations,
+    generate_personalized_notification
+)
 
 env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
 load_dotenv(dotenv_path=env_path)
@@ -238,7 +242,38 @@ def increment_user_message_count(user_id, current_count, today):
         print(f"Error increment_user_message_count: {e}")
     finally:
         conn.close()
-
+def log_interaction(user_id, item_type, item_id, interaction_type="view"):
+    """
+    Enregistre l'interaction de l'utilisateur avec un filtre anti-doublon (5 minutes).
+    """
+    if not user_id:
+        return
+    conn = get_db()
+    if not conn:
+        return
+    try:
+        with conn.cursor() as cur:
+            # Vérifier si la même interaction a eu lieu dans les 5 dernières minutes
+            cur.execute("""
+                SELECT id FROM user_interactions
+                WHERE user_id = %s 
+                  AND item_type = %s 
+                  AND item_id = %s 
+                  AND interaction_type = %s 
+                  AND created_at >= NOW() - INTERVAL 5 MINUTE
+                LIMIT 1
+            """, (user_id, item_type, item_id, interaction_type))
+            
+            if not cur.fetchone():
+                cur.execute("""
+                    INSERT INTO user_interactions (user_id, item_type, item_id, interaction_type)
+                    VALUES (%s, %s, %s, %s)
+                """, (user_id, item_type, item_id, interaction_type))
+                conn.commit()
+    except Exception as e:
+        print(f"[Interaction Log Error] : {e}")
+    finally:
+        conn.close()
 
 # ============================================================
 # EMAIL MASKING
@@ -724,10 +759,28 @@ def verify_code():
 # ---------- Étape 3 : Finaliser inscription ----------
 @app.route('/register', methods=['POST'])
 def register():
-    data = request.get_json()
-    nom = data.get('nom', '').strip()
-    password = data.get('password', '').strip()
+    data = request.get_json(silent=True) or request.form
+    nom = (data.get('nom') or data.get('name') or '').strip()
+    password = (data.get('password') or data.get('mot_de_passe') or '').strip()
     email = data.get('email', '').strip().lower()
+
+    # --- Nouveaux champs de profil (optionnels) ---
+    age_raw = data.get('age')
+    try:
+        age = int(age_raw) if age_raw and str(age_raw).strip().isdigit() else None
+    except (ValueError, TypeError):
+        age = None
+
+    travel_type = (data.get('travel_type') or 'Solo').strip()
+    # Normalize valid values
+    valid_types = {'Solo': 'Solo', 'Couple': 'Couple', 'Famille': 'Famille', 'Amis': 'Amis', 'Family': 'Famille', 'Friends': 'Amis'}
+    travel_type = valid_types.get(travel_type, 'Solo')
+
+    children_raw = data.get('children_count')
+    try:
+        children_count = int(children_raw) if children_raw and str(children_raw).strip().isdigit() else 0
+    except (ValueError, TypeError):
+        children_count = 0
     
     if not email:
         return jsonify({'success': False, 'message': 'Email requis.'})
@@ -749,8 +802,10 @@ def register():
                 return jsonify({'success': False, 'message': "Veuillez d'abord vérifier votre email."})
                 
             cur.execute(
-                "INSERT INTO users (nom, email, password_hash, tier, msg_count, email_verified) VALUES (%s,%s,%s,'explorer',0,TRUE)",
-                (nom, email, hash_password(password))
+                """INSERT INTO users 
+                   (nom, email, password_hash, tier, msg_count, email_verified, age, travel_type, children_count) 
+                   VALUES (%s, %s, %s, 'explorer', 0, TRUE, %s, %s, %s)""",
+                (nom, email, hash_password(password), age, travel_type, children_count)
             )
             conn.commit()
             user_id = cur.lastrowid
@@ -1062,6 +1117,89 @@ def set_tier(tier):
                     conn.close()
         return jsonify({'status': 'success', 'tier': tier})
     return jsonify({'status': 'error'})
+
+# ============================================================
+# API RECOMMANDATIONS & NOTIFICATIONS
+# ============================================================
+
+@app.route('/api/recommendations', methods=['GET'])
+def api_recommendations():
+    user_id = session.get('user_id')
+    recs = get_recommendations(user_id=user_id, limit=6)
+    return jsonify({'status': 'success', 'recommendations': recs})
+
+@app.route('/api/notifications', methods=['GET'])
+def api_notifications():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'status': 'unauthorized', 'notifications': []}), 401
+
+    # Generer automatiquement une notification selon le profil si besoin
+    generate_personalized_notification(user_id)
+
+    conn = get_db()
+    if not conn:
+        return jsonify({'status': 'error', 'notifications': []}), 500
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, title, message, is_read, created_at 
+                FROM notifications 
+                WHERE user_id = %s 
+                ORDER BY created_at DESC 
+                LIMIT 10
+            """, (user_id,))
+            rows = cur.fetchall()
+            
+            notifications = []
+            for r in rows:
+                if isinstance(r, dict):
+                    notifications.append({
+                        "id": r["id"],
+                        "title": r["title"],
+                        "message": r["message"],
+                        "is_read": bool(r["is_read"]),
+                        "created_at": r["created_at"].strftime("%Y-%m-%d %H:%M") if r.get("created_at") else ""
+                    })
+                else:
+                    notifications.append({
+                        "id": r[0],
+                        "title": r[1],
+                        "message": r[2],
+                        "is_read": bool(r[3]),
+                        "created_at": str(r[4])
+                    })
+            return jsonify({'status': 'success', 'notifications': notifications})
+    except Exception as e:
+        print(f"[API Notifications Error] : {e}")
+        return jsonify({'status': 'error', 'notifications': []}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/notifications/<int:notif_id>/read', methods=['POST'])
+def api_mark_notification_read(notif_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'status': 'unauthorized'}), 401
+
+    conn = get_db()
+    if not conn:
+        return jsonify({'status': 'error'}), 500
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE notifications SET is_read = 1 WHERE id = %s AND user_id = %s",
+                (notif_id, user_id)
+            )
+            conn.commit()
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        print(f"[API Read Notification Error] : {e}")
+        return jsonify({'status': 'error'}), 500
+    finally:
+        conn.close()
 
 @app.route('/api/search')
 def global_search():

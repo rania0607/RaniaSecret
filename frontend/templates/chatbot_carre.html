@@ -1993,6 +1993,11 @@
             </div>
             <div class="cb-nav-btns">
                 <div class="cb-nav-group">
+                    <!-- Notification Bell Button -->
+                    <button class="cb-btn-nav-group" id="notifBellBtn" onclick="toggleNotifDropdown(event)" style="position: relative;">
+                        🔔
+                        <span id="notifCountBadge" style="display: none; position: absolute; top: -3px; right: -3px; background: #ef4444; color: white; font-size: 9px; font-weight: 800; border-radius: 50%; width: 16px; height: 16px; align-items: center; justify-content: center; border: 1.5px solid white;">0</span>
+                    </button>
                     <button class="cb-btn-nav-group" id="navBtn" onclick="switchToView('profile')">👤 Profil</button>
                     <button class="cb-btn-nav-group" id="upgradeNavBtn" onclick="switchToView('pack')">✦ Packs</button>
                 </div>
@@ -2040,6 +2045,17 @@
         <div id="cbImageModal" onclick="closeZoom()">
             <div class="cb-modal-content">
                 <img src="" alt="Zoomed image" id="zoomedImage">
+            </div>
+        </div>
+
+        <!-- ── Notification Dropdown Box ── -->
+        <div id="cbNotifBox" style="display: none; background: #ffffff; border-bottom: 2px solid var(--cb-desert-gold); box-shadow: 0 8px 20px rgba(0,0,0,0.12); z-index: 100; max-height: 280px; overflow-y: auto; padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #f0f0f0; padding-bottom: 6px;">
+                <span style="font-size: 12px; font-weight: 700; color: var(--cb-grona); text-transform: uppercase; letter-spacing: 0.5px;">Vos Recommandations</span>
+                <span onclick="toggleNotifDropdown()" style="cursor: pointer; font-size: 13px; color: #888;">✕</span>
+            </div>
+            <div id="notifListContainer" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="font-size: 11px; color: #999; text-align: center; padding: 10px;">Chargement des notifications...</div>
             </div>
         </div>
 
@@ -2143,11 +2159,32 @@
                     <i class="fa-solid fa-lock cb-input-icon"></i>
                     <input type="password" id="registerPassword" placeholder="Mot de passe" required>
                 </div>
+
+                <!-- Champs de profil pour recommandation -->
+                <div class="cb-input-group">
+                    <i class="fa-solid fa-calendar-days cb-input-icon"></i>
+                    <input type="number" id="registerAge" placeholder="Âge (optionnel)" min="14" max="100">
+                </div>
+
+                <div class="cb-input-group">
+                    <i class="fa-solid fa-compass cb-input-icon"></i>
+                    <select id="registerTravelType" onchange="toggleChildrenField(this.value)" style="width:100%; padding:12px 12px 12px 42px; border:1.5px solid #e5e7eb; border-radius:12px; font-size:14px; background:#f9fafb; color:#333; outline:none;">
+                        <option value="Solo">Voyageur Solo 🎒</option>
+                        <option value="Couple">En Couple 💑</option>
+                        <option value="Famille">En Famille 👨‍👩‍👧‍👦</option>
+                        <option value="Amis">Entre Amis 🎉</option>
+                    </select>
+                </div>
+
+                <div class="cb-input-group" id="childrenFieldGroup" style="display: none;">
+                    <i class="fa-solid fa-child cb-input-icon"></i>
+                    <input type="number" id="registerChildrenCount" placeholder="Nombre d'enfants" min="0" max="15" value="0">
+                </div>
+
                 <div class="cb-auth-err" id="registerError"></div>
                 <button class="cb-auth-submit" onclick="performRegister()">S'inscrire</button>
                 <a href="#" class="cb-auth-skip" onclick="switchToView('chat'); hideAuthPanel()">Continuer en invité</a>
             </div>
-        </div>
 
         <!-- ── Profile View ── -->
         <div id="cbProfileView">
@@ -2596,12 +2633,12 @@
                     setSessionId(data.new_session_id);
                 }
             } else {
-                appendMessage('Désolé, je n'ai pas pu traiter votre requête pour le moment.', 'bot');
+                appendMessage("Désolé, je n'ai pas pu traiter votre requête pour le moment.', 'bot");
             }
-        } catch (error) {
-            console.error('Erreur lors de l'envoi du message :', error);
+        } catch (error) {console.error("Erreur lors de l'envoi du message :", error);
+            
             hideTypingIndicator();
-            appendMessage('Une erreur est survenue. Veuillez réessayer plus tard.', 'bot');
+            appendMessage("Une erreur est survenue. Veuillez réessayer plus tard.", 'bot');
         }
     }
 
@@ -2640,7 +2677,7 @@
 
             const botAvatar = document.createElement('div');
             botAvatar.classList.add('bot-avatar');
-            botAvatar.innerHTML = '<img src="{{ cdn_url }}villes/trippy.jpg" alt="Trippy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2745%27 fill=%27%23ffffff%27/%3E%3Ctext x=%2750%27 y=%2770%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%236b1d1d%27%3ET%3C/text%3E%3C/svg%3E'">'
+            botAvatar.innerHTML = '<img src="{{ cdn_url }}villes/trippy.jpg" alt="Trippy">';
             botAvatar.onclick = () => openZoom('{{ cdn_url }}villes/trippy.jpg');
 
             const botContent = document.createElement('div');
@@ -2762,7 +2799,7 @@
 
                 hideAuthPanel();
                 switchToView('profile'); // Go to profile on successful login
-                appendMessage(`Bienvenue de retour, \${data.user.name}!`, 'bot');
+                appendMessage("Bienvenue de retour, \${data.user.name}!", 'bot');
             } else {
                 loginError.textContent = data.message || 'Email ou mot de passe incorrect.';
                 loginError.classList.add('show');
@@ -2774,36 +2811,61 @@
         }
     }
 
+    async function toggleChildrenField(val) {
+        const group = document.getElementById('childrenFieldGroup');
+        if (group) {
+            group.style.display = (val === 'Famille') ? 'block' : 'none';
+        }
+    }
+
     async function performRegister() {
-        const name = document.getElementById('registerName').value;
-        const email = document.getElementById('registerEmail').value;
-        const password = document.getElementById('registerPassword').value;
+        const nom = document.getElementById('registerName').value.trim();
+        const email = document.getElementById('registerEmail').value.trim();
+        const password = document.getElementById('registerPassword').value.trim();
+        const age = document.getElementById('registerAge') ? document.getElementById('registerAge').value : null;
+        const travel_type = document.getElementById('registerTravelType') ? document.getElementById('registerTravelType').value : 'Solo';
+        const children_count = document.getElementById('registerChildrenCount') ? document.getElementById('registerChildrenCount').value : 0;
 
         registerError.classList.remove('show');
+
+        if (!nom || !email || !password) {
+            registerError.textContent = 'Veuillez remplir tous les champs obligatoires.';
+            registerError.classList.add('show');
+            return;
+        }
+
         try {
-            const response = await fetch('/api/register', {
+            // Seft l /register direct (compatible m3a app.py)
+            const response = await fetch('/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password })
+                body: JSON.stringify({ 
+                    nom: nom, 
+                    email: email, 
+                    password: password,
+                    age: age,
+                    travel_type: travel_type,
+                    children_count: children_count
+                })
             });
             const data = await response.json();
 
-            if (data.status === 'success') {
+            if (data.success || data.status === 'success') {
                 localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('userName', data.user.name);
-                localStorage.setItem('userEmail', data.user.email);
-                localStorage.setItem('userTier', data.user.tier);
-                localStorage.setItem('userQueriesRemaining', data.user.queries_remaining);
+                localStorage.setItem('userName', data.nom || nom);
+                localStorage.setItem('userEmail', data.email || email);
+                localStorage.setItem('userTier', data.tier || 'explorer');
+                
                 hideAuthPanel();
                 switchToView('profile');
-                appendMessage(`Bienvenue, \${data.user.name}! Votre compte a été créé.`, 'bot');
+                appendMessage("Bienvenue, ${data.nom || nom} ! Votre profil personnalisé est prêt.", 'bot');
             } else {
-                registerError.textContent = data.message || 'Erreur lors de l'inscription.';
+                registerError.textContent = data.message || "Erreur lors de l'inscription.";
                 registerError.classList.add('show');
             }
         } catch (error) {
             console.error('Register error:', error);
-            registerError.textContent = 'Une erreur est survenue lors de l'inscription.';
+            registerError.textContent = "Une erreur est survenue lors de l'inscription.";
             registerError.classList.add('show');
         }
     }
@@ -2846,7 +2908,7 @@
         sessionStorage.removeItem('chatSessionId');
         hideAuthPanel();
         switchToView('chat'); // Go back to chat view
-        appendMessage('Vous avez été déconnecté.', 'bot');
+        appendMessage("Vous avez été déconnecté.", 'bot');
     }
 
     // PACK SELECTION LOGIC
@@ -2982,5 +3044,83 @@
                 customLangList.classList.remove('show');
             }
         });
+    });
+
+    // ============================================================
+    // GESTION DES NOTIFICATIONS PERSONNALISEES
+    // ============================================================
+    function toggleNotifDropdown(e) {
+        if (e) e.stopPropagation();
+        const box = document.getElementById('cbNotifBox');
+        if (!box) return;
+
+        if (box.style.display === 'none' || !box.style.display) {
+            box.style.display = 'block';
+            loadUserNotifications();
+        } else {
+            box.style.display = 'none';
+        }
+    }
+
+    async function loadUserNotifications() {
+        const container = document.getElementById('notifListContainer');
+        const badge = document.getElementById('notifCountBadge');
+        if (!container) return;
+
+        try {
+            const res = await fetch('/api/notifications');
+            if (res.status === 401) {
+                container.innerHTML = '<div style="font-size: 11px; color: #888; text-align: center; padding: 10px;">Connectez-vous pour voir vos recommandations personnalisées.</div>';
+                if (badge) badge.style.display = 'none';
+                return;
+            }
+
+            const data = await res.json();
+            if (data.status === 'success' && data.notifications && data.notifications.length > 0) {
+                container.innerHTML = '';
+                let unreadCount = 0;
+
+                data.notifications.forEach(n => {
+                    if (!n.is_read) unreadCount++;
+
+                    const item = document.createElement('div');
+                    item.style.cssText = `padding: 10px; border-radius: 10px; background: ${n.is_read ? '#f9fafb' : '#fef6ee'}; border-left: 3px solid ${n.is_read ? '#d1d5db' : '#c59d5f'}; cursor: pointer; transition: all 0.2s;`;
+                    item.innerHTML = `
+                        <div style="font-size: 12px; font-weight: 700; color: #6b1d1d; margin-bottom: 2px;">${n.title}</div>
+                        <div style="font-size: 11px; color: #4b5563; line-height: 1.4;">${n.message}</div>
+                        <div style="font-size: 9px; color: #9ca3af; margin-top: 4px; text-align: right;">${n.created_at || ''}</div>
+                    `;
+
+                    // Clic pour marquer comme lu
+                    item.onclick = async () => {
+                        if (!n.is_read) {
+                            await fetch(`/api/notifications/${n.id}/read`, { method: 'POST' });
+                            loadUserNotifications();
+                        }
+                    };
+                    container.appendChild(item);
+                });
+
+                if (badge) {
+                    if (unreadCount > 0) {
+                        badge.textContent = unreadCount;
+                        badge.style.display = 'flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            } else {
+                container.innerHTML = '<div style="font-size: 11px; color: #888; text-align: center; padding: 10px;">Aucune notification pour le moment.</div>';
+                if (badge) badge.style.display = 'none';
+            }
+        } catch (err) {
+            console.error('Erreur chargement notifications:', err);
+            container.innerHTML = '<div style="font-size: 11px; color: #ef4444; text-align: center; padding: 10px;">Erreur de connexion.</div>';
+        }
+    }
+
+    // Charger les notifications au chargement de la page
+    document.addEventListener('DOMContentLoaded', () => {
+        loadUserNotifications();
     });
 </script>
