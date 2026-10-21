@@ -1,0 +1,4 @@
+[startup] migration check failed: (1049, "Unknown database 'tourism_maroc'")
+Erreur DB : (1049, "Unknown database 'tourism_maroc'")
+ * Serving Flask app 'app'
+ * Debug mode: off

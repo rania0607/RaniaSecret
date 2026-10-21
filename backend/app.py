@@ -53,36 +53,13 @@ app.secret_key = os.getenv('SECRET_KEY', 'trippy_maroc_secret_key_2026')
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 # En local (HTTP), SESSION_COOKIE_SECURE doit être False, sinon le navigateur rejette les cookies de session.
 app.config['SESSION_COOKIE_SECURE'] = os.getenv('FLASK_ENV') == 'production'
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.jinja_env.auto_reload = True
 
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 from admin_routes import admin_bp, _ensure_google_maps_link_column
 app.register_blueprint(admin_bp)
-
-with app.app_context():
-    try:
-        _ensure_google_maps_link_column()
-    except Exception as e:
-        print(f"[startup] migration check failed: {e}")
-
-    try:
-        conn = get_db()
-        if conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS verification_codes (
-                        email VARCHAR(255) PRIMARY KEY,
-                        code VARCHAR(10) NOT NULL,
-                        purpose VARCHAR(50) NOT NULL,
-                        expires_at DATETIME NOT NULL,
-                        verified BOOLEAN DEFAULT FALSE,
-                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                    )
-                """)
-                conn.commit()
-            conn.close()
-    except Exception as e:
-        print(f"[startup] verification_codes table check failed: {e}")
 
 # ============================================================
 # CONFIGURATION EMAIL
@@ -135,6 +112,33 @@ def get_db():
         print(f"Erreur DB : {e}")
         return None
 
+
+# ── Migrations légeres au démarrage (après définition de get_db) ────────────
+with app.app_context():
+    try:
+        _ensure_google_maps_link_column()
+    except Exception as e:
+        print(f"[startup] migration check failed: {e}")
+
+    try:
+        conn = get_db()
+        if conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS verification_codes (
+                        email VARCHAR(255) PRIMARY KEY,
+                        code VARCHAR(10) NOT NULL,
+                        purpose VARCHAR(50) NOT NULL,
+                        expires_at DATETIME NOT NULL,
+                        verified BOOLEAN DEFAULT FALSE,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                conn.commit()
+            conn.close()
+    except Exception as e:
+        print(f"[startup] verification_codes table check failed: {e}")
+
 def hash_password(password):
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
@@ -159,6 +163,7 @@ def call_groq(system_prompt, user_message):
         )
         if resp.status_code == 200:
             return resp.json()["choices"][0]["message"]["content"]
+        print(f"Erreur Groq ({resp.status_code}) : {resp.text[:300]}")
     except Exception as e:
         print(f"Erreur Groq : {e}")
     return None

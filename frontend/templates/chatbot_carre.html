@@ -1961,6 +1961,98 @@
             bottom: 10px;
         }
     }
+
+    /* ═══════════════════════════════════════════════
+       ISOLATION (specificity 0 : ne casse aucune largeur)
+    ═══════════════════════════════════════════════ */
+    :where(.chatbot-container),
+    :where(.chatbot-container) * { box-sizing: border-box; }
+    :where(.chatbot-container) button { font-family: inherit; line-height: normal; text-transform: none; letter-spacing: normal; margin: 0; cursor: pointer; }
+    :where(.chatbot-container) img { max-width: 100%; }
+    :where(.chatbot-container) a { text-decoration: none; }
+
+    /* ═══════════════════════════════════════════════
+       LAYOUT FINAL
+    ═══════════════════════════════════════════════ */
+    .chatbot-container .chatbot-window {
+        width: min(390px, calc(100vw - 32px));
+        height: 620px;
+        max-height: calc(100vh - 120px);
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .chatbot-container .chatbot-window > * { min-width: 0; }
+
+    /* header : une seule ligne */
+    .chatbot-container .cb-header { padding: 12px 14px; gap: 8px; flex-wrap: nowrap; flex-shrink: 0; width: 100%; }
+    .chatbot-container .cb-header-left { min-width: 0; flex: 1 1 auto; gap: 8px; }
+    .chatbot-container .cb-avatar-header { width: 38px; height: 38px; flex-shrink: 0; }
+    .chatbot-container .cb-header-info { min-width: 0; }
+    .chatbot-container .cb-header-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; }
+    .chatbot-container .cb-header-status { white-space: nowrap; }
+    .chatbot-container .cb-nav-btns { flex: 0 0 auto; gap: 6px; }
+    .chatbot-container .cb-nav-group { padding: 2px; gap: 2px; }
+    .chatbot-container .cb-btn-nav-group { padding: 5px 8px; gap: 4px; font-size: 11px; line-height: 1; flex-shrink: 0; }
+    .chatbot-container .cb-btn-close { width: 28px; height: 28px; min-width: 28px; flex-shrink: 0; padding: 0; font-size: 13px; line-height: 1; }
+
+    /* zone de chat : colonne, scroll interne */
+    .chatbot-container .cb-content-wrapper { flex: 1 1 auto; min-height: 0; flex-direction: column; }
+    .chatbot-container .cb-messages-area { flex: 0 0 auto; width: 100%; }
+    .chatbot-container .typing-indicator { flex-shrink: 0; }
+    .chatbot-container #cbNotifBox { flex-shrink: 0; }
+    .chatbot-container .suggestions { flex-shrink: 0; padding: 8px 12px; gap: 6px; }
+    .chatbot-container .cb-footer { flex-shrink: 0; padding: 10px 12px; gap: 8px; }
+    .chatbot-container .cb-footer input { flex: 1; min-width: 0; height: 40px; min-height: 0; padding: 10px 14px; font-size: 13px; }
+    .chatbot-container .cb-footer button { width: 40px; height: 40px; min-width: 40px; padding: 0; }
+
+    /* vues Profil / Packs / Paiement / Auth : colonne, scroll, enfants jamais écrasés */
+    .chatbot-container #cbProfileView,
+    .chatbot-container #cbPackView,
+    .chatbot-container #cbPaymentView,
+    .chatbot-container .cb-auth-panel {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
+        flex-direction: column;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+    .chatbot-container #cbProfileView > *,
+    .chatbot-container #cbPackView > *,
+    .chatbot-container #cbPaymentView > *,
+    .chatbot-container .cb-auth-panel > * { flex-shrink: 0; }
+
+    /* Profil */
+    .chatbot-container #cbProfileView { align-items: stretch; padding: 16px 20px 24px; }
+    .chatbot-container #cbProfileView .cb-auth-header-buttons { background: transparent; border-bottom: none; padding: 0 0 8px; }
+    .chatbot-container #cbProfileView .profile-avatar { flex-shrink: 0; }
+    .chatbot-container #cbProfileView .profile-tier { align-self: center; }
+    .chatbot-container .profile-value { text-align: right; word-break: break-word; }
+
+    /* Packs */
+    .chatbot-container .pack-cards-list { flex-shrink: 0; }
+    .chatbot-container .pack-card { flex-shrink: 0; }
+    .chatbot-container .pack-billing-row { flex-wrap: wrap; }
+    .chatbot-container .pack-toggle-sw { flex-shrink: 0; }
+    .chatbot-container .pack-card-img { width: 56px; height: 56px; min-width: 56px; overflow: hidden; font-size: 0; }
+    .chatbot-container .pack-card-name { white-space: normal; }
+    .chatbot-container .pack-card-price { min-width: 84px; white-space: nowrap; }
+    .chatbot-container .pack-card-amount { font-size: 1.25rem; white-space: nowrap; }
+    .chatbot-container .pack-cta-main { width: 100%; }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+        .chatbot-container .chatbot-window { width: calc(100vw - 28px); left: 14px; right: 14px; bottom: 85px; height: 72vh; max-height: calc(100vh - 100px); }
+    }
+    @media (max-width: 440px) {
+        .chatbot-container .cb-btn-nav-group .cb-lbl { display: none; }
+        .chatbot-container .cb-btn-nav-group { padding: 6px 9px; font-size: 14px; }
+        .chatbot-container .cb-header-name { font-size: 14px; }
+    }
+    @media (max-height: 500px) {
+        .chatbot-container .chatbot-window { height: calc(100vh - 20px); bottom: 10px; max-height: none; }
+    }
 </style>
 
 <!-- ═══ HTML ═══ -->
@@ -1973,13 +2065,20 @@
         <span class="chatbot-badge" id="cbBadge">!</span>
     </div>
 
+    <!-- ── Image Zoom Modal ── -->
+    <div id="cbImageModal" onclick="closeZoom()">
+        <div class="cb-modal-content">
+            <img src="" alt="Zoomed image" id="zoomedImage">
+        </div>
+    </div>
+
     <!-- Chatbot window -->
     <div class="chatbot-window" id="chatWin">
 
         <!-- ── Header ── -->
         <div class="cb-header">
             <div class="cb-header-left">
-                <div class="cb-avatar-header" onclick="openZoom()">
+                <div class="cb-avatar-header" onclick="openZoom('{{ cdn_url }}villes/trippy.jpg')">
                     <img src="{{ cdn_url }}villes/trippy.jpg" alt="Trippy"
                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2745%27 fill=%27%23ffffff%27/%3E%3Ctext x=%2750%27 y=%2770%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%236b1d1d%27%3ET%3C/text%3E%3C/svg%3E'">
                 </div>
@@ -1995,58 +2094,17 @@
                 <div class="cb-nav-group">
                     <!-- Notification Bell Button -->
                     <button class="cb-btn-nav-group" id="notifBellBtn" onclick="toggleNotifDropdown(event)" style="position: relative;">
-                        🔔
+                        <span class="cb-ico">🔔</span>
                         <span id="notifCountBadge" style="display: none; position: absolute; top: -3px; right: -3px; background: #ef4444; color: white; font-size: 9px; font-weight: 800; border-radius: 50%; width: 16px; height: 16px; align-items: center; justify-content: center; border: 1.5px solid white;">0</span>
                     </button>
-                    <button class="cb-btn-nav-group" id="navBtn" onclick="switchToView('profile')">👤 Profil</button>
-                    <button class="cb-btn-nav-group" id="upgradeNavBtn" onclick="switchToView('pack')">✦ Packs</button>
+                    <button class="cb-btn-nav-group" id="navBtn" onclick="switchToView('profile')"><span class="cb-ico">👤</span><span class="cb-lbl">Profil</span></button>
+                    <button class="cb-btn-nav-group" id="upgradeNavBtn" onclick="switchToView('pack')"><span class="cb-ico">✦</span><span class="cb-lbl">Packs</span></button>
                 </div>
                 <button class="cb-btn-close" onclick="toggleChat()">✕</button>
             </div>
+        </div><!-- /cb-header -->
 
-        <!-- SIDEBAR PANNEAU -->
-        <div class="mobile-sidebar" id="mobileSidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-brand-m" style="flex-direction: column; align-items: flex-start; gap: 12px; padding: 10px 0;">
-                    <img src="{{ logo_url }}" alt="Logo" class="nav-logo" style="height: 65px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));">
-                    <span style="font-size: 1.4rem;">Morocco <em>Secrets</em></span>
-                </div>
-                <button class="sidebar-close" onclick="closeSidebar()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="sidebar-links">
-                <a href="/" onclick="closeSidebar()" data-ar="<i class='fa-solid fa-house'></i>الرئيسية"><i
-                        class="fa-solid fa-house"></i>Accueil</a>
-                <a href="/villes" onclick="closeSidebar()" data-ar="<i class='fa-solid fa-map'></i>المدن"><i
-                        class="fa-solid fa-map"></i>Villes</a>
-                <a href="/attractions" onclick="closeSidebar()" data-ar="<i class='fa-solid fa-mountain-sun'></i>جاذبات"><i
-                        class="fa-solid fa-mountain-sun"></i>Attractions</a>
-                <a href="/pricing" onclick="closeSidebar()" data-ar="<i class='fa-solid fa-tag'></i>العروض"><i
-                        class="fa-solid fa-tag"></i>Offres</a>
-            </div>
 
-            <div class="sidebar-lang-selector">
-                <span class="sidebar-lang-label">Langue</span>
-                <div class="custom-lang-selector" id="sidebarLangDropdown">
-                    <div class="custom-lang-btn">
-                        <i class="fa-solid fa-globe"></i>
-                        <span id="currentLangTextSidebar">FR</span>
-                    </div>
-                    <ul class="custom-lang-list">
-                        <li data-lang="fr">Français</li>
-                        <li data-lang="ar">العربية</li>
-                        <li data-lang="en">English</li>
-                    </ul>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- ── Image Zoom Modal ── -->
-        <div id="cbImageModal" onclick="closeZoom()">
-            <div class="cb-modal-content">
-                <img src="" alt="Zoomed image" id="zoomedImage">
-            </div>
-        </div>
 
         <!-- ── Notification Dropdown Box ── -->
         <div id="cbNotifBox" style="display: none; background: #ffffff; border-bottom: 2px solid var(--cb-desert-gold); box-shadow: 0 8px 20px rgba(0,0,0,0.12); z-index: 100; max-height: 280px; overflow-y: auto; padding: 12px 14px;">
@@ -2110,7 +2168,7 @@
 
         <!-- ── Footer Input ── -->
         <div class="cb-footer">
-            <input type="text" id="userInput" placeholder="Votre message..." onkeypress="handleKeyPress(event)">
+            <input type="text" id="userInput" placeholder="Posez votre question sur le Maroc..." onkeypress="handleKeyPress(event)">
             <button onclick="sendMessage()">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
@@ -2120,7 +2178,7 @@
         <div class="cb-auth-panel" id="authPanel">
             <div class="cb-auth-header-buttons">
                 <button class="cb-auth-back-btn" onclick="hideAuthPanel()"><i class="fa-solid fa-arrow-left"></i></button>
-                <button class="cb-auth-close-btn" onclick="closeChat()"><i class="fa-solid fa-xmark"></i></button>
+                <button class="cb-auth-close-btn" onclick="toggleChat()"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
             <div class="cb-auth-tabs">
@@ -2185,6 +2243,7 @@
                 <button class="cb-auth-submit" onclick="performRegister()">S'inscrire</button>
                 <a href="#" class="cb-auth-skip" onclick="switchToView('chat'); hideAuthPanel()">Continuer en invité</a>
             </div>
+        </div>
 
         <!-- ── Profile View ── -->
         <div id="cbProfileView">
@@ -2236,17 +2295,16 @@
 
             <div class="pack-billing-row">
                 <span class="pack-billing-label monthly active">Mensuel</span>
-                <div class="pack-toggle-sw" id="billingToggle">
-                    <div class="pack-save-pill">20% OFF</div>
-                </div>
+                <div class="pack-toggle-sw" id="billingToggle"></div>
                 <span class="pack-billing-label annual">Annuel</span>
+                <div class="pack-save-pill">-20%</div>
             </div>
 
             <div class="pack-cards-list">
                 <!-- PACK: EXPLORER -->
                 <div class="pack-card selected" data-pack-id="1">
                     <div class="pack-card-inner">
-                        <img src="{{ cdn_url }}icons/pack-explorer.png" alt="Explorer Pack" class="pack-card-img">
+                        <img src="{{ cdn_url }}icons/pack-explorer.png" alt="Explorer Pack" class="pack-card-img" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 56 56%27%3E%3Crect width=%2756%27 height=%2756%27 rx=%2712%27 fill=%27%23f2e6d9%27/%3E%3Ctext x=%2728%27 y=%2738%27 text-anchor=%27middle%27 font-size=%2726%27%3E%E2%9C%A6%3C/text%3E%3C/svg%3E'">
                         <div class="pack-card-info">
                             <div class="pack-card-name">Pack Explorateur</div>
                             <p class="pack-card-desc">Accès de base aux fonctionnalités IA</p>
@@ -2266,7 +2324,7 @@
                 <!-- PACK: STANDARD -->
                 <div class="pack-card" data-pack-id="2">
                     <div class="pack-card-inner">
-                        <img src="{{ cdn_url }}icons/pack-standard.png" alt="Standard Pack" class="pack-card-img">
+                        <img src="{{ cdn_url }}icons/pack-standard.png" alt="Standard Pack" class="pack-card-img" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 56 56%27%3E%3Crect width=%2756%27 height=%2756%27 rx=%2712%27 fill=%27%23f2e6d9%27/%3E%3Ctext x=%2728%27 y=%2738%27 text-anchor=%27middle%27 font-size=%2726%27%3E%E2%9C%A6%3C/text%3E%3C/svg%3E'">
                         <div class="pack-card-info">
                             <div class="pack-card-name">Pack Standard</div>
                             <p class="pack-card-desc">Idéal pour les voyageurs réguliers</p>
@@ -2289,7 +2347,7 @@
                 <!-- PACK: PREMIUM -->
                 <div class="pack-card" data-pack-id="3">
                     <div class="pack-card-inner">
-                        <img src="{{ cdn_url }}icons/pack-premium.png" alt="Premium Pack" class="pack-card-img">
+                        <img src="{{ cdn_url }}icons/pack-premium.png" alt="Premium Pack" class="pack-card-img" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 56 56%27%3E%3Crect width=%2756%27 height=%2756%27 rx=%2712%27 fill=%27%23f2e6d9%27/%3E%3Ctext x=%2728%27 y=%2738%27 text-anchor=%27middle%27 font-size=%2726%27%3E%E2%9C%A6%3C/text%3E%3C/svg%3E'">
                         <div class="pack-card-info">
                             <div class="pack-card-name">Pack Premium</div>
                             <p class="pack-card-desc">L'expérience ultime de voyage</p>
@@ -2372,8 +2430,8 @@
                 </div>
             </div>
         </div>
-    </div>
-</div>
+    </div><!-- /chatbot-window -->
+</div><!-- /chatbot-container -->
 
 
 <script>
@@ -2422,31 +2480,39 @@
 
     function switchToView(view) {
         currentView = view;
-        // Hide all views
+        const footer = document.querySelector('.cb-footer');
+        const sugg = document.getElementById('suggestionsArea');
         chatContent.style.display = 'none';
         cbProfileView.style.display = 'none';
         cbPackView.style.display = 'none';
         cbPaymentView.style.display = 'none';
-        // Hide auth panel by default for other views
         authPanel.classList.remove('visible');
 
-        // Show the requested view
+        const navBtn = document.getElementById('navBtn');
+        const upgradeNavBtn = document.getElementById('upgradeNavBtn');
+        if (navBtn) navBtn.classList.toggle('active', view === 'profile');
+        if (upgradeNavBtn) upgradeNavBtn.classList.toggle('active', view === 'pack');
+
+        const showChatBars = (view === 'chat');
+        if (sugg) sugg.style.display = showChatBars ? 'flex' : 'none';
+        if (footer) footer.style.display = showChatBars ? 'flex' : 'none';
+
         if (view === 'chat') {
             chatContent.style.display = 'flex';
-            chatContent.scrollTop = chatContent.scrollHeight; // Scroll to bottom
+            chatContent.scrollTop = chatContent.scrollHeight;
         } else if (view === 'profile') {
             cbProfileView.style.display = 'flex';
             updateProfileView();
         } else if (view === 'pack') {
             cbPackView.style.display = 'flex';
-            updatePackPrices(); // Ensure prices are correct
+            updatePackPrices();
         } else if (view === 'payment') {
             cbPaymentView.style.display = 'flex';
         }
     }
 
     function openZoom(imgSrc) {
-        zoomedImage.src = imgSrc;
+        zoomedImage.src = imgSrc || '{{ cdn_url }}villes/trippy.jpg';
         cbImageModal.style.display = 'flex';
     }
 
@@ -2456,8 +2522,8 @@
     }
 
     function showAuthPanel() {
+        switchToView('auth');
         authPanel.classList.add('visible');
-        switchToView('auth'); // Temporarily change view for styling
     }
 
     function hideAuthPanel() {
@@ -2484,11 +2550,11 @@
     }
 
     function openSidebar() {
-        mobileSidebar.classList.add('active');
+        if (mobileSidebar) mobileSidebar.classList.add('active');
     }
 
     function closeSidebar() {
-        mobileSidebar.classList.remove('active');
+        if (mobileSidebar) mobileSidebar.classList.remove('active');
     }
 
     // LANGUAGE DROPDOWNS (outside chatbot interaction for global site)
@@ -2568,10 +2634,6 @@
         if (cbHeaderStatus) {
             cbHeaderStatus.textContent = lang === 'ar' ? 'متصل' : 'En ligne';
         }
-        const profileStatus = document.getElementById('profileStatus');
-        if (profileStatus) {
-            profileStatus.textContent = lang === 'ar' ? 'نشط' : 'Actif';
-        }
     }
 
     // Initialize language to French if not set
@@ -2609,7 +2671,7 @@
         showTypingIndicator();
 
         try {
-            const response = await fetch('/api/chat', {
+            const response = await fetch('/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2624,22 +2686,63 @@
             const data = await response.json();
             hideTypingIndicator();
 
-            if (data.status === 'success') {
-                appendMessage(data.response, 'bot');
-                if (data.actions && data.actions.length > 0) {
-                    displayActionButtons(data.actions);
-                }
-                if (data.new_session_id) {
-                    setSessionId(data.new_session_id);
-                }
-            } else {
-                appendMessage("Désolé, je n'ai pas pu traiter votre requête pour le moment.', 'bot");
+            // Limite atteinte pour un utilisateur connecté (pack Explorateur)
+            if (data.limit_reached) {
+                appendMessage(data.response || 'Vous avez atteint votre limite de messages pour aujourd\'hui.', 'bot');
+                showLimitBanner();
+                return;
             }
-        } catch (error) {console.error("Erreur lors de l'envoi du message :", error);
-            
+
+            // Limite atteinte en mode invité → on propose l'inscription
+            if (data.need_register) {
+                appendMessage('Vous avez atteint la limite de messages en mode invité. Créez un compte pour continuer.', 'bot');
+                showAuthPanel();
+                showAuthTab('register');
+                return;
+            }
+
+            if (data.response) {
+                appendMessage(data.response, 'bot');
+            } else {
+                appendMessage('Désolé, je n\'ai pas pu traiter votre requête pour le moment.', 'bot');
+            }
+
+            if (data.actions && data.actions.length > 0) {
+                displayActionButtons(data.actions);
+            }
+            if (data.new_session_id) {
+                setSessionId(data.new_session_id);
+            }
+            if (typeof data.msg_count === 'number') {
+                localStorage.setItem('userMsgCount', data.msg_count);
+            }
+            if (typeof data.anon_remaining === 'number') {
+                localStorage.setItem('anonRemaining', data.anon_remaining);
+            }
+        } catch (error) {
+            console.error("Erreur lors de l'envoi du message :", error);
             hideTypingIndicator();
-            appendMessage("Une erreur est survenue. Veuillez réessayer plus tard.", 'bot');
+            appendMessage('Une erreur est survenue. Veuillez réessayer plus tard.', 'bot');
         }
+    }
+
+    function showLimitBanner() {
+        const area = document.getElementById('messagesArea');
+        if (!area) return;
+        if (document.getElementById('cbLimitBanner')) return;
+
+        const banner = document.createElement('div');
+        banner.className = 'cb-limit-banner';
+        banner.id = 'cbLimitBanner';
+        banner.innerHTML =
+            '<div class="cb-limit-icon">🔒</div>' +
+            '<div class="cb-limit-text">' +
+            '<div class="cb-limit-title">Limite atteinte</div>' +
+            '<div class="cb-limit-sub">Passez au pack Voyageur Pro pour des messages illimités.</div>' +
+            '</div>' +
+            '<button class="cb-limit-upgrade" onclick="switchToView(\'pack\')">Améliorer</button>';
+        area.appendChild(banner);
+        banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function appendMessage(text, sender) {
@@ -2782,24 +2885,23 @@
 
         loginError.classList.remove('show');
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch('/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
             const data = await response.json();
 
-            if (data.status === 'success') {
-                // Simulate successful login
+            if (data.success) {
                 localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('userName', data.user.name);
-                localStorage.setItem('userEmail', data.user.email);
-                localStorage.setItem('userTier', data.user.tier);
-                localStorage.setItem('userQueriesRemaining', data.user.queries_remaining);
+                localStorage.setItem('userName', data.nom || data.message || '');
+                localStorage.setItem('userEmail', data.email || email);
+                localStorage.setItem('userTier', data.tier || 'explorer');
+                localStorage.setItem('userQueriesRemaining', data.msg_count != null ? data.msg_count : 'Illimité');
 
                 hideAuthPanel();
                 switchToView('profile'); // Go to profile on successful login
-                appendMessage("Bienvenue de retour, \${data.user.name}!", 'bot');
+                appendMessage(`Bienvenue de retour, ${data.nom || ''} !`, 'bot');
             } else {
                 loginError.textContent = data.message || 'Email ou mot de passe incorrect.';
                 loginError.classList.add('show');
@@ -2858,7 +2960,7 @@
                 
                 hideAuthPanel();
                 switchToView('profile');
-                appendMessage("Bienvenue, ${data.nom || nom} ! Votre profil personnalisé est prêt.", 'bot');
+                appendMessage(`Bienvenue, ${data.nom || nom} ! Votre profil personnalisé est prêt.`, 'bot');
             } else {
                 registerError.textContent = data.message || "Erreur lors de l'inscription.";
                 registerError.classList.add('show');
@@ -2874,8 +2976,12 @@
         const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
         document.getElementById('profileName').textContent = localStorage.getItem('userName') || 'Utilisateur';
         document.getElementById('profileEmail').textContent = localStorage.getItem('userEmail') || 'N/A';
-        document.getElementById('profileTier').textContent = localStorage.getItem('userTier') || 'Explorateur';
-        document.getElementById('profilePack').textContent = localStorage.getItem('userTier') || 'Explorateur';
+        const tierRaw = (localStorage.getItem('userTier') || 'explorer').toString();
+        const tierMap = { explorer: 'Explorateur', explorateur: 'Explorateur', standard: 'Standard', premium: 'Premium' };
+        const tierLabel = tierMap[tierRaw.toLowerCase()] || tierRaw;
+        document.getElementById('profileTier').textContent = tierLabel;
+        document.getElementById('profilePack').textContent = 'Pack ' + tierLabel;
+        document.getElementById('profileStatus').textContent = isAuthenticated ? 'Connecté' : 'Invité';
         document.getElementById('profileQueriesRemaining').textContent = localStorage.getItem('userQueriesRemaining') || 'Illimité';
 
         // Toggle login/logout button
@@ -2890,7 +2996,7 @@
         // Show/hide upgrade button based on tier (simple logic)
         const upgradeBtn = document.querySelector('#cbProfileView .profile-actions .upgrade');
         if (upgradeBtn) {
-            if (localStorage.getItem('userTier') === 'Premium') {
+            if ((localStorage.getItem('userTier') || '').toLowerCase() === 'premium') {
                 upgradeBtn.style.display = 'none';
             } else {
                 upgradeBtn.style.display = 'inline-block';
@@ -2934,7 +3040,7 @@
                 } else {
                     const monthlyPrice = amountSpan.dataset.monthly;
                     const annualPrice = amountSpan.dataset.annual;
-                    amountSpan.textContent = isAnnualBilling ? `\${annualPrice} DHS` : `\${monthlyPrice} DHS`;
+                    amountSpan.textContent = isAnnualBilling ? `${annualPrice} DHS` : `${monthlyPrice} DHS`;
                     periodSpan.textContent = isAnnualBilling ? '/an' : '/mois';
                 }
             }
@@ -2954,8 +3060,15 @@
         const period = selectedPack.querySelector('.pack-card-period').textContent;
 
         document.getElementById('paymentPackName').textContent = packName;
-        document.getElementById('paymentPeriod').textContent = period;
+        document.getElementById('paymentPeriod').textContent = isAnnualBilling ? 'Annuel' : 'Mensuel';
         document.getElementById('paymentTotal').textContent = totalAmount;
+
+        const wa = document.querySelector('#cbPaymentView .wa-cta-btn');
+        if (wa) {
+            const periodTxt = isAnnualBilling ? 'annuel' : 'mensuel';
+            const txt = `Bonjour, je viens d'effectuer un virement pour le ${packName} (${periodTxt}, ${totalAmount}). Voici la capture d'écran de mon paiement.`;
+            wa.href = 'https://wa.me/212661854898?text=' + encodeURIComponent(txt);
+        }
 
         switchToView('payment');
     }
@@ -3018,6 +3131,7 @@
     // Initial setup for the language dropdowns
     document.addEventListener('DOMContentLoaded', function () {
         const customLangDropdown = document.getElementById('customLangDropdown');
+        if (!customLangDropdown) return;
         const customLangList = customLangDropdown.querySelector('.custom-lang-list');
         const customLangBtn = customLangDropdown.querySelector('.custom-lang-btn');
 
