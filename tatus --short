@@ -1,0 +1,9 @@
+warning: in the working copy of 'backend/migrate_db.py', LF will be replaced by CRLF the next time Git touches it
+backend/app.py
+backend/migrate_db.py
+frontend/templates/chatbot_carre.html
+frontend/templates/details.html
+frontend/templates/home.html
+frontend/templates/index.html
+frontend/templates/pricing.html
+frontend/templates/villes.html
