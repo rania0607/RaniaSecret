@@ -95,7 +95,7 @@ GROQ_MODEL   = "openai/gpt-oss-120b"
 from db import DB_CONFIG
 
 TIER_LIMITS = {
-    'explorer': 10,
+    'explorer': 50,
     'standard': float('inf'),
     'premium':  float('inf')
 }
@@ -142,7 +142,7 @@ with app.app_context():
 def hash_password(password):
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
-def call_groq(system_prompt, user_message):
+def call_groq(system_prompt, user_message, history=None):
     if not GROQ_API_KEY:
         app.logger.error("chatbot configuration error: GROQ_API_KEY is not set")
         return None
@@ -155,9 +155,10 @@ def call_groq(system_prompt, user_message):
         "model":    GROQ_MODEL,
         "messages": [
             {"role": "system", "content": system_prompt},
+            *(history or []),
             {"role": "user",   "content": user_message}
         ],
-        "temperature": 0.7,
+        "temperature": 0.3,
         "max_tokens":  800
     }
     try:
@@ -218,31 +219,59 @@ def count_today_messages(user_id):
 def get_user_limit_data(user_id):
     """Fetch daily limit data from users table"""
     conn = get_db()
-    if not conn: return 0, None
+    if not conn:
+        raise RuntimeError("Database is unavailable while reading daily quota")
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT msg_count, last_message_date FROM users WHERE id = %s", (user_id,))
             row = cur.fetchone()
-            if not row: return 0, None
+            if not row:
+                raise LookupError("User not found while reading daily quota")
             
-            count = row.get('msg_count', 0)
+            count = row.get('msg_count') or 0
             last_date = row.get('last_message_date')
             
             # Reset if it's a new day
             today = datetime.now().date()
+            if isinstance(last_date, datetime):
+                last_date = last_date.date()
             if last_date != today:
+                cur.execute(
+                    """UPDATE users SET msg_count = 0, last_message_date = %s
+                       WHERE id = %s""",
+                    (today, user_id)
+                )
+                conn.commit()
                 return 0, today
             return count, today
-    except Exception as e:
-        print(f"Error get_user_limit_data: {e}")
-        return 0, None
+    except Exception:
+        app.logger.exception("Failed to read daily quota for user %s", user_id)
+        raise
     finally:
         conn.close()
+
+
+def get_user_tier(user_id):
+    conn = get_db()
+    if not conn:
+        raise RuntimeError("Database is unavailable while reading account tier")
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT tier FROM users WHERE id = %s", (user_id,))
+            row = cur.fetchone()
+            return (row.get('tier') or 'explorer') if row else None
+    except Exception:
+        app.logger.exception("Failed to read account tier for user %s", user_id)
+        raise
+    finally:
+        conn.close()
+
 
 def increment_user_message_count(user_id, current_count, today):
     """Increment message_count and update last_message_date"""
     conn = get_db()
-    if not conn: return
+    if not conn:
+        raise RuntimeError("Database is unavailable while updating daily quota")
     try:
         with conn.cursor() as cur:
             cur.execute("""
@@ -251,8 +280,96 @@ def increment_user_message_count(user_id, current_count, today):
                 WHERE id = %s
             """, (current_count + 1, today, user_id))
             conn.commit()
-    except Exception as e:
-        print(f"Error increment_user_message_count: {e}")
+    except Exception:
+        conn.rollback()
+        app.logger.exception("Failed to update daily quota for user %s", user_id)
+        raise
+    finally:
+        conn.close()
+
+
+def create_conversation(user_id, title='Nouvelle conversation'):
+    conn = get_db()
+    if not conn:
+        raise RuntimeError("Database is unavailable")
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO conversations (user_id, title) VALUES (%s, %s)",
+                (user_id, title[:120])
+            )
+            conversation_id = cur.lastrowid
+        conn.commit()
+        return conversation_id
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def get_owned_conversation(user_id, conversation_id, include_messages=False):
+    conn = get_db()
+    if not conn:
+        raise RuntimeError("Database is unavailable")
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT id, title, created_at, updated_at
+                   FROM conversations WHERE id = %s AND user_id = %s""",
+                (conversation_id, user_id)
+            )
+            conversation = cur.fetchone()
+            if conversation and include_messages:
+                cur.execute(
+                    """SELECT id, role, content, created_at FROM messages
+                       WHERE conversation_id = %s ORDER BY id ASC""",
+                    (conversation_id,)
+                )
+                conversation['messages'] = cur.fetchall()
+            return conversation
+    finally:
+        conn.close()
+
+
+def store_conversation_message(user_id, conversation_id, role, content):
+    conn = get_db()
+    if not conn:
+        raise RuntimeError("Database is unavailable")
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM conversations WHERE id = %s AND user_id = %s FOR UPDATE",
+                (conversation_id, user_id)
+            )
+            if not cur.fetchone():
+                raise LookupError("Conversation not found for this user")
+            if role == 'user':
+                cur.execute(
+                    """SELECT id FROM messages
+                       WHERE conversation_id = %s AND role = 'user'
+                       ORDER BY id ASC LIMIT 1""",
+                    (conversation_id,)
+                )
+                is_first_user_message = cur.fetchone() is None
+            else:
+                is_first_user_message = False
+            cur.execute(
+                "INSERT INTO messages (conversation_id, role, content) VALUES (%s, %s, %s)",
+                (conversation_id, role, content)
+            )
+            if is_first_user_message:
+                title = content.strip().replace('\r', ' ').replace('\n', ' ')
+                title = ' '.join(title.split())[:120] or 'Nouvelle conversation'
+                cur.execute(
+                    """UPDATE conversations SET title = %s
+                       WHERE id = %s AND user_id = %s""",
+                    (title, conversation_id, user_id)
+                )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 def log_interaction(user_id, item_type, item_id, interaction_type="view"):
@@ -285,6 +402,27 @@ def log_interaction(user_id, item_type, item_id, interaction_type="view"):
                 conn.commit()
     except Exception as e:
         print(f"[Interaction Log Error] : {e}")
+    finally:
+        conn.close()
+
+
+def get_conversation_context(user_id, conversation_id, limit=10):
+    conn = get_db()
+    if not conn:
+        raise RuntimeError("Database is unavailable")
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT m.role, m.content FROM messages AS m
+                   INNER JOIN conversations AS c ON c.id = m.conversation_id
+                   WHERE c.id = %s AND c.user_id = %s
+                   ORDER BY m.id DESC LIMIT %s""",
+                (conversation_id, user_id, limit)
+            )
+            return list(reversed(cur.fetchall()))
+    except Exception:
+        app.logger.exception("Failed to read conversation context for user %s", user_id)
+        raise
     finally:
         conn.close()
 
@@ -838,7 +976,10 @@ def register():
     session['user_tier'] = 'explorer'
     session.pop('anon_msg_count', None)
     
-    return jsonify({'success': True, 'message': f'Bienvenue {nom} !', 'nom': nom, 'tier': 'explorer', 'email': email})
+    return jsonify({
+        'success': True, 'message': f'Bienvenue {nom} !', 'nom': nom,
+        'tier': 'explorer', 'email': email, 'msg_count': 0, 'remaining_queries': 50
+    })
 
 # ---------- Connexion classique ----------
 @app.route('/login', methods=['POST'])
@@ -866,20 +1007,23 @@ def login():
         session['user_id'] = user['id']
         session['user_nom'] = user['nom']
         session['user_email'] = user['email']
-        session['user_tier'] = user['tier']
+        user_tier = user.get('tier') or 'explorer'
+        session['user_tier'] = user_tier
         session.pop('anon_msg_count', None)
 
+        msg_count = count_today_messages(user['id']) if user_tier == 'explorer' else 0
         history = get_chat_history(user['id'], limit=30)
-        msg_count = count_today_messages(user['id'])
 
         return jsonify({
             'success':   True,
             'message':   f"Bon retour {user['nom']} !",
             'nom':       user['nom'],
-            'tier':      user['tier'],
+            'tier':      user_tier,
             'email':     user['email'],
             'msg_count': msg_count,
-            'history':   [{'role': m['role'], 'message': m['message']} for m in history]
+            'history':   [{'role': m['role'], 'message': m['message']} for m in history],
+            'remaining_queries': max(0, TIER_LIMITS[user_tier] - msg_count)
+                if user_tier == 'explorer' else 'Illimité'
         })
     except Exception as e:
         print(f"Erreur login : {e}")
@@ -997,18 +1141,156 @@ def me():
     if 'user_id' not in session:
         return jsonify({'logged': False, 'anon_count': session.get('anon_msg_count', 0)})
     user_id = session.get('user_id')
-    msg_count = count_today_messages(user_id)
+    user_tier = get_user_tier(user_id)
+    if not user_tier:
+        session.clear()
+        return jsonify({'logged': False})
+    session['user_tier'] = user_tier
+    msg_count = count_today_messages(user_id) if user_tier == 'explorer' else 0
     return jsonify({
         'logged':    True,
         'nom':       session.get('user_nom'),
         'email':     session.get('user_email'),
-        'tier':      session.get('user_tier'),
-        'msg_count': msg_count
+        'tier':      user_tier,
+        'msg_count': msg_count,
+        'remaining_queries': max(0, TIER_LIMITS[user_tier] - msg_count)
+            if user_tier == 'explorer' else 'Illimité'
     })
 
 # ============================================================
 # CHATBOT
 # ============================================================
+@app.route('/api/conversations', methods=['GET', 'POST'])
+def api_conversations():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Connexion requise pour accéder aux conversations.'}), 401
+
+    if request.method == 'POST':
+        try:
+            conversation_id = create_conversation(user_id)
+            conversation = get_owned_conversation(user_id, conversation_id)
+            return jsonify({'conversation': conversation}), 201
+        except Exception:
+            app.logger.exception("Failed to create conversation for user %s", user_id)
+            return jsonify({'error': 'Impossible de créer la conversation.'}), 500
+
+    conn = get_db()
+    if not conn:
+        return jsonify({'error': 'La base de données est indisponible.'}), 503
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT id, title, created_at, updated_at FROM conversations
+                   WHERE user_id = %s ORDER BY updated_at DESC, id DESC""",
+                (user_id,)
+            )
+            conversations = cur.fetchall()
+            return jsonify({'conversations': conversations})
+    except Exception:
+        app.logger.exception("Failed to list or create conversations for user %s", user_id)
+        return jsonify({'error': 'Impossible de charger les conversations.'}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/conversations/import', methods=['POST'])
+def api_import_guest_conversation():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Connexion requise pour sauvegarder cette conversation.'}), 401
+
+    data = request.get_json(silent=True)
+    raw_messages = data.get('messages') if isinstance(data, dict) else None
+    if not isinstance(raw_messages, list) or not raw_messages or len(raw_messages) > 100:
+        return jsonify({'error': 'La conversation à sauvegarder est invalide.'}), 400
+
+    messages = []
+    for item in raw_messages:
+        if not isinstance(item, dict):
+            return jsonify({'error': 'Un message de la conversation est invalide.'}), 400
+        role = item.get('role')
+        content = item.get('content')
+        if role not in ('user', 'assistant') or not isinstance(content, str) or not content.strip():
+            return jsonify({'error': 'Un message de la conversation est invalide.'}), 400
+        messages.append((role, content.strip()[:20000]))
+
+    first_user_message = next((content for role, content in messages if role == 'user'), None)
+    title = ' '.join((first_user_message or 'Conversation sauvegardée').split())[:120]
+    conn = get_db()
+    if not conn:
+        return jsonify({'error': 'La base de données est indisponible.'}), 503
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO conversations (user_id, title) VALUES (%s, %s)",
+                (user_id, title)
+            )
+            conversation_id = cur.lastrowid
+            cur.executemany(
+                """INSERT INTO messages (conversation_id, role, content)
+                   VALUES (%s, %s, %s)""",
+                [(conversation_id, role, content) for role, content in messages]
+            )
+        conn.commit()
+        return jsonify({'conversation_id': conversation_id}), 201
+    except Exception:
+        conn.rollback()
+        app.logger.exception("Failed to import guest conversation for user %s", user_id)
+        return jsonify({'error': 'Impossible de sauvegarder la conversation.'}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/conversations/<int:conversation_id>', methods=['GET', 'PATCH', 'DELETE'])
+def api_conversation(conversation_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Connexion requise pour accéder aux conversations.'}), 401
+
+    try:
+        if request.method == 'GET':
+            conversation = get_owned_conversation(user_id, conversation_id, include_messages=True)
+            if not conversation:
+                return jsonify({'error': 'Conversation introuvable.'}), 404
+            return jsonify({'conversation': conversation})
+
+        conn = get_db()
+        if not conn:
+            return jsonify({'error': 'La base de données est indisponible.'}), 503
+        try:
+            with conn.cursor() as cur:
+                if request.method == 'PATCH':
+                    data = request.get_json(silent=True)
+                    title = data.get('title') if isinstance(data, dict) else None
+                    if not isinstance(title, str) or not title.strip():
+                        return jsonify({'error': 'Le titre est requis.'}), 400
+                    title = ' '.join(title.split())[:120]
+                    cur.execute(
+                        """UPDATE conversations SET title = %s
+                           WHERE id = %s AND user_id = %s""",
+                        (title, conversation_id, user_id)
+                    )
+                    if cur.rowcount == 0:
+                        return jsonify({'error': 'Conversation introuvable.'}), 404
+                    conn.commit()
+                    return jsonify({'success': True, 'title': title})
+
+                cur.execute(
+                    "DELETE FROM conversations WHERE id = %s AND user_id = %s",
+                    (conversation_id, user_id)
+                )
+                if cur.rowcount == 0:
+                    return jsonify({'error': 'Conversation introuvable.'}), 404
+                conn.commit()
+                return jsonify({'success': True})
+        finally:
+            conn.close()
+    except Exception:
+        app.logger.exception("Failed to update conversation %s for user %s", conversation_id, user_id)
+        return jsonify({'error': 'Impossible de modifier la conversation.'}), 500
+
+
 @app.route('/chat', methods=['POST'])
 def chat():
     app.logger.info("chat request received")
@@ -1022,7 +1304,21 @@ def chat():
         message = message.strip()
 
         user_id   = session.get('user_id')
-        user_tier = session.get('user_tier', 'explorer')
+        user_tier = 'explorer'
+        if user_id:
+            user_tier = get_user_tier(user_id)
+            if not user_tier:
+                session.clear()
+                return jsonify({'error': 'Session invalide. Veuillez vous reconnecter.'}), 401
+            session['user_tier'] = user_tier
+        conversation_id = data.get('conversation_id')
+        history = []
+
+        if not user_id:
+            try:
+                history = validate_guest_history(data.get('history'))
+            except ValueError as error:
+                return jsonify({'error': str(error)}), 400
         
         used = 0
         today = datetime.now().date()
@@ -1035,25 +1331,37 @@ def chat():
             used = session['anon_msg_count']
         elif user_tier == 'explorer':
             used, today = get_user_limit_data(user_id)
-            if used >= 10:
-                return jsonify({'response': "Désolé, vous avez épuisé vos 10 messages pour aujourd'hui. Revenez demain !", 'limit_reached': True})
+            if used >= TIER_LIMITS['explorer']:
+                return jsonify({
+                    'response': "Vous avez atteint vos 50 requêtes quotidiennes du pack Explorateur. La limite sera réinitialisée demain.",
+                    'limit_reached': True
+                })
+
+        if user_id:
+            if conversation_id is None:
+                conversation_id = create_conversation(user_id)
+            elif not isinstance(conversation_id, int) or not get_owned_conversation(user_id, conversation_id):
+                return jsonify({'error': 'Conversation introuvable.'}), 404
+            history = get_conversation_context(user_id, conversation_id, limit=10)
+            store_conversation_message(user_id, conversation_id, 'user', message)
 
         limit_info = None
         if not user_id:
             limit_info = f"L'utilisateur est en mode anonyme. Message {used}/{ANON_LIMIT}. Rappelle-lui de s'inscrire pour ne pas perdre l'accès."
         elif user_tier == 'explorer':
-            remaining = 10 - used
+            remaining = TIER_LIMITS['explorer'] - used
             if remaining <= 2:
-                limit_info = f"Il reste {remaining} messages à l'utilisateur aujourd'hui. Suggère-lui de passer au pack Voyageur Pro."
+                limit_info = f"Il reste {remaining} requêtes gratuites à l'utilisateur aujourd'hui. Propose-lui de consulter les offres."
 
         rag = rag_retrieve_and_augment(message, limit_info)
-        response_text = call_groq(rag['system_prompt'], rag['user_prompt'])
+        response_text = call_groq(rag['system_prompt'], rag['user_prompt'], history)
         if not response_text:
             return jsonify({
                 'error': "Trippy ne peut pas répondre pour le moment. Réessayez plus tard."
             }), 503
 
         if user_id:
+            store_conversation_message(user_id, conversation_id, 'assistant', response_text)
             save_message(user_id, 'user', message, rag.get('ville_detec'))
             save_message(user_id, 'bot', response_text, rag.get('ville_detec'))
             if user_tier == 'explorer':
@@ -1064,6 +1372,8 @@ def chat():
         intent_detec = rag.get('intent_detec')
 
         result = {'response': response_text, 'ville': ville_detec, 'intent': intent_detec}
+        if user_id:
+            result['conversation_id'] = conversation_id
         if not user_id:
             remaining = ANON_LIMIT - used
             result['anon_remaining'] = remaining
@@ -1071,8 +1381,10 @@ def chat():
                 result['need_register'] = True
         elif user_tier == 'explorer':
             result['msg_count'] = used
+            result['remaining_queries'] = max(0, TIER_LIMITS['explorer'] - used)
         else:
             result['msg_count'] = used
+            result['remaining_queries'] = 'Illimité'
         return jsonify(result)
     except Exception:
         app.logger.exception("Unexpected chatbot request failure")
@@ -1097,11 +1409,31 @@ def clear_chat_history():
     if conn:
         try:
             with conn.cursor() as cur:
+                cur.execute("DELETE FROM conversations WHERE user_id = %s", (user_id,))
                 cur.execute("DELETE FROM chat_messages WHERE user_id = %s", (user_id,))
             conn.commit()
         finally:
             conn.close()
     return jsonify({'success': True})
+
+
+def validate_guest_history(raw_history):
+    if raw_history is None:
+        return []
+    if not isinstance(raw_history, list):
+        raise ValueError("history must be a list")
+
+    history = []
+    for item in raw_history[-10:]:
+        if not isinstance(item, dict):
+            raise ValueError("history entries must be objects")
+        role = item.get('role')
+        content = item.get('content')
+        if role not in ('user', 'assistant') or not isinstance(content, str):
+            raise ValueError("history entries must contain a valid role and content")
+        history.append({'role': role, 'content': content[:5000]})
+    return history
+
 
 # ============================================================
 # MEDIAS
@@ -1123,20 +1455,27 @@ def serve_logo(filename):
 # ============================================================
 @app.route('/set-tier/<tier>')
 def set_tier(tier):
-    if tier in ('explorer', 'standard', 'premium'):
-        session['user_tier'] = tier
-        user_id = session.get('user_id')
-        if user_id:
-            conn = get_db()
-            if conn:
-                try:
-                    with conn.cursor() as cur:
-                        cur.execute("UPDATE users SET tier = %s WHERE id = %s", (tier, user_id))
-                    conn.commit()
-                finally:
-                    conn.close()
-        return jsonify({'status': 'success', 'tier': tier})
-    return jsonify({'status': 'error'})
+    if tier != 'explorer':
+        return jsonify({'status': 'error', 'message': 'Les packs payants doivent être activés par le support.'}), 403
+
+    user_id = session.get('user_id')
+    if user_id:
+        conn = get_db()
+        if not conn:
+            return jsonify({'status': 'error', 'message': 'Base de données indisponible.'}), 503
+        try:
+            with conn.cursor() as cur:
+                cur.execute("UPDATE users SET tier = %s WHERE id = %s", (tier, user_id))
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            app.logger.exception("Failed to update tier for user %s", user_id)
+            return jsonify({'status': 'error', 'message': 'Impossible de modifier le pack.'}), 500
+        finally:
+            conn.close()
+
+    session['user_tier'] = tier
+    return jsonify({'status': 'success', 'tier': tier})
 
 # ============================================================
 # API RECOMMANDATIONS & NOTIFICATIONS

@@ -293,6 +293,37 @@
         animation: slideUp 0.4s cubic-bezier(0.34, 1.12, 0.64, 1);
     }
 
+    .cb-conversations-panel {
+        position: absolute;
+        z-index: 30;
+        top: 76px;
+        bottom: 0;
+        left: 0;
+        width: 270px;
+        max-width: 82%;
+        display: none;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px 12px;
+        background: #fff;
+        border-right: 1px solid #eadfce;
+        box-shadow: 8px 0 24px rgba(20, 35, 27, 0.12);
+    }
+
+    .cb-conversations-panel.open { display: flex; }
+    .cb-conversations-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #263b30; font-weight: 700; }
+    .cb-conversations-actions { display: flex; gap: 6px; }
+    .cb-conversations-actions button,
+    .cb-conversation-new { border: 1px solid #e7dccb; border-radius: 9px; background: #fff; color: #3a4c40; padding: 7px 9px; cursor: pointer; }
+    .cb-conversation-new { width: 100%; background: #1f4634; color: #fff; border-color: #1f4634; font-weight: 600; }
+    .cb-conversation-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; min-height: 0; }
+    .cb-conversation-item { display: flex; align-items: center; gap: 5px; border-radius: 9px; padding: 5px; }
+    .cb-conversation-item.active { background: #f2f5f1; }
+    .cb-conversation-open { flex: 1; min-width: 0; border: 0; padding: 7px; background: transparent; color: #29362e; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cb-conversation-action { flex: 0 0 auto; border: 0; padding: 5px; background: transparent; color: #68756c; cursor: pointer; }
+    .cb-conversation-empty, .cb-conversation-login { color: #68756c; font-size: 12px; line-height: 1.5; padding: 8px; }
+    .cb-conversation-login button { border: 0; padding: 0; background: transparent; color: #1f6344; text-decoration: underline; cursor: pointer; }
+
     @keyframes slideUp {
         from {
             opacity: 0;
@@ -1920,6 +1951,9 @@
         flex-shrink: 0;
         white-space: nowrap;
         touch-action: manipulation;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
     }
 
     .cb-limit-upgrade:hover {
@@ -2097,6 +2131,7 @@
                         <span class="cb-ico">🔔</span>
                         <span id="notifCountBadge" style="display: none; position: absolute; top: -3px; right: -3px; background: #ef4444; color: white; font-size: 9px; font-weight: 800; border-radius: 50%; width: 16px; height: 16px; align-items: center; justify-content: center; border: 1.5px solid white;">0</span>
                     </button>
+                    <button class="cb-btn-nav-group" id="conversationHistoryToggle" type="button" aria-label="Historique des conversations" title="Historique des conversations"><span class="cb-ico">☰</span></button>
                     <button class="cb-btn-nav-group" id="navBtn" onclick="switchToView('profile')"><span class="cb-ico">👤</span><span class="cb-lbl">Profil</span></button>
                     <button class="cb-btn-nav-group" id="upgradeNavBtn" onclick="switchToView('pack')"><span class="cb-ico">✦</span><span class="cb-lbl">Packs</span></button>
                 </div>
@@ -2104,6 +2139,17 @@
             </div>
         </div><!-- /cb-header -->
 
+        <aside class="cb-conversations-panel" id="conversationSidebar" aria-label="Historique des conversations">
+            <div class="cb-conversations-heading">
+                <span>Conversations</span>
+                <div class="cb-conversations-actions">
+                    <button type="button" id="newConversationButton" aria-label="Nouvelle conversation" title="Nouvelle conversation">＋</button>
+                    <button type="button" id="closeConversationSidebar" aria-label="Fermer l'historique">✕</button>
+                </div>
+            </div>
+            <button class="cb-conversation-new" type="button" id="newConversationButtonLabel">Nouvelle conversation</button>
+            <div class="cb-conversation-list" id="conversationList"></div>
+        </aside>
 
 
         <!-- ── Notification Dropdown Box ── -->
@@ -2661,7 +2707,230 @@
     const sendButton = document.getElementById('sendChatMessage');
     const typingIndicator = document.getElementById('typingIndicator');
     const suggestionsArea = document.getElementById('suggestionsArea');
+    const conversationSidebar = document.getElementById('conversationSidebar');
+    const conversationList = document.getElementById('conversationList');
+    const guestMessagesKey = 'trippyGuestMessages';
+    let activeConversationId = null;
     let isBotTyping = false;
+
+    function showConversationSidebar() {
+        conversationSidebar.classList.add('open');
+        loadConversationList();
+    }
+
+    function renderConversationList(conversations) {
+        conversationList.replaceChildren();
+        if (!conversations.length) {
+            const empty = document.createElement('div');
+            empty.className = 'cb-conversation-empty';
+            empty.textContent = 'Aucune conversation enregistrée.';
+            conversationList.appendChild(empty);
+            return;
+        }
+
+        conversations.forEach(conversation => {
+            const item = document.createElement('div');
+            item.className = 'cb-conversation-item';
+            item.classList.toggle('active', Number(conversation.id) === Number(activeConversationId));
+
+            const openButton = document.createElement('button');
+            openButton.type = 'button';
+            openButton.className = 'cb-conversation-open';
+            openButton.textContent = conversation.title;
+            openButton.title = conversation.title;
+            openButton.addEventListener('click', () => loadConversation(conversation.id));
+
+            const renameButton = document.createElement('button');
+            renameButton.type = 'button';
+            renameButton.className = 'cb-conversation-action';
+            renameButton.textContent = '✎';
+            renameButton.title = 'Renommer';
+            renameButton.addEventListener('click', () => renameConversation(conversation.id, conversation.title));
+
+            const deleteButton = document.createElement('button');
+            deleteButton.type = 'button';
+            deleteButton.className = 'cb-conversation-action';
+            deleteButton.textContent = '×';
+            deleteButton.title = 'Supprimer';
+            deleteButton.addEventListener('click', () => deleteConversation(conversation.id));
+
+            item.append(openButton, renameButton, deleteButton);
+            conversationList.appendChild(item);
+        });
+    }
+
+    async function loadConversationList() {
+        try {
+            const response = await fetch('/api/conversations');
+            const data = await response.json();
+            if (response.status === 401) {
+                conversationList.replaceChildren();
+                const prompt = document.createElement('div');
+                prompt.className = 'cb-conversation-login';
+                prompt.textContent = 'Connectez-vous pour sauvegarder et retrouver vos conversations. ';
+                const loginButton = document.createElement('button');
+                loginButton.type = 'button';
+                loginButton.textContent = 'Se connecter';
+                loginButton.addEventListener('click', () => {
+                    showAuthPanel();
+                    showAuthTab('login');
+                });
+                prompt.appendChild(loginButton);
+                conversationList.appendChild(prompt);
+                return;
+            }
+            if (!response.ok) throw new Error(data.error || 'Impossible de charger les conversations.');
+            renderConversationList(data.conversations || []);
+        } catch (error) {
+            console.error('[Trippy] Failed to load conversations:', error);
+            conversationList.textContent = error.message;
+        }
+    }
+
+    async function createNewConversation() {
+        if (localStorage.getItem('isAuthenticated') !== 'true') {
+            activeConversationId = null;
+            localStorage.removeItem(guestMessagesKey);
+            resetConversationView();
+            conversationSidebar.classList.remove('open');
+            return;
+        }
+        try {
+            const response = await fetch('/api/conversations', { method: 'POST' });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Impossible de créer une conversation.');
+            activeConversationId = data.conversation.id;
+            localStorage.setItem('activeConversationId', activeConversationId);
+            resetConversationView();
+            await loadConversationList();
+            conversationSidebar.classList.remove('open');
+        } catch (error) {
+            console.error('[Trippy] Failed to create conversation:', error);
+            appendMessage(error.message, 'bot');
+        }
+    }
+
+    async function loadConversation(conversationId) {
+        try {
+            const response = await fetch(`/api/conversations/${conversationId}`);
+            const data = await response.json();
+            if (response.status === 404) {
+                if (Number(activeConversationId) === Number(conversationId)) {
+                    activeConversationId = null;
+                    localStorage.removeItem('activeConversationId');
+                    resetConversationView();
+                }
+                await loadConversationList();
+                return;
+            }
+            if (!response.ok) throw new Error(data.error || 'Impossible de charger la conversation.');
+            activeConversationId = data.conversation.id;
+            localStorage.setItem('activeConversationId', activeConversationId);
+            messagesArea.replaceChildren();
+            (data.conversation.messages || []).forEach(message => {
+                appendMessage(message.content, message.role === 'assistant' ? 'bot' : 'user');
+            });
+            conversationSidebar.classList.remove('open');
+        } catch (error) {
+            console.error('[Trippy] Failed to open conversation:', error);
+            appendMessage(error.message, 'bot');
+        }
+    }
+
+    async function renameConversation(conversationId, currentTitle) {
+        const title = window.prompt('Nouveau titre de conversation :', currentTitle);
+        if (title === null || !title.trim()) return;
+        try {
+            const response = await fetch(`/api/conversations/${conversationId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Impossible de renommer la conversation.');
+            await loadConversationList();
+        } catch (error) {
+            console.error('[Trippy] Failed to rename conversation:', error);
+            appendMessage(error.message, 'bot');
+        }
+    }
+
+    async function deleteConversation(conversationId) {
+        if (!window.confirm('Supprimer définitivement cette conversation ?')) return;
+        try {
+            const response = await fetch(`/api/conversations/${conversationId}`, { method: 'DELETE' });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Impossible de supprimer la conversation.');
+            if (Number(activeConversationId) === Number(conversationId)) {
+                activeConversationId = null;
+                localStorage.removeItem('activeConversationId');
+                resetConversationView();
+            }
+            await loadConversationList();
+        } catch (error) {
+            console.error('[Trippy] Failed to delete conversation:', error);
+            appendMessage(error.message, 'bot');
+        }
+    }
+
+    function resetConversationView() {
+        messagesArea.replaceChildren();
+        appendMessage('Bonjour ! Je suis Trippy, votre guide virtuel pour explorer les merveilles du Maroc. Comment puis-je vous aider aujourd’hui ?', 'bot');
+    }
+
+    function restoreGuestMessages() {
+        if (localStorage.getItem('isAuthenticated') === 'true') return;
+        try {
+            const messages = getGuestMessages();
+            if (!Array.isArray(messages)) return;
+            messages.forEach(message => {
+                if (message && typeof message.content === 'string' && ['user', 'assistant'].includes(message.role)) {
+                    appendMessage(message.content, message.role === 'assistant' ? 'bot' : 'user');
+                }
+            });
+        } catch (error) {
+            console.error('[Trippy] Failed to restore guest conversation:', error);
+            localStorage.removeItem(guestMessagesKey);
+        }
+    }
+
+    function getGuestMessages() {
+        const messages = JSON.parse(localStorage.getItem(guestMessagesKey) || '[]');
+        return Array.isArray(messages) ? messages.filter(message =>
+            message && ['user', 'assistant'].includes(message.role) &&
+            typeof message.content === 'string'
+        ) : [];
+    }
+
+    function saveGuestMessage(role, content) {
+        if (localStorage.getItem('isAuthenticated') === 'true') return;
+        try {
+            const messages = getGuestMessages();
+            messages.push({ role, content });
+            localStorage.setItem(guestMessagesKey, JSON.stringify(messages.slice(-100)));
+        } catch (error) {
+            console.error('[Trippy] Failed to save guest conversation locally:', error);
+        }
+    }
+
+    async function saveGuestConversationAfterLogin() {
+        const messages = getGuestMessages();
+        if (!messages.length) return false;
+
+        const response = await fetch('/api/conversations/import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Impossible de sauvegarder la conversation invitée.');
+
+        activeConversationId = data.conversation_id;
+        localStorage.setItem('activeConversationId', activeConversationId);
+        localStorage.removeItem(guestMessagesKey);
+        await loadConversationList();
+        return true;
+    }
 
     async function sendMessage() {
         if (!userInput || !messagesArea || !typingIndicator) {
@@ -2674,6 +2943,7 @@
 
         console.info('[Trippy] Sending chat message.', { length: message.length });
         appendMessage(message, 'user');
+        saveGuestMessage('user', message);
         userInput.value = '';
         showTypingIndicator();
 
@@ -2686,7 +2956,11 @@
                 },
                 body: JSON.stringify({
                     message: message,
-                    session_id: getSessionId()
+                    session_id: getSessionId(),
+                    conversation_id: activeConversationId,
+                    history: localStorage.getItem('isAuthenticated') === 'true'
+                        ? undefined
+                        : getGuestMessages().slice(0, -1).slice(-10)
                 })
             });
 
@@ -2709,7 +2983,7 @@
             }
 
             // Limite atteinte en mode invité → on propose l'inscription
-            if (data.need_register) {
+            if (data.need_register && !data.response) {
                 appendMessage('Vous avez atteint la limite de messages en mode invité. Créez un compte pour continuer.', 'bot');
                 showAuthPanel();
                 showAuthTab('register');
@@ -2718,8 +2992,19 @@
 
             if (data.response) {
                 appendMessage(data.response, 'bot');
+                saveGuestMessage('assistant', data.response);
+                if (data.need_register) {
+                    appendMessage('Créez un compte pour sauvegarder cette conversation et continuer.', 'bot');
+                    showAuthPanel();
+                    showAuthTab('register');
+                }
             } else {
                 appendMessage("Désolé, je n'ai pas pu traiter votre requête pour le moment.", 'bot');
+            }
+            if (data.conversation_id) {
+                activeConversationId = data.conversation_id;
+                localStorage.setItem('activeConversationId', activeConversationId);
+                loadConversationList();
             }
 
             if (data.actions && data.actions.length > 0) {
@@ -2730,6 +3015,9 @@
             }
             if (typeof data.msg_count === 'number') {
                 localStorage.setItem('userMsgCount', data.msg_count);
+            }
+            if (typeof data.remaining_queries === 'number' || data.remaining_queries === 'Illimité') {
+                localStorage.setItem('userQueriesRemaining', data.remaining_queries);
             }
             if (typeof data.anon_remaining === 'number') {
                 localStorage.setItem('anonRemaining', data.anon_remaining);
@@ -2753,9 +3041,9 @@
             '<div class="cb-limit-icon">🔒</div>' +
             '<div class="cb-limit-text">' +
             '<div class="cb-limit-title">Limite atteinte</div>' +
-            '<div class="cb-limit-sub">Passez au pack Voyageur Pro pour des messages illimités.</div>' +
+            '<div class="cb-limit-sub">Passez au pack Standard ou Premium pour un accès illimité.</div>' +
             '</div>' +
-            '<button class="cb-limit-upgrade" onclick="switchToView(\'pack\')">Améliorer</button>';
+            '<a class="cb-limit-upgrade" href="/pricing">Voir les offres</a>';
         area.appendChild(banner);
         banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -2817,6 +3105,14 @@
     }
 
     if (sendButton) sendButton.addEventListener('click', sendMessage);
+    const historyToggle = document.getElementById('conversationHistoryToggle');
+    const closeHistoryButton = document.getElementById('closeConversationSidebar');
+    const newConversationButton = document.getElementById('newConversationButton');
+    const newConversationButtonLabel = document.getElementById('newConversationButtonLabel');
+    if (historyToggle) historyToggle.addEventListener('click', showConversationSidebar);
+    if (closeHistoryButton) closeHistoryButton.addEventListener('click', () => conversationSidebar.classList.remove('open'));
+    if (newConversationButton) newConversationButton.addEventListener('click', createNewConversation);
+    if (newConversationButtonLabel) newConversationButtonLabel.addEventListener('click', createNewConversation);
     if (userInput) {
         userInput.addEventListener('keydown', event => {
             if (event.key === 'Enter') {
@@ -2916,7 +3212,15 @@
                 localStorage.setItem('userName', data.nom || data.message || '');
                 localStorage.setItem('userEmail', data.email || email);
                 localStorage.setItem('userTier', data.tier || 'explorer');
-                localStorage.setItem('userQueriesRemaining', data.msg_count != null ? data.msg_count : 'Illimité');
+                localStorage.setItem('userQueriesRemaining', data.remaining_queries != null ? data.remaining_queries : 'Illimité');
+                localStorage.removeItem('activeConversationId');
+                activeConversationId = null;
+                try {
+                    await saveGuestConversationAfterLogin();
+                } catch (error) {
+                    console.error('[Trippy] Guest conversation could not be saved after login:', error);
+                    appendMessage('Vous êtes connecté, mais votre conversation invitée n’a pas pu être sauvegardée. Elle reste conservée dans ce navigateur.', 'bot');
+                }
 
                 hideAuthPanel();
                 switchToView('profile'); // Go to profile on successful login
@@ -2976,7 +3280,16 @@
                 localStorage.setItem('userName', data.nom || nom);
                 localStorage.setItem('userEmail', data.email || email);
                 localStorage.setItem('userTier', data.tier || 'explorer');
-                
+                localStorage.setItem('userQueriesRemaining', data.remaining_queries != null ? data.remaining_queries : '50');
+                localStorage.removeItem('activeConversationId');
+                activeConversationId = null;
+                try {
+                    await saveGuestConversationAfterLogin();
+                } catch (error) {
+                    console.error('[Trippy] Guest conversation could not be saved after registration:', error);
+                    appendMessage('Votre compte est créé, mais la conversation invitée n’a pas pu être sauvegardée. Elle reste conservée dans ce navigateur.', 'bot');
+                }
+
                 hideAuthPanel();
                 switchToView('profile');
                 appendMessage(`Bienvenue, ${data.nom || nom} ! Votre profil personnalisé est prêt.`, 'bot');
@@ -3023,17 +3336,32 @@
         }
     }
 
-    function performLogout() {
+    async function performLogout() {
+        try {
+            const response = await fetch('/logout', { method: 'POST' });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'La déconnexion a échoué.');
+            }
+        } catch (error) {
+            console.error('[Trippy] Logout failed:', error);
+            appendMessage('Impossible de vous déconnecter pour le moment. Réessayez.', 'bot');
+            return;
+        }
+
         localStorage.removeItem('isAuthenticated');
         localStorage.removeItem('userName');
         localStorage.removeItem('userEmail');
         localStorage.removeItem('userTier');
         localStorage.removeItem('userQueriesRemaining');
-        // Clear session ID on logout to force new session for next interaction
+        localStorage.removeItem('activeConversationId');
+        localStorage.removeItem(guestMessagesKey);
+        activeConversationId = null;
         sessionStorage.removeItem('chatSessionId');
         hideAuthPanel();
         switchToView('chat'); // Go back to chat view
-        appendMessage("Vous avez été déconnecté.", 'bot');
+        resetConversationView();
+        appendMessage('Vous avez été déconnecté. Connectez-vous pour retrouver vos conversations enregistrées.', 'bot');
     }
 
     // PACK SELECTION LOGIC
@@ -3113,8 +3441,35 @@
 
     // Initial state setup on load
     document.addEventListener('DOMContentLoaded', () => {
-        // Check if user is authenticated and update UI
-        updateProfileView();
+        fetch('/me')
+            .then(response => response.json())
+            .then(data => {
+                if (data.logged) {
+                    localStorage.setItem('isAuthenticated', 'true');
+                    localStorage.setItem('userName', data.nom || '');
+                    localStorage.setItem('userEmail', data.email || '');
+                    localStorage.setItem('userTier', data.tier || 'explorer');
+                    localStorage.setItem('userQueriesRemaining', data.remaining_queries != null
+                        ? data.remaining_queries
+                        : 'Illimité');
+                    activeConversationId = Number(localStorage.getItem('activeConversationId')) || null;
+                    if (activeConversationId) loadConversation(activeConversationId);
+                } else {
+                    localStorage.removeItem('isAuthenticated');
+                    localStorage.removeItem('userName');
+                    localStorage.removeItem('userEmail');
+                    localStorage.removeItem('userTier');
+                    localStorage.removeItem('userQueriesRemaining');
+                    activeConversationId = null;
+                    restoreGuestMessages();
+                }
+                updateProfileView();
+            })
+            .catch(error => {
+                console.error('[Trippy] Failed to load account state:', error);
+                restoreGuestMessages();
+                updateProfileView();
+            });
 
         // Ensure the correct tab is shown if authPanel is visible on load (e.g., after refresh with validation errors)
         if (authPanel.classList.contains('visible')) {

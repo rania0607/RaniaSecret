@@ -1393,6 +1393,7 @@
             }
         }
     </style>
+    {% include 'ads_head.html' %}
 </head>
 
 <body>
@@ -1536,7 +1537,7 @@
                             villes</span>
                     </li>
                     <li>
-                        <div class="feat-icon">✓</div><span data-ar="روبوت محادثة (10 أسئلة)">Chatbot IA (10
+                        <div class="feat-icon">✓</div><span data-ar="روبوت محادثة (50 سؤالاً يومياً)">Chatbot IA (50
                             questions)</span>
                     </li>
                     <li>
@@ -1568,12 +1569,12 @@
                         alt="Dunes du Sahara marocain — Aventure" onerror="this.style.display='none'">
                     <div class="plan-hero-overlay">
                         <div class="plan-hero-label" data-ar="الباقة القياسية">Pack Standard</div>
-                        <div class="plan-hero-title" data-ar="المسافر المحترف">Voyageur Pro</div>
+                        <div class="plan-hero-title" data-ar="الباقة القياسية">Standard</div>
                     </div>
                 </div>
                 <div class="plan-price-block">
                     <div class="plan-price">
-                        <span class="price-amount" data-monthly="99" data-annual="87">99</span>
+                        <span class="price-amount" data-monthly="49" data-annual="39">49</span>
                         <span class="price-currency" data-ar=" درهم"> MAD</span>
                         <span class="price-period" data-ar="/شهرياً">/mois</span>
                     </div>
@@ -1619,12 +1620,12 @@
                         alt="Casablanca — Hub économique du Maroc" onerror="this.style.display='none'">
                     <div class="plan-hero-overlay">
                         <div class="plan-hero-label" data-ar="الباقة المميزة">Pack Premium</div>
-                        <div class="plan-hero-title" data-ar="شريك">Partenaire</div>
+                        <div class="plan-hero-title" data-ar="الباقة المميزة">Premium</div>
                     </div>
                 </div>
                 <div class="plan-price-block">
                     <div class="plan-price">
-                        <span class="price-amount" data-monthly="499" data-annual="495">499</span>
+                        <span class="price-amount" data-monthly="99" data-annual="79">99</span>
                         <span class="price-currency" data-ar=" درهم"> MAD</span>
                         <span class="price-period" data-ar="/شهرياً">/mois</span>
                     </div>
@@ -1632,7 +1633,7 @@
                 </div>
                 <ul class="plan-features">
                     <li>
-                        <div class="feat-icon">✓</div>Tout Voyageur Pro inclus
+                        <div class="feat-icon">✓</div>Tout Standard inclus
                     </li>
                     <li>
                         <div class="feat-icon feat-star">★</div>Page établissement mise en avant
@@ -1672,8 +1673,8 @@
                     <tr>
                         <th style="width:40%;">Fonctionnalité</th>
                         <th>Explorateur</th>
-                        <th>Voyageur Pro</th>
-                        <th>Partenaire</th>
+                        <th>Standard</th>
+                        <th>Premium</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1685,7 +1686,7 @@
                     </tr>
                     <tr>
                         <td>Chatbot IA</td>
-                        <td>10 msg</td>
+                        <td>50 msg/jour</td>
                         <td><span class="check-yes">Illimité</span></td>
                         <td><span class="check-yes">Illimité</span></td>
                     </tr>
@@ -1785,8 +1786,8 @@
         var WA = '212625902686';
         var MSG = {
             'explorer': "Bonjour Morocco Secrets\nJe souhaite activer le pack *Explorateur* (Gratuit).",
-            'standard': "Bonjour Morocco Secrets\nJe souhaite m'abonner au pack *Voyageur Pro* (99 MAD/mois).\nMerci de me confirmer les modalités de paiement !",
-            'premium': "Bonjour Morocco Secrets\nJe souhaite devenir *Partenaire Business* (499 MAD/mois).\nMerci de me contacter pour finaliser mon abonnement !"
+            'standard': "Bonjour Morocco Secrets\nJe souhaite m'abonner au pack *Standard* (49 MAD/mois).\nMerci de me confirmer les modalités de paiement !",
+            'premium': "Bonjour Morocco Secrets\nJe souhaite m'abonner au pack *Premium* (99 MAD/mois).\nMerci de me confirmer les modalités de paiement !"
         };
         function setTier(tier) {
             if (tier === 'explorer') {
