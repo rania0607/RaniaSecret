@@ -2168,8 +2168,8 @@
 
         <!-- ── Footer Input ── -->
         <div class="cb-footer">
-            <input type="text" id="userInput" placeholder="Posez votre question sur le Maroc..." onkeypress="handleKeyPress(event)">
-            <button onclick="sendMessage()">
+            <input type="text" id="userInput" placeholder="Posez votre question sur le Maroc...">
+            <button id="sendChatMessage" type="button">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
         </div>
@@ -2658,14 +2658,21 @@
     // CHATBOT DIALOG & API INTERACTION
     const messagesArea = document.getElementById('messagesArea');
     const userInput = document.getElementById('userInput');
+    const sendButton = document.getElementById('sendChatMessage');
     const typingIndicator = document.getElementById('typingIndicator');
     const suggestionsArea = document.getElementById('suggestionsArea');
     let isBotTyping = false;
 
     async function sendMessage() {
+        if (!userInput || !messagesArea || !typingIndicator) {
+            console.error('[Trippy] Chat elements are missing from the page.');
+            return;
+        }
+
         const message = userInput.value.trim();
         if (message === '') return;
 
+        console.info('[Trippy] Sending chat message.', { length: message.length });
         appendMessage(message, 'user');
         userInput.value = '';
         showTypingIndicator();
@@ -2683,8 +2690,16 @@
                 })
             });
 
+            console.info('[Trippy] Chat response received.', {
+                status: response.status,
+                ok: response.ok
+            });
             const data = await response.json();
             hideTypingIndicator();
+
+            if (!response.ok) {
+                throw new Error(data.error || `Chat request failed (${response.status}).`);
+            }
 
             // Limite atteinte pour un utilisateur connecté (pack Explorateur)
             if (data.limit_reached) {
@@ -2704,7 +2719,7 @@
             if (data.response) {
                 appendMessage(data.response, 'bot');
             } else {
-                appendMessage('Désolé, je n\'ai pas pu traiter votre requête pour le moment.', 'bot');
+                appendMessage("Désolé, je n'ai pas pu traiter votre requête pour le moment.", 'bot');
             }
 
             if (data.actions && data.actions.length > 0) {
@@ -2720,9 +2735,9 @@
                 localStorage.setItem('anonRemaining', data.anon_remaining);
             }
         } catch (error) {
-            console.error("Erreur lors de l'envoi du message :", error);
+            console.error("[Trippy] Chat request failed:", error);
             hideTypingIndicator();
-            appendMessage('Une erreur est survenue. Veuillez réessayer plus tard.', 'bot');
+            appendMessage(error.message || 'Une erreur est survenue. Veuillez réessayer plus tard.', 'bot');
         }
     }
 
@@ -2801,10 +2816,14 @@
         messagesArea.scrollTop = messagesArea.scrollHeight;
     }
 
-    function handleKeyPress(event) {
-        if (event.key === 'Enter') {
-            sendMessage();
-        }
+    if (sendButton) sendButton.addEventListener('click', sendMessage);
+    if (userInput) {
+        userInput.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
     }
 
     function showTypingIndicator() {

@@ -8,7 +8,6 @@ from flask_mail import Mail, Message
 from werkzeug.exceptions import HTTPException
 import pymysql
 import requests
-import traceback
 import os
 import hashlib
 import random
@@ -41,6 +40,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_cors import CORS
 
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
+app.logger.setLevel("INFO")
 
 # Fix pour Railway (Reverse Proxy) : assure que Flask comprend que l'on est en HTTPS
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
@@ -90,7 +90,7 @@ def inject_cloudinary():
 
 
 GROQ_API_KEY = (os.getenv('GROQ_API_KEY') or '').strip()
-GROQ_MODEL   = "llama-3.3-70b-versatile"
+GROQ_MODEL   = "openai/gpt-oss-120b"
 
 from db import DB_CONFIG
 
@@ -143,6 +143,10 @@ def hash_password(password):
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 def call_groq(system_prompt, user_message):
+    if not GROQ_API_KEY:
+        app.logger.error("chatbot configuration error: GROQ_API_KEY is not set")
+        return None
+
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type":  "application/json"
@@ -163,9 +167,13 @@ def call_groq(system_prompt, user_message):
         )
         if resp.status_code == 200:
             return resp.json()["choices"][0]["message"]["content"]
-        print(f"Erreur Groq ({resp.status_code}) : {resp.text[:300]}")
-    except Exception as e:
-        print(f"Erreur Groq : {e}")
+        app.logger.error("Groq API returned HTTP %s: %s", resp.status_code, resp.text[:300])
+    except requests.Timeout:
+        app.logger.exception("Groq API request timed out")
+    except requests.RequestException:
+        app.logger.exception("Groq API request failed")
+    except (KeyError, IndexError, TypeError, ValueError):
+        app.logger.exception("Groq API returned an invalid response")
     return None
 
 def save_message(user_id, role, message, ville=None):
@@ -1003,11 +1011,15 @@ def me():
 # ============================================================
 @app.route('/chat', methods=['POST'])
 def chat():
+    app.logger.info("chat request received")
     try:
-        data    = request.get_json()
-        message = data.get('message', '').strip()
-        if not message:
-            return jsonify({'response': "Veuillez ecrire un message !"})
+        data    = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify({'error': 'Le corps JSON est invalide.'}), 400
+        message = data.get('message')
+        if not isinstance(message, str) or not message.strip():
+            return jsonify({'error': 'Veuillez écrire un message.'}), 400
+        message = message.strip()
 
         user_id   = session.get('user_id')
         user_tier = session.get('user_tier', 'explorer')
@@ -1037,7 +1049,9 @@ def chat():
         rag = rag_retrieve_and_augment(message, limit_info)
         response_text = call_groq(rag['system_prompt'], rag['user_prompt'])
         if not response_text:
-            response_text = "Désolé, erreur technique."
+            return jsonify({
+                'error': "Trippy ne peut pas répondre pour le moment. Réessayez plus tard."
+            }), 503
 
         if user_id:
             save_message(user_id, 'user', message, rag.get('ville_detec'))
@@ -1060,10 +1074,11 @@ def chat():
         else:
             result['msg_count'] = used
         return jsonify(result)
-    except Exception as e:
-        print(f"CRITICAL CHAT ERROR: {e}")
-        traceback.print_exc()
-        return jsonify({'response': "Erreur interne. Veuillez réessayer plus tard."})
+    except Exception:
+        app.logger.exception("Unexpected chatbot request failure")
+        return jsonify({
+            'error': "Erreur interne. Veuillez réessayer plus tard."
+        }), 500
 
 @app.route('/chat/history')
 def chat_history():
