@@ -15,6 +15,8 @@ from datetime import datetime, timedelta
 from functools import wraps
 from urllib.parse import unquote
 from dotenv import load_dotenv
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from recommendation_engine import (
     get_recommendations,
     generate_personalized_notification
