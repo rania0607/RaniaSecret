@@ -1,7 +1,10 @@
-
-{
+﻿{
   "version": 2,
   "builds": [
+    {
+      "src": "public/static/sounds/**",
+      "use": "@vercel/static"
+    },
     {
       "src": "frontend/static/**",
       "use": "@vercel/static"
@@ -18,6 +21,10 @@
     }
   ],
   "routes": [
+    {
+      "src": "/static/sounds/(.*)",
+      "dest": "/public/static/sounds/$1"
+    },
     {
       "src": "/static/(.*)",
       "dest": "/frontend/static/$1"
