@@ -1450,6 +1450,14 @@ def validate_guest_history(raw_history):
 # ============================================================
 # MEDIAS
 # ============================================================
+
+@app.route('/static/sounds/<path:filename>')
+def serve_sound(filename):
+    return send_from_directory(
+        os.path.join(frontend_dir, 'static', 'sounds'),
+        filename
+    )
+
 @app.route('/static/videos/<path:filename>')
 def serve_video(filename):
     return send_from_directory(os.path.join(frontend_dir, 'static', 'videos'), filename, mimetype='video/mp4')

@@ -1,19 +1,31 @@
-﻿{
+
+{
   "version": 2,
   "builds": [
+    {
+      "src": "frontend/static/**",
+      "use": "@vercel/static"
+    },
     {
       "src": "backend/app.py",
       "use": "@vercel/python",
       "config": {
         "includeFiles": [
           "frontend/**",
-          "backend/**",
-          "public/**"
+          "backend/**"
         ]
       }
     }
   ],
   "routes": [
+    {
+      "src": "/static/sounds/(.*)",
+      "dest": "/backend/app.py"
+    },
+    {
+      "src": "/static/(.*)",
+      "dest": "/frontend/static/$1"
+    },
     {
       "src": "/(.*)",
       "dest": "/backend/app.py"
