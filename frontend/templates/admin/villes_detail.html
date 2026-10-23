@@ -371,6 +371,7 @@
 
 <div class="tabs-bar" role="tablist">
     <button class="tab active" data-tab="attractions">Attractions <span class="tab-count">{{ attractions|length }}</span></button>
+    <button class="tab" data-tab="textile">Textile <span class="tab-count">{{ textile_crafts|length }}</span></button>
     <button class="tab" data-tab="specialites">Specialties <span class="tab-count">{{ specialites|length }}</span></button>
     <button class="tab" data-tab="restaurants">Restaurants <span class="tab-count">{{ restaurants|length }}</span></button>
     <button class="tab" data-tab="artisanat">artisanat <span class="tab-count">{{ artisanat|length }}</span></button>
@@ -455,6 +456,112 @@
                     <form method="post"
                           action="{{ url_for('admin.attractions_delete', nom_ville=ville.nom_ville, id=a.id) }}"
                           onsubmit="return confirm('Supprimer « {{ a.nom | replace("'", "\\'") }} » ? Cette action est irréversible.');">
+                        <button type="submit" class="btn-row-delete">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-card">No entries found.</div>
+    {% endif %}
+</div>
+<!-- Patrimoine Textile -->
+<div class="panel" data-panel="textile">
+    <div class="panel-header">
+        <button type="button" class="btn-add-inline" id="btn-add-textile">+ Add Textile Craft</button>
+    </div>
+
+    <form id="form-textile" class="inline-form" method="post" enctype="multipart/form-data" action="" style="display:none;">
+        <div class="inline-form-grid">
+            <div class="field full-width">
+                <label for="text-nom">Name *</label>
+                <input type="text" id="text-nom" name="nom" maxlength="255" required>
+            </div>
+            <div class="field">
+                <label for="text-atelier">Atelier / Maison</label>
+                <input type="text" id="text-atelier" name="atelier_nom" maxlength="255">
+            </div>
+            <div class="field">
+                <label for="text-contact">Contact</label>
+                <input type="text" id="text-contact" name="contact" maxlength="100">
+            </div>
+            <div class="field">
+                <label for="text-adresse">Adresse</label>
+                <input type="text" id="text-adresse" name="adresse" maxlength="255">
+            </div>
+            <div class="field">
+                <label for="text-localisation">Localisation (Maps Link)</label>
+                <input type="text" id="text-localisation" name="localisation" maxlength="100">
+            </div>
+            <div class="field">
+                <label for="text-prix">Prix</label>
+                <input type="text" id="text-prix" name="prix" maxlength="100">
+            </div>
+            <div class="field">
+                <label for="text-duree">Durée</label>
+                <input type="text" id="text-duree" name="duree" maxlength="50">
+            </div>
+            <div class="field">
+                <label for="text-horaires">Horaires</label>
+                <input type="text" id="text-horaires" name="horaires" maxlength="100">
+            </div>
+            <div class="field">
+                <label for="text-res-info">Réservation Info</label>
+                <input type="text" id="text-res-info" name="reservation_info" maxlength="255">
+            </div>
+            <div class="field full-width">
+                <label for="text-description">Description</label>
+                <textarea id="text-description" name="description" rows="4"></textarea>
+            </div>
+            <div class="field full-width">
+                <label for="text-image">Image</label>
+                <div class="current-image" id="text-current-image" style="display:none;">
+                    <img id="text-current-img" src="" alt="">
+                    <span>Upload a file to replace.</span>
+                </div>
+                <input type="file" id="text-image" name="image" accept="image/*">
+            </div>
+        </div>
+        <div class="inline-form-actions">
+            <button type="button" class="btn-cancel" id="btn-cancel-textile">Cancel</button>
+            <button type="submit" class="btn-save" id="btn-save-textile">Create</button>
+        </div>
+    </form>
+
+    {% if textile_crafts %}
+    <table class="detail-table" id="textile-table">
+        <thead><tr>
+            <th style="width:80px;">Image</th>
+            <th>Name</th>
+            <th>Atelier</th>
+            <th>Description</th>
+            <th style="width:160px; text-align:right;">Actions</th>
+        </tr></thead>
+        <tbody>
+            {% for t in textile_crafts %}
+            <tr data-id="{{ t.id }}"
+                data-nom="{{ t.nom or '' }}"
+                data-description="{{ t.description or '' }}"
+                data-atelier-nom="{{ t.atelier_nom or '' }}"
+                data-adresse="{{ t.adresse or '' }}"
+                data-contact="{{ t.contact or '' }}"
+                data-localisation="{{ t.localisation or '' }}"
+                data-prix="{{ t.prix or '' }}"
+                data-duree="{{ t.duree or '' }}"
+                data-horaires="{{ t.horaires or '' }}"
+                data-reservation-info="{{ t.reservation_info or '' }}"
+                data-image-path="{{ t.image_url or '' }}">
+                <td>{{ thumb(t.image_url, 'textile') }}</td>
+                <td><span class="item-name">{{ t.nom or '—' }}</span></td>
+                <td><span class="badge-pill">{{ t.atelier_nom or '—' }}</span></td>
+                <td><span class="item-desc">{{ truncate_desc(t.description) }}</span></td>
+                <td class="row-actions" style="text-align:right;">
+                    <button type="button" class="btn-row-edit">Edit</button>
+                    <form method="post"
+                          action="{{ url_for('admin.textile_delete', nom_ville=ville.nom_ville, id=t.id) }}"
+                          onsubmit="return confirm('Delete \'{{ t.nom | replace("'", "\\'") }}\'?');">
                         <button type="submit" class="btn-row-delete">Delete</button>
                     </form>
                 </td>
@@ -1397,6 +1504,83 @@
                     setEtoiles(tr.dataset.etoiles || '');
                     inputAvis.value = tr.dataset.avis || '';
                     inputLien.value = tr.dataset.lien || '';
+                    form.action = editUrl(tr.dataset.id);
+                    btnSave.textContent = 'Save';
+                    tr.classList.add('editing');
+                    showForm();
+                });
+            });
+        }
+    })();
+
+    // ── ZID HADA HNA (Textile inline form) ──
+    (function () {
+        const NOM_VILLE = {{ ville.nom_ville | tojson }};
+        const CDN = {{ cdn_url | tojson }};
+        const newUrl = `/admin/villes/${encodeURIComponent(NOM_VILLE)}/textile/new`;
+        const editUrl = (id) => `/admin/villes/${encodeURIComponent(NOM_VILLE)}/textile/${id}/edit`;
+
+        const form = document.getElementById('form-textile');
+        const btnAdd = document.getElementById('btn-add-textile');
+        const btnCancel = document.getElementById('btn-cancel-textile');
+        const btnSave = document.getElementById('btn-save-textile');
+        const inputNom = document.getElementById('text-nom');
+        const inputAtelier = document.getElementById('text-atelier');
+        const inputContact = document.getElementById('text-contact');
+        const inputAdresse = document.getElementById('text-adresse');
+        const inputLocalisation = document.getElementById('text-localisation');
+        const inputPrix = document.getElementById('text-prix');
+        const inputDuree = document.getElementById('text-duree');
+        const inputHoraires = document.getElementById('text-horaires');
+        const inputResInfo = document.getElementById('text-res-info');
+        const inputDesc = document.getElementById('text-description');
+        const currentWrap = document.getElementById('text-current-image');
+        const currentImg = document.getElementById('text-current-img');
+        const table = document.getElementById('textile-table');
+
+        function clearForm() {
+            form.reset();
+            currentWrap.style.display = 'none';
+            currentImg.src = '';
+            if (table) table.querySelectorAll('tr.editing').forEach(r => r.classList.remove('editing'));
+        }
+        function showForm() {
+            form.style.display = 'block';
+            inputNom.focus();
+            form.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+        }
+        function hideForm() { form.style.display = 'none'; clearForm(); }
+
+        if (btnAdd) {
+            btnAdd.addEventListener('click', () => {
+                clearForm();
+                form.action = newUrl;
+                btnSave.textContent = 'Créer';
+                showForm();
+            });
+        }
+        if (btnCancel) btnCancel.addEventListener('click', hideForm);
+
+        if (table) {
+            table.querySelectorAll('.btn-row-edit').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const tr = e.target.closest('tr');
+                    clearForm();
+                    inputNom.value = tr.dataset.nom || '';
+                    inputAtelier.value = tr.dataset.atelierNom || '';
+                    inputContact.value = tr.dataset.contact || '';
+                    inputAdresse.value = tr.dataset.adresse || '';
+                    inputLocalisation.value = tr.dataset.localisation || '';
+                    inputPrix.value = tr.dataset.prix || '';
+                    inputDuree.value = tr.dataset.duree || '';
+                    inputHoraires.value = tr.dataset.horaires || '';
+                    inputResInfo.value = tr.dataset.reservationInfo || '';
+                    inputDesc.value = tr.dataset.description || '';
+                    
+                    if (tr.dataset.imagePath) {
+                        currentImg.src = `${CDN}${tr.dataset.imagePath}`;
+                        currentWrap.style.display = 'flex';
+                    }
                     form.action = editUrl(tr.dataset.id);
                     btnSave.textContent = 'Save';
                     tr.classList.add('editing');

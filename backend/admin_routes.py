@@ -417,6 +417,15 @@ def villes_detail(nom_ville):
                 "SELECT id, type FROM transports "
                 "WHERE nom_ville = %s ORDER BY id", (nom_ville,))
             transports = cur.fetchall()
+
+            cur.execute("SELECT id FROM villes WHERE nom_ville = %s", (nom_ville,))
+            v_row = cur.fetchone()
+            ville_id = (v_row["id"] if isinstance(v_row, dict) else v_row[0]) if v_row else 0
+
+            cur.execute(
+                "SELECT id, nom, description, image_url, atelier_nom, adresse, contact, localisation, prix, duree, horaires, reservation_info, reservation_link "
+                "FROM textile_crafts WHERE ville_id = %s ORDER BY id", (ville_id,))
+            textile_crafts = cur.fetchall()
     finally:
         conn.close()
 
@@ -431,6 +440,7 @@ def villes_detail(nom_ville):
         hebergements=hebergements,
         evenements=evenements,
         transports=transports,
+        textile_crafts=textile_crafts,
     )
 
 
@@ -1252,6 +1262,143 @@ def vestimentaire_delete(nom_ville, id):
         conn.close()
     flash("Clothing item deleted.", "success")
     return _detail_redirect(nom_ville, "vestimentaire")
+
+# ---------------------------------------------------------------------------
+# Textile Crafts CRUD (textile_crafts table)
+# ---------------------------------------------------------------------------
+
+def _validate_textile(form):
+    nom = (form.get("nom") or "").strip()
+    description = (form.get("description") or "").strip() or None
+    atelier_nom = (form.get("atelier_nom") or "").strip() or None
+    adresse = (form.get("adresse") or "").strip() or None
+    contact = (form.get("contact") or "").strip() or None
+    localisation = (form.get("localisation") or "").strip() or None
+    prix = (form.get("prix") or "").strip() or None
+    duree = (form.get("duree") or "").strip() or None
+    horaires = (form.get("horaires") or "").strip() or None
+    reservation_info = (form.get("reservation_info") or "").strip() or None
+    reservation_link = (form.get("reservation_link") or "").strip() or None
+
+    if not nom:
+        return None, "Name is required."
+    if len(nom) > 255:
+        return None, "Name exceeds 255 characters."
+    
+    return {
+        "nom": nom,
+        "description": description,
+        "atelier_nom": atelier_nom,
+        "adresse": adresse,
+        "contact": contact,
+        "localisation": localisation,
+        "prix": prix,
+        "duree": duree,
+        "horaires": horaires,
+        "reservation_info": reservation_info,
+        "reservation_link": reservation_link,
+    }, None
+
+
+@admin_bp.route("/villes/<nom_ville>/textile/new", methods=["POST"])
+@admin_required
+def textile_new(nom_ville):
+    nom_ville = unquote(nom_ville)
+    data, err = _validate_textile(request.form)
+    if err:
+        flash(err, "error")
+        return _detail_redirect(nom_ville, "textile")
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM villes WHERE nom_ville = %s", (nom_ville,))
+            v = cur.fetchone()
+            if not v:
+                flash("Ville introuvable.", "error")
+                return redirect(url_for("admin.villes_list"))
+            ville_id = v["id"] if isinstance(v, dict) else v[0]
+
+            slug = slugify(data["nom"])
+            image_path, upload_err = _upload_image_if_present(
+                request.files.get("image"), slug, folder="textile"
+            )
+            if upload_err:
+                flash(f"Cloudinary upload error: {upload_err}", "error")
+                return _detail_redirect(nom_ville, "textile")
+
+            cur.execute(
+                """INSERT INTO textile_crafts 
+                (ville_id, nom, description, image_url, atelier_nom, adresse, contact, localisation, prix, duree, horaires, reservation_info, reservation_link)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                (ville_id, data["nom"], data["description"], image_path, data["atelier_nom"], 
+                 data["adresse"], data["contact"], data["localisation"], data["prix"], 
+                 data["duree"], data["horaires"], data["reservation_info"], data["reservation_link"]),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    flash("Artisanat textile ajouté.", "success")
+    return _detail_redirect(nom_ville, "textile")
+
+
+@admin_bp.route("/villes/<nom_ville>/textile/<int:id>/edit", methods=["POST"])
+@admin_required
+def textile_edit(nom_ville, id):
+    nom_ville = unquote(nom_ville)
+    data, err = _validate_textile(request.form)
+    if err:
+        flash(err, "error")
+        return _detail_redirect(nom_ville, "textile")
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT image_path FROM textile_crafts WHERE id = %s", (id,))
+            current = cur.fetchone()
+            if not current:
+                flash("Article introuvable.", "error")
+                return _detail_redirect(nom_ville, "textile")
+
+            slug = slugify(data["nom"])
+            new_image, upload_err = _upload_image_if_present(
+                request.files.get("image"), slug, folder="textile"
+            )
+            if upload_err:
+                flash(f"Cloudinary upload error: {upload_err}", "error")
+                return _detail_redirect(nom_ville, "textile")
+            image_path = new_image or (current["image_path"] if isinstance(current, dict) else current[0])
+
+            cur.execute(
+                """UPDATE textile_crafts SET 
+                nom=%s, description=%s, image_url=%s, atelier_nom=%s, adresse=%s, 
+                contact=%s, localisation=%s, prix=%s, duree=%s, horaires=%s, 
+                reservation_info=%s, reservation_link=%s 
+                WHERE id=%s""",
+                (data["nom"], data["description"], image_path, data["atelier_nom"], 
+                 data["adresse"], data["contact"], data["localisation"], data["prix"], 
+                 data["duree"], data["horaires"], data["reservation_info"], data["reservation_link"], id),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    flash("Artisanat textile modifié.", "success")
+    return _detail_redirect(nom_ville, "textile")
+
+
+@admin_bp.route("/villes/<nom_ville>/textile/<int:id>/delete", methods=["POST"])
+@admin_required
+def textile_delete(nom_ville, id):
+    nom_ville = unquote(nom_ville)
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM textile_crafts WHERE id = %s", (id,))
+        conn.commit()
+    finally:
+        conn.close()
+    flash("Artisanat textile supprimé.", "success")
+    return _detail_redirect(nom_ville, "textile")
 
 
 # ---------------------------------------------------------------------------

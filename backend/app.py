@@ -603,6 +603,12 @@ def details_ville(nom):
             cur.execute("SELECT type FROM transports WHERE nom_ville = %s", (nom,))
             transports = cur.fetchall()
 
+            cur.execute("SELECT type FROM transports WHERE nom_ville = %s", (nom,))
+            transports = cur.fetchall()
+
+            cur.execute("SELECT * FROM textile_crafts WHERE ville_id = %s", (ville['id'],))
+            textile_crafts = cur.fetchall()
+
     except HTTPException:
         raise
     except Exception as e:
@@ -616,7 +622,7 @@ def details_ville(nom):
         restaurants=restaurants, specialites=specialites,
         artisanat=artisanat, hebergements=hebergements,
         vetements=vetements, evenements=evenements,
-        transports=transports, cdn_url=CDN_URL)
+        transports=transports, textile_crafts=textile_crafts, cdn_url=CDN_URL)
 
 def _guess_type_icon(type_name):
     """Devine une icône FontAwesome pertinente à partir du nom du type (dynamique, venant de la DB)."""

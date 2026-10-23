@@ -104,7 +104,40 @@ try:
                     ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """)
-        print("Ensured notifications table exists")
+        # ========================================================
+        # 8. NEW: textile_crafts table (Artisanat & Patrimoine Textile)
+        # ========================================================
+        
+        # التأكد من وجود عمود id في جدول villes بطريقة امنة (بدون تضارب Primary Key)
+        cur.execute("SHOW COLUMNS FROM villes LIKE 'id'")
+        if not cur.fetchone():
+            try:
+                cur.execute("ALTER TABLE villes ADD COLUMN id INT AUTO_INCREMENT UNIQUE")
+                print("Added id column to villes table")
+            except Exception as ex:
+                print(f"Note on villes id: {ex}")
+
+        # إنشاء جدول textile_crafts
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS textile_crafts (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                ville_id INT NOT NULL,
+                nom VARCHAR(255) NOT NULL,
+                description TEXT,
+                image_url VARCHAR(255),
+                atelier_nom VARCHAR(255),
+                adresse VARCHAR(255),
+                contact VARCHAR(100),
+                localisation VARCHAR(100),
+                prix VARCHAR(100),
+                duree VARCHAR(50),
+                horaires VARCHAR(100),
+                reservation_info VARCHAR(255),
+                reservation_link VARCHAR(255),
+                FOREIGN KEY (ville_id) REFERENCES villes(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """)
+        print("Ensured textile_crafts table exists")
 
     conn.commit()
     print("Database normalization and recommendation setup complete.")
