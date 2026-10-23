@@ -36,13 +36,23 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # app.py est dans /backend — frontend est au niveau parent (root)
 frontend_dir = os.path.join(BASE_DIR, '..', 'frontend')
 template_dir = os.path.join(BASE_DIR, '..', 'frontend', 'templates')
-static_dir = os.path.join(BASE_DIR, '..', 'frontend', 'static')
+static_dir = os.path.abspath(
+    os.path.join(BASE_DIR, '..', 'frontend', 'static')
+)
+
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_cors import CORS
 
-app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
+
+app = Flask(
+    __name__,
+    template_folder=template_dir,
+    static_folder=static_dir,
+    static_url_path='/static'
+)
 app.logger.setLevel("INFO")
+
 
 # Fix pour Railway (Reverse Proxy) : assure que Flask comprend que l'on est en HTTPS
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
