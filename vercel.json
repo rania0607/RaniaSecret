@@ -7,6 +7,10 @@
       "use": "@vercel/static"
     },
     {
+      "src": "public/static/**",
+      "use": "@vercel/static"
+    },
+    {
       "src": "backend/app.py",
       "use": "@vercel/python",
       "config": {
@@ -20,7 +24,7 @@
   "routes": [
     {
       "src": "/static/sounds/(.*)",
-      "dest": "/backend/app.py"
+      "dest": "/public/static/sounds/$1"
     },
     {
       "src": "/static/(.*)",
