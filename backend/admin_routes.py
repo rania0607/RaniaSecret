@@ -1354,7 +1354,7 @@ def textile_edit(nom_ville, id):
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT image_path FROM textile_crafts WHERE id = %s", (id,))
+            cur.execute("SELECT image_url FROM textile_crafts WHERE id = %s", (id,))
             current = cur.fetchone()
             if not current:
                 flash("Article introuvable.", "error")

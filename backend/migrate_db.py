@@ -117,7 +117,7 @@ try:
             except Exception as ex:
                 print(f"Note on villes id: {ex}")
 
-        # إنشاء جدول textile_crafts
+        # textile_crafts
         cur.execute("""
             CREATE TABLE IF NOT EXISTS textile_crafts (
                 id INT AUTO_INCREMENT PRIMARY KEY,
