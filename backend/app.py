@@ -578,6 +578,9 @@ def details_ville(nom):
 
             cur.execute("SELECT id, nom, description, type_attraction, image_path FROM attractions WHERE nom_ville = %s", (nom,))
             attractions = cur.fetchall()
+            for a in attractions:
+                if not a.get('type_attraction'):
+                    a['type_attraction'] = 'Non spécifié'
 
             cur.execute("SELECT description FROM activites WHERE nom_ville = %s", (nom,))
             activites = cur.fetchall()
