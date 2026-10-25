@@ -60,8 +60,9 @@ INTENT_KEYWORDS = {
                      'taxi', 'voiture', 'comment arriver', 'route', 'tramway', 'tgv', 'al boraq', 'نقل', 'مواصلات'],
     'vetements':    ['vetement', 'vêtement', 'habit', 'tenue', 'djellaba', 'caftan', 'takchita',
                      'babouche', 'habit traditionnel', 'costume', 'جلابة', 'قفطان'],
-    'artisanat':    ['artisanat', 'souk', 'poterie', 'zellige', 'tapis', 'ceramique', 'céramique',
-                     'cuir', 'bijoux', 'craft', 'marche', 'marché', 'bois', 'صناعة تقليدية'],
+    'artisanat':    ['artisanat', 'artisanal', 'souk', 'poterie', 'zellige', 'tapis', 'ceramique', 'céramique',
+                     'cuir', 'bijoux', 'craft', 'marche', 'marché', 'bois', 'textile', 'broderie', 'damasquinage',
+                     'صناعة تقليدية', 'تراث', 'حرفي', 'حرف', 'الحرفي', 'التراث', 'نسيج', 'طرز', 'زليج', 'فخار'],
     'general':      []
 }
 
@@ -96,6 +97,49 @@ CITY_ALIASES = {
     'casa': 'Casablanca',
     'chaouen': 'Chefchaouen',
     'taghazout': 'Agadir',
+    'مكناس': 'Meknès',
+    'مراكش': 'Marrakech',
+    'فاس': 'Fès',
+    'أكادير': 'Agadir',
+    'اكادير': 'Agadir',
+    'أغادير': 'Agadir',
+    'طنجة': 'Tanger',
+    'الرباط': 'Rabat',
+    'الدار البيضاء': 'Casablanca',
+    'كازابلانكا': 'Casablanca',
+    'شفشاون': 'Chefchaouen',
+    'الشاون': 'Chefchaouen',
+    'الصويرة': 'Essaouira',
+    'تطوان': 'Tétouan',
+    'ورزازات': 'Ouarzazate',
+    'مرزوكة': 'Merzouga',
+    'الداخلة': 'Dakhla',
+    'الحسيمة': 'Al Hoceima',
+    'إفران': 'Ifrane',
+    'افران': 'Ifrane',
+    'آسفي': 'Safi',
+    'اسفي': 'Safi',
+    'تارودانت': 'Taroudant',
+    'زاكورة': 'Zagora',
+    'وجدة': 'Oujda',
+    'الناظور': 'Nador',
+    'السعيدية': 'Saïdia',
+    'الجديدة': 'El Jadida',
+    'أصيلة': 'Asilah',
+    'اصيلة': 'Asilah',
+    'أزرو': 'Azrou',
+    'ازرو': 'Azrou',
+    'بركان': 'Berkane',
+    'القنيطرة': 'Kénitra',
+    'العيون': 'Laâyoune',
+    'الوليدية': 'Oualidia',
+    'تاوريرت': 'Taourirt',
+    'تازة': 'Taza',
+    'إمليل': 'Imlil',
+    'امليل': 'Imlil',
+    'أوكايمدن': 'Oukaïmeden',
+    'الأطلس الكبير': 'Haut Atlas',
+    'الأطلس المتوسط': 'Moyen Atlas',
 }
 
 
@@ -115,10 +159,10 @@ def detect_ville(message: str, villes_list: list) -> str | None:
         if ville.lower() in msg_lower or (len(v_norm) >= 3 and re.search(r'\b' + re.escape(v_norm) + r'\b', msg_norm)):
             return ville
 
-    # 2. Alias
+    # 2. Alias (Latin words + Arabic substring match)
     words_norm = re.findall(r'\b\w+\b', msg_norm)
     for alias, target in CITY_ALIASES.items():
-        if alias in words_norm:
+        if alias in words_norm or (any('\u0600' <= ch <= '\u06FF' for ch in alias) and alias in msg_lower):
             for ville in villes_list:
                 if _strip_accents(ville) == _strip_accents(target):
                     return ville
@@ -176,7 +220,7 @@ def retrieve_context(message: str, history: list = None) -> dict:
         with conn.cursor() as cur:
             # Liste complète des villes avec métadonnées
             cur.execute(
-                "SELECT nom_ville, slogan, description, type_ville, latitude, longitude "
+                "SELECT id, nom_ville, slogan, description, type_ville, latitude, longitude "
                 "FROM villes ORDER BY nom_ville"
             )
             toutes_villes = cur.fetchall()
@@ -264,6 +308,13 @@ def retrieve_context(message: str, history: list = None) -> dict:
                     "WHERE nom_ville = %s LIMIT 6", (ville,)
                 )
                 context['data']['artisanat'] = cur.fetchall()
+
+                if ville_info and ville_info.get('id'):
+                    cur.execute(
+                        "SELECT nom, description, atelier_nom, adresse, contact, horaires "
+                        "FROM textile_crafts WHERE ville_id = %s LIMIT 6", (ville_info['id'],)
+                    )
+                    context['data']['textile_crafts'] = cur.fetchall()
 
             else:
                 # ── Pas de ville détectée → données générales depuis MySQL ──
@@ -423,10 +474,12 @@ Coordonnées : {vi.get('latitude', '')}, {vi.get('longitude', '')}
             ctx += f"• {v['nom']} : {v.get('description', '')[:120]}\n"
         context_parts.append(ctx)
 
-    if data.get('artisanat'):
-        ctx = "\n=== ARTISANAT ===\n"
-        for a in data['artisanat']:
-            ctx += f"• {a['nom_artisanat']} : {a.get('description', '')[:120]}\n"
+    if data.get('artisanat') or data.get('textile_crafts'):
+        ctx = "\n=== ARTISANAT & PATRIMOINE TEXTILE ===\n"
+        for a in data.get('artisanat', []):
+            ctx += f"• {a['nom_artisanat']} : {a.get('description', '')[:140]}\n"
+        for tc in data.get('textile_crafts', []):
+            ctx += f"• {tc['nom']} ({tc.get('atelier_nom', '')}) : {tc.get('description', '')[:140]}\n"
         context_parts.append(ctx)
 
     if data.get('toutes_villes') and not ville:
@@ -578,11 +631,26 @@ def generate_fallback_response(user_message: str, context: dict, limit_info: str
 
         elif intent == 'artisanat':
             arts = data.get('artisanat', [])
-            lines.append(f"🏺 **Artisanat traditionnel de {nom_v} :**")
+            tcrafts = data.get('textile_crafts', [])
+            is_ar = any('\u0600' <= ch <= '\u06FF' for ch in user_message)
+            if is_ar:
+                lines.append(f"🏺 **التراث الحرفي والصناعة التقليدية بمدينة {nom_v} :**")
+            else:
+                lines.append(f"🏺 **Artisanat et Patrimoine Textile de {nom_v} :**")
             if arts:
                 for a in arts:
                     lines.append(f"• **{a['nom_artisanat']}** : {a.get('description', '')}")
-            else:
+            if tcrafts:
+                if is_ar:
+                    lines.append(f"\n🧵 **ورشات التراث النسيجي والحرفي في {nom_v} :**")
+                else:
+                    lines.append(f"\n🧵 **Ateliers & Patrimoine Textile à {nom_v} :**")
+                for tc in tcrafts:
+                    meta = []
+                    if tc.get('atelier_nom'): meta.append(tc['atelier_nom'])
+                    meta_str = f" ({' · '.join(meta)})" if meta else ""
+                    lines.append(f"• **{tc['nom']}**{meta_str} : {tc.get('description', '')}")
+            if not arts and not tcrafts:
                 lines.append(f"Découvrez le savoir-faire artisanal local sur la fiche de {nom_v}.")
 
         else:

@@ -129,14 +129,17 @@ try:
                 adresse VARCHAR(255),
                 contact VARCHAR(100),
                 localisation VARCHAR(100),
-                prix VARCHAR(100),
-                duree VARCHAR(50),
                 horaires VARCHAR(100),
                 reservation_info VARCHAR(255),
                 reservation_link VARCHAR(255),
                 FOREIGN KEY (ville_id) REFERENCES villes(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """)
+        for col_to_drop in ("prix", "duree"):
+            cur.execute(f"SHOW COLUMNS FROM textile_crafts LIKE '{col_to_drop}'")
+            if cur.fetchone():
+                cur.execute(f"ALTER TABLE textile_crafts DROP COLUMN {col_to_drop}")
+                print(f"Dropped column {col_to_drop} from textile_crafts")
         print("Ensured textile_crafts table exists")
 
     conn.commit()

@@ -496,14 +496,6 @@
                 <input type="text" id="text-localisation" name="localisation" maxlength="100">
             </div>
             <div class="field">
-                <label for="text-prix">Prix</label>
-                <input type="text" id="text-prix" name="prix" maxlength="100">
-            </div>
-            <div class="field">
-                <label for="text-duree">Durée</label>
-                <input type="text" id="text-duree" name="duree" maxlength="50">
-            </div>
-            <div class="field">
                 <label for="text-horaires">Horaires</label>
                 <input type="text" id="text-horaires" name="horaires" maxlength="100">
             </div>
@@ -548,8 +540,6 @@
                 data-adresse="{{ t.adresse or '' }}"
                 data-contact="{{ t.contact or '' }}"
                 data-localisation="{{ t.localisation or '' }}"
-                data-prix="{{ t.prix or '' }}"
-                data-duree="{{ t.duree or '' }}"
                 data-horaires="{{ t.horaires or '' }}"
                 data-reservation-info="{{ t.reservation_info or '' }}"
                 data-image-path="{{ t.image_url or '' }}">
@@ -1529,8 +1519,6 @@
         const inputContact = document.getElementById('text-contact');
         const inputAdresse = document.getElementById('text-adresse');
         const inputLocalisation = document.getElementById('text-localisation');
-        const inputPrix = document.getElementById('text-prix');
-        const inputDuree = document.getElementById('text-duree');
         const inputHoraires = document.getElementById('text-horaires');
         const inputResInfo = document.getElementById('text-res-info');
         const inputDesc = document.getElementById('text-description');
@@ -1571,8 +1559,6 @@
                     inputContact.value = tr.dataset.contact || '';
                     inputAdresse.value = tr.dataset.adresse || '';
                     inputLocalisation.value = tr.dataset.localisation || '';
-                    inputPrix.value = tr.dataset.prix || '';
-                    inputDuree.value = tr.dataset.duree || '';
                     inputHoraires.value = tr.dataset.horaires || '';
                     inputResInfo.value = tr.dataset.reservationInfo || '';
                     inputDesc.value = tr.dataset.description || '';
