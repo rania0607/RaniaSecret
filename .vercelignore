@@ -1,1 +1,2 @@
-frontend/static
+# .vercelignore
+# Keep frontend/static included so CSS, JS, and sound files are deployed

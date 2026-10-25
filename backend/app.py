@@ -1634,25 +1634,6 @@ def global_search():
     
     return jsonify({'results': results})
 
-@app.route('/test-sound-debug')
-def test_sound_debug():
-    res = {
-        '__file__': __file__,
-        'BASE_DIR': BASE_DIR,
-        'frontend_dir': frontend_dir,
-        'frontend_dir_exists': os.path.exists(frontend_dir),
-        'sounds_dir': os.path.join(frontend_dir, 'static', 'sounds'),
-        'sounds_dir_exists': os.path.exists(os.path.join(frontend_dir, 'static', 'sounds')),
-    }
-    if res['sounds_dir_exists']:
-        res['sounds_files'] = os.listdir(os.path.join(frontend_dir, 'static', 'sounds'))
-    if os.path.exists('/var/task'):
-        res['var_task_list'] = os.listdir('/var/task')
-    for d in ['/var/task', BASE_DIR, os.path.abspath(os.path.join(BASE_DIR, '..'))]:
-        if os.path.exists(d):
-            res['dir_' + d] = os.listdir(d)
-    return jsonify(res)
-
 @app.route('/test-db')
 def test_db():
     result = {'status': 'error', 'tables': []}
