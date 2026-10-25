@@ -1367,7 +1367,7 @@ def textile_edit(nom_ville, id):
             if upload_err:
                 flash(f"Cloudinary upload error: {upload_err}", "error")
                 return _detail_redirect(nom_ville, "textile")
-            image_path = new_image or (current["image_path"] if isinstance(current, dict) else current[0])
+            image_path = new_image or (current.get("image_url") if isinstance(current, dict) else current[0])
 
             cur.execute(
                 """UPDATE textile_crafts SET 
