@@ -4592,13 +4592,43 @@
         }
     }
 
-    // Toggle Notifications Dropdown in Navbar
+    // Toggle Notifications Dropdown in Navbar & Mobile Sidebar
     function toggleNavNotifDropdown(e) {
-        if (e) e.stopPropagation();
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         const box = document.getElementById('navNotifBox');
         if (!box) return;
 
-        if (box.style.display === 'none' || !box.style.display) {
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+            if (box.parentElement !== document.body) {
+                document.body.appendChild(box);
+            }
+            box.style.position = 'fixed';
+            box.style.top = '78px';
+            box.style.left = '50%';
+            box.style.right = 'auto';
+            box.style.transform = 'translateX(-50%)';
+            box.style.width = 'min(92vw, 350px)';
+            box.style.zIndex = '100005';
+        } else {
+            const wrapper = document.querySelector('.nav-notif-wrapper');
+            if (wrapper && box.parentElement !== wrapper) {
+                wrapper.appendChild(box);
+            }
+            box.style.position = '';
+            box.style.top = '';
+            box.style.left = '';
+            box.style.right = '';
+            box.style.transform = '';
+            box.style.width = '';
+            box.style.zIndex = '';
+        }
+
+        const fromSidebar = e && e.target && e.target.closest && e.target.closest('.sidebar-notif-link');
+        if (fromSidebar || box.style.display === 'none' || !box.style.display) {
             box.style.display = 'flex';
             loadUserNotifications();
         } else {
@@ -4610,8 +4640,12 @@
     document.addEventListener('click', function(e) {
         const notifBox = document.getElementById('navNotifBox');
         const notifBtn = document.getElementById('navNotifBtn');
+        const sidebarNotif = document.querySelector('.sidebar-notif-link');
         if (notifBox && notifBox.style.display !== 'none') {
-            if (!notifBox.contains(e.target) && (!notifBtn || !notifBtn.contains(e.target))) {
+            const clickedInsideBox = notifBox.contains(e.target);
+            const clickedBtn = notifBtn && notifBtn.contains(e.target);
+            const clickedSidebarLink = sidebarNotif && sidebarNotif.contains(e.target);
+            if (!clickedInsideBox && !clickedBtn && !clickedSidebarLink) {
                 notifBox.style.display = 'none';
             }
         }

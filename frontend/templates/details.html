@@ -1053,77 +1053,77 @@
     {% endif %}
 <!-- Section Artisanat Textile -->
 {% if textile_crafts %}
-<section class="section-wrapper" style="background: linear-gradient(135deg, #1a0a00 0%, #2d1200 50%, #1a0a00 100%); padding: 60px 20px;">
-    <h2 class="section-heading" style="color: #FBD5BC;"
+<section class="section-wrapper" id="patrimoine-textile" style="background: var(--grona); color: white;">
+    <h2 class="section-heading" style="color: white;"
         data-ar="<i class='fa-solid fa-scroll'></i>التراث <span>النسيجي</span>">
-        <i class="fa-solid fa-scroll"></i>Patrimoine <span style="color: #E19B64;">Textile</span>
+        <i class="fa-solid fa-scroll"></i>Patrimoine <span>Textile</span>
     </h2>
-    <div style="max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px;">
+    <div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
         {% for craft in textile_crafts %}
-        <div style="display:flex; gap:30px; background:rgba(255,255,255,0.05); border:1px solid rgba(225,155,100,0.3); border-radius:20px; padding:30px; flex-wrap:wrap; box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+        <div class="list-item-pro" style="display:flex; gap:20px; background:rgba(255,255,255,0.08); border-radius:var(--radius); border-bottom:3px solid var(--desert-gold); padding:18px 22px; flex-wrap:wrap; align-items:center; margin-bottom:0;">
             <!-- Colonne gauche : Image + Nom + Description -->
-            <div style="flex:1; min-width:260px; display:flex; flex-direction:column; gap:15px;">
+            <div style="flex:0 1 280px; min-width:220px; display:flex; flex-direction:column; gap:10px;">
                 {% if craft.image_url %}
                 <img src="{% if craft.image_url.startswith('http') %}{{ craft.image_url }}{% else %}{{ cdn_url }}{{ craft.image_url }}{% endif %}" alt="{{ craft.nom }}"
-                     style="width:100%; height:230px; object-fit:cover; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.5);"
+                     style="width:100%; height:155px; object-fit:cover; border-radius:12px;"
                      onerror="this.style.display='none'">
                 {% endif %}
-                <h3 style="font-family:'Playfair Display',serif; font-size:1.6rem; color:#E19B64; margin:0;">{{ craft.nom }}</h3>
+                <h3 style="font-family:'Playfair Display',serif; font-size:1.15rem; color:var(--desert-gold); margin:0; line-height:1.3;">{{ craft.nom }}</h3>
                 {% if craft.description %}
-                <p style="color:#d4c4b0; font-size:0.95rem; line-height:1.7; margin:0;">{{ craft.description }}</p>
+                <p style="color:rgba(255,255,255,0.9); font-size:0.85rem; line-height:1.5; margin:0;">{{ craft.description }}</p>
                 {% endif %}
             </div>
             <!-- Colonne droite : Fiche pratique -->
-            <div style="flex:1; min-width:260px;">
+            <div style="flex:1; min-width:240px;">
                 <table style="width:100%; border-collapse:collapse;">
                     {% if craft.atelier_nom %}
-                    <tr style="border-bottom:1px solid rgba(102, 39, 39, 0.395);">
-                        <td style="padding:12px 10px; color:#E19B64; font-weight:600; font-size:0.85rem; width:40%; text-transform:uppercase;"><i class="fa-solid fa-store" style="margin-right:6px;"></i>Atelier</td>
-                        <td style="padding:12px 10px; color:#e8ddd0; font-size:0.9rem;">{{ craft.atelier_nom }}</td>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
+                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; width:38%; text-transform:uppercase;"><i class="fa-solid fa-store" style="margin-right:6px;"></i>Atelier</td>
+                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;">{{ craft.atelier_nom }}</td>
                     </tr>
                     {% endif %}
                     {% if craft.adresse %}
-                    <tr style="border-bottom:1px solid rgba(225,155,100,0.2);">
-                        <td style="padding:12px 10px; color:#E19B64; font-weight:600; font-size:0.85rem; text-transform:uppercase;"><i class="fa-solid fa-location-dot" style="margin-right:6px;"></i>Adresse</td>
-                        <td style="padding:12px 10px; color:#e8ddd0; font-size:0.9rem;">{{ craft.adresse }}</td>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
+                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; text-transform:uppercase;"><i class="fa-solid fa-location-dot" style="margin-right:6px;"></i>Adresse</td>
+                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;">{{ craft.adresse }}</td>
                     </tr>
                     {% endif %}
                     {% if craft.contact %}
-                    <tr style="border-bottom:1px solid rgba(225,155,100,0.2);">
-                        <td style="padding:12px 10px; color:#E19B64; font-weight:600; font-size:0.85rem; text-transform:uppercase;"><i class="fa-solid fa-phone" style="margin-right:6px;"></i>Contact</td>
-                        <td style="padding:12px 10px; color:#e8ddd0; font-size:0.9rem;"><a href="tel:{{ craft.contact }}" style="color:#E19B64; text-decoration:none;">{{ craft.contact }}</a></td>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
+                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; text-transform:uppercase;"><i class="fa-solid fa-phone" style="margin-right:6px;"></i>Contact</td>
+                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;"><a href="tel:{{ craft.contact }}" style="color:var(--desert-gold); font-weight:600; text-decoration:none;">{{ craft.contact }}</a></td>
                     </tr>
                     {% endif %}
                     {% if craft.localisation %}
-                    <tr style="border-bottom:1px solid rgba(225,155,100,0.2);">
-                        <td style="padding:12px 10px; color:#E19B64; font-weight:600; font-size:0.85rem; text-transform:uppercase;"><i class="fa-solid fa-map-pin" style="margin-right:6px;"></i>Localisation</td>
-                        <td style="padding:12px 10px; color:#e8ddd0; font-size:0.9rem;"><a href="{{ craft.localisation }}" target="_blank" style="color:#E19B64; text-decoration:none;">&#128205; Voir sur Google Maps</a></td>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
+                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; text-transform:uppercase;"><i class="fa-solid fa-map-pin" style="margin-right:6px;"></i>Localisation</td>
+                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;"><a href="{{ craft.localisation }}" target="_blank" style="color:var(--desert-gold); font-weight:600; text-decoration:none;">&#128205; Voir sur Google Maps</a></td>
                     </tr>
                     {% endif %}
                     {% if craft.prix %}
-                    <tr style="border-bottom:1px solid rgba(225,155,100,0.2);">
-                        <td style="padding:12px 10px; color:#E19B64; font-weight:600; font-size:0.85rem; text-transform:uppercase;"><i class="fa-solid fa-tag" style="margin-right:6px;"></i>Prix</td>
-                        <td style="padding:12px 10px; color:#e8ddd0; font-size:0.9rem;">{{ craft.prix }}</td>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
+                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; text-transform:uppercase;"><i class="fa-solid fa-tag" style="margin-right:6px;"></i>Prix</td>
+                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;">{{ craft.prix }}</td>
                     </tr>
                     {% endif %}
                     {% if craft.duree %}
-                    <tr style="border-bottom:1px solid rgba(225,155,100,0.2);">
-                        <td style="padding:12px 10px; color:#E19B64; font-weight:600; font-size:0.85rem; text-transform:uppercase;"><i class="fa-solid fa-clock" style="margin-right:6px;"></i>Durée</td>
-                        <td style="padding:12px 10px; color:#e8ddd0; font-size:0.9rem;">{{ craft.duree }}</td>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
+                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; text-transform:uppercase;"><i class="fa-solid fa-clock" style="margin-right:6px;"></i>Durée</td>
+                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;">{{ craft.duree }}</td>
                     </tr>
                     {% endif %}
                     {% if craft.horaires %}
-                    <tr style="border-bottom:1px solid rgba(225,155,100,0.2);">
-                        <td style="padding:12px 10px; color:#E19B64; font-weight:600; font-size:0.85rem; text-transform:uppercase;"><i class="fa-solid fa-calendar" style="margin-right:6px;"></i>Horaires</td>
-                        <td style="padding:12px 10px; color:#e8ddd0; font-size:0.9rem;">{{ craft.horaires }}</td>
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
+                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; text-transform:uppercase;"><i class="fa-solid fa-calendar" style="margin-right:6px;"></i>Horaires</td>
+                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;">{{ craft.horaires }}</td>
                     </tr>
                     {% endif %}
                     {% if craft.reservation_info or craft.reservation_link %}
                     <tr>
-                        <td style="padding:12px 10px; color:#E19B64; font-weight:600; font-size:0.85rem; text-transform:uppercase;"><i class="fa-solid fa-calendar-check" style="margin-right:6px;"></i>Réservation</td>
-                        <td style="padding:12px 10px; color:#e8ddd0; font-size:0.9rem;">
+                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; text-transform:uppercase;"><i class="fa-solid fa-calendar-check" style="margin-right:6px;"></i>Réservation</td>
+                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;">
                             {% if craft.reservation_link %}
-                            <a href="{{ craft.reservation_link }}" target="_blank" style="display:inline-block; padding:7px 18px; background:#E19B64; color:#1a0a00; border-radius:20px; font-weight:700; text-decoration:none; font-size:0.85rem;">Réserver &rarr;</a>
+                            <a href="{{ craft.reservation_link }}" target="_blank" class="btn-gold" style="padding:6px 14px; border-radius:20px; font-size:0.78rem;">Réserver &rarr;</a>
                             {% else %}{{ craft.reservation_info }}{% endif %}
                         </td>
                     </tr>
