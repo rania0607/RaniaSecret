@@ -8,9 +8,41 @@
             autoDisplay: false
         }, 'google_translate_element');
     }
+
+    // Explicit global window bindings
+    window.openGlobalAuthOrProfile = openGlobalAuthOrProfile;
+    window.closeGlobalUserModal = closeGlobalUserModal;
+    window.toggleNavNotifDropdown = toggleNavNotifDropdown;
+    window.toggleChat = toggleChat;
+    window.showGmAuthTab = showGmAuthTab;
+    window.openGlobalPacksView = openGlobalPacksView;
+    window.selectGmPack = selectGmPack;
+    window.proceedToGmPayment = proceedToGmPayment;
+    window.copyGmRib = copyGmRib;
+    window.performGmLogin = performGmLogin;
+    window.performGmRegister = performGmRegister;
+    window.performGlobalLogout = performGlobalLogout;
+    window.loadUserNotifications = loadUserNotifications;
+
 </script>
 <script type="text/javascript"
-    src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit">
+    // Explicit global window bindings
+    window.openGlobalAuthOrProfile = openGlobalAuthOrProfile;
+    window.closeGlobalUserModal = closeGlobalUserModal;
+    window.toggleNavNotifDropdown = toggleNavNotifDropdown;
+    window.toggleChat = toggleChat;
+    window.showGmAuthTab = showGmAuthTab;
+    window.openGlobalPacksView = openGlobalPacksView;
+    window.selectGmPack = selectGmPack;
+    window.proceedToGmPayment = proceedToGmPayment;
+    window.copyGmRib = copyGmRib;
+    window.performGmLogin = performGmLogin;
+    window.performGmRegister = performGmRegister;
+    window.performGlobalLogout = performGlobalLogout;
+    window.loadUserNotifications = loadUserNotifications;
+
+</script>
 
 <style>
     /* --- CUSTOM UI TRANSLATE --- */
@@ -3895,7 +3927,7 @@
         }
     }
 
-    function updateProfileView() {
+        function updateProfileView() {
         const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
         const uName = localStorage.getItem('userName') || 'Utilisateur';
         const uEmail = localStorage.getItem('userEmail') || 'N/A';
@@ -3936,17 +3968,22 @@
         if (gmUpgrade) {
             gmUpgrade.style.display = (tierRaw.toLowerCase() === 'premium') ? 'none' : 'inline-flex';
         }
-        document.getElementById('profileName').textContent = localStorage.getItem('userName') || 'Utilisateur';
-        document.getElementById('profileEmail').textContent = localStorage.getItem('userEmail') || 'N/A';
-        const tierRaw = (localStorage.getItem('userTier') || 'explorer').toString();
-        const tierMap = { explorer: 'Explorateur', explorateur: 'Explorateur', standard: 'Standard', premium: 'Premium' };
-        const tierLabel = tierMap[tierRaw.toLowerCase()] || tierRaw;
-        document.getElementById('profileTier').textContent = tierLabel;
-        document.getElementById('profilePack').textContent = 'Pack ' + tierLabel;
-        document.getElementById('profileStatus').textContent = isAuthenticated ? 'Connecté' : 'Invité';
-        document.getElementById('profileQueriesRemaining').textContent = localStorage.getItem('userQueriesRemaining') || 'Illimité';
 
-        // Toggle login/logout button
+        // Update Chatbot Profile fields
+        const pName = document.getElementById('profileName');
+        if (pName) pName.textContent = uName;
+        const pEmail = document.getElementById('profileEmail');
+        if (pEmail) pEmail.textContent = uEmail;
+        const pTier = document.getElementById('profileTier');
+        if (pTier) pTier.textContent = tierLabel;
+        const pPack = document.getElementById('profilePack');
+        if (pPack) pPack.textContent = 'Pack ' + tierLabel;
+        const pStatus = document.getElementById('profileStatus');
+        if (pStatus) pStatus.textContent = isAuthenticated ? 'Connecté' : 'Invité';
+        const pQueries = document.getElementById('profileQueriesRemaining');
+        if (pQueries) pQueries.textContent = qRemaining;
+
+        // Toggle login/logout button in Chatbot
         const loginBtn = document.querySelector('#cbProfileView .profile-actions .primary');
         if (loginBtn) {
             loginBtn.textContent = isAuthenticated ? 'Se déconnecter' : 'Se connecter';
@@ -3955,10 +3992,9 @@
                 showAuthTab('login');
             };
         }
-        // Show/hide upgrade button based on tier (simple logic)
         const upgradeBtn = document.querySelector('#cbProfileView .profile-actions .upgrade');
         if (upgradeBtn) {
-            if ((localStorage.getItem('userTier') || '').toLowerCase() === 'premium') {
+            if (tierRaw.toLowerCase() === 'premium') {
                 upgradeBtn.style.display = 'none';
             } else {
                 upgradeBtn.style.display = 'inline-block';
@@ -4571,5 +4607,21 @@
             }
         }
     });
+
+
+    // Explicit global window bindings
+    window.openGlobalAuthOrProfile = openGlobalAuthOrProfile;
+    window.closeGlobalUserModal = closeGlobalUserModal;
+    window.toggleNavNotifDropdown = toggleNavNotifDropdown;
+    window.toggleChat = toggleChat;
+    window.showGmAuthTab = showGmAuthTab;
+    window.openGlobalPacksView = openGlobalPacksView;
+    window.selectGmPack = selectGmPack;
+    window.proceedToGmPayment = proceedToGmPayment;
+    window.copyGmRib = copyGmRib;
+    window.performGmLogin = performGmLogin;
+    window.performGmRegister = performGmRegister;
+    window.performGlobalLogout = performGlobalLogout;
+    window.loadUserNotifications = loadUserNotifications;
 
 </script>
