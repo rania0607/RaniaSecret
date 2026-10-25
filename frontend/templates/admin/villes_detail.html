@@ -496,10 +496,6 @@
                 <input type="text" id="text-localisation" name="localisation" maxlength="100">
             </div>
             <div class="field">
-                <label for="text-horaires">Horaires</label>
-                <input type="text" id="text-horaires" name="horaires" maxlength="100">
-            </div>
-            <div class="field">
                 <label for="text-res-info">Réservation Info</label>
                 <input type="text" id="text-res-info" name="reservation_info" maxlength="255">
             </div>
@@ -540,7 +536,6 @@
                 data-adresse="{{ t.adresse or '' }}"
                 data-contact="{{ t.contact or '' }}"
                 data-localisation="{{ t.localisation or '' }}"
-                data-horaires="{{ t.horaires or '' }}"
                 data-reservation-info="{{ t.reservation_info or '' }}"
                 data-image-path="{{ t.image_url or '' }}">
                 <td>{{ thumb(t.image_url, 'textile') }}</td>
@@ -1519,7 +1514,6 @@
         const inputContact = document.getElementById('text-contact');
         const inputAdresse = document.getElementById('text-adresse');
         const inputLocalisation = document.getElementById('text-localisation');
-        const inputHoraires = document.getElementById('text-horaires');
         const inputResInfo = document.getElementById('text-res-info');
         const inputDesc = document.getElementById('text-description');
         const currentWrap = document.getElementById('text-current-image');
@@ -1559,7 +1553,6 @@
                     inputContact.value = tr.dataset.contact || '';
                     inputAdresse.value = tr.dataset.adresse || '';
                     inputLocalisation.value = tr.dataset.localisation || '';
-                    inputHoraires.value = tr.dataset.horaires || '';
                     inputResInfo.value = tr.dataset.reservationInfo || '';
                     inputDesc.value = tr.dataset.description || '';
                     

@@ -422,14 +422,14 @@ def villes_detail(nom_ville):
             v_row = cur.fetchone()
             ville_id = (v_row["id"] if isinstance(v_row, dict) else v_row[0]) if v_row else 0
 
-            for _legacy_col in ("prix", "duree"):
+            for _legacy_col in ("prix", "duree", "horaires"):
                 cur.execute(f"SHOW COLUMNS FROM textile_crafts LIKE '{_legacy_col}'")
                 if cur.fetchone():
                     cur.execute(f"ALTER TABLE textile_crafts DROP COLUMN {_legacy_col}")
                     conn.commit()
 
             cur.execute(
-                "SELECT id, nom, description, image_url, atelier_nom, adresse, contact, localisation, horaires, reservation_info, reservation_link "
+                "SELECT id, nom, description, image_url, atelier_nom, adresse, contact, localisation, reservation_info, reservation_link "
                 "FROM textile_crafts WHERE ville_id = %s ORDER BY id", (ville_id,))
             textile_crafts = cur.fetchall()
     finally:
@@ -1280,7 +1280,6 @@ def _validate_textile(form):
     adresse = (form.get("adresse") or "").strip() or None
     contact = (form.get("contact") or "").strip() or None
     localisation = (form.get("localisation") or "").strip() or None
-    horaires = (form.get("horaires") or "").strip() or None
     reservation_info = (form.get("reservation_info") or "").strip() or None
     reservation_link = (form.get("reservation_link") or "").strip() or None
 
@@ -1296,7 +1295,6 @@ def _validate_textile(form):
         "adresse": adresse,
         "contact": contact,
         "localisation": localisation,
-        "horaires": horaires,
         "reservation_info": reservation_info,
         "reservation_link": reservation_link,
     }, None
@@ -1331,11 +1329,11 @@ def textile_new(nom_ville):
 
             cur.execute(
                 """INSERT INTO textile_crafts 
-                (ville_id, nom, description, image_url, atelier_nom, adresse, contact, localisation, horaires, reservation_info, reservation_link)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                (ville_id, nom, description, image_url, atelier_nom, adresse, contact, localisation, reservation_info, reservation_link)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 (ville_id, data["nom"], data["description"], image_path, data["atelier_nom"], 
                  data["adresse"], data["contact"], data["localisation"], 
-                 data["horaires"], data["reservation_info"], data["reservation_link"]),
+                 data["reservation_info"], data["reservation_link"]),
             )
         conn.commit()
     finally:
@@ -1374,12 +1372,12 @@ def textile_edit(nom_ville, id):
             cur.execute(
                 """UPDATE textile_crafts SET 
                 nom=%s, description=%s, image_url=%s, atelier_nom=%s, adresse=%s, 
-                contact=%s, localisation=%s, horaires=%s, 
+                contact=%s, localisation=%s, 
                 reservation_info=%s, reservation_link=%s 
                 WHERE id=%s""",
                 (data["nom"], data["description"], image_path, data["atelier_nom"], 
                  data["adresse"], data["contact"], data["localisation"], 
-                 data["horaires"], data["reservation_info"], data["reservation_link"], id),
+                 data["reservation_info"], data["reservation_link"], id),
             )
         conn.commit()
     finally:

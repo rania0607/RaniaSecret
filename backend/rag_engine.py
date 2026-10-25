@@ -311,7 +311,7 @@ def retrieve_context(message: str, history: list = None) -> dict:
 
                 if ville_info and ville_info.get('id'):
                     cur.execute(
-                        "SELECT nom, description, atelier_nom, adresse, contact, horaires "
+                        "SELECT nom, description, atelier_nom, adresse, contact "
                         "FROM textile_crafts WHERE ville_id = %s LIMIT 6", (ville_info['id'],)
                     )
                     context['data']['textile_crafts'] = cur.fetchall()
