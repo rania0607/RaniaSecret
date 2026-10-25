@@ -1025,7 +1025,7 @@
 <section class="section-wrapper" style="background: linear-gradient(135deg, #1a0a00 0%, #2d1200 50%, #1a0a00 100%); padding: 60px 20px;">
     <h2 class="section-heading" style="color: #FBD5BC;"
         data-ar="<i class='fa-solid fa-scroll'></i>التراث <span>النسيجي</span>">
-        <i class="fa-solid fa-scroll"></i>Patrimoine <span style="color: #E19B64;">Textile &amp; Artisanat</span>
+        <i class="fa-solid fa-scroll"></i>Patrimoine <span style="color: #E19B64;">Textile</span>
     </h2>
     <div style="max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px;">
         {% for craft in textile_crafts %}
@@ -1033,7 +1033,7 @@
             <!-- Colonne gauche : Image + Nom + Description -->
             <div style="flex:1; min-width:260px; display:flex; flex-direction:column; gap:15px;">
                 {% if craft.image_url %}
-                <img src="{{ craft.image_url }}" alt="{{ craft.nom }}"
+                <img src="{% if craft.image_url.startswith('http') %}{{ craft.image_url }}{% else %}{{ cdn_url }}{{ craft.image_url }}{% endif %}" alt="{{ craft.nom }}"
                      style="width:100%; height:230px; object-fit:cover; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.5);"
                      onerror="this.style.display='none'">
                 {% endif %}
@@ -1104,54 +1104,8 @@
     </div>
 </section>
 {% endif %}
-                <tr>
-                    <td class="label-col">Adresse:</td>
-                    <td>{{ craft.adresse or 'N/A' }}</td>
-                </tr>
-                <tr>
-                    <td class="label-col">Contact:</td>
-                    <td>{{ craft.contact or 'N/A' }}</td>
-                </tr>
-                <tr>
-                    <td class="label-col">Localisation:</td>
-                    <td>
-                        {% if craft.localisation_link %}
-                            <a href="{{ craft.localisation_link }}" target="_blank" style="color: #e0a96d;">Voir sur Google Maps 📍</a>
-                        {% else %}
-                            {{ craft.localisation or 'N/A' }}
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <td class="label-col">Prix / Tarif:</td>
-                    <td>{{ craft.prix or 'Gratuit / Variable' }}</td>
-                </tr>
-                <tr>
-                    <td class="label-col">Durée:</td>
-                    <td>{{ craft.duree or 'N/A' }}</td>
-                </tr>
-                <tr>
-                    <td class="label-col">Horaires:</td>
-                    <td>{{ craft.horaires or '09:00 - 18:00' }}</td>
-                </tr>
-                <tr>
-                    <td class="label-col">Réservation:</td>
-                    <td>
-                        {% if craft.reservation_link %}
-                            <a href="{{ craft.reservation_link }}" class="btn-reservation" target="_blank">Réserver</a>
-                        {% else %}
-                            {{ craft.reservation_info or 'Sur place / Non requise' }}
-                        {% endif %}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
 
-    <!-- SPÉCIALITÉS CULINAIRES -->
+<!-- SPÉCIALITÉS CULINAIRES -->
     <section class="section-wrapper" id="specialites">
         <h2 class="section-heading" style="color: white;"
             data-ar="<i class='fa-solid fa-plate-wheat'></i>تخصصات <span>الطبخ</span>"><i
