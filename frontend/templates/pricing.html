@@ -1813,7 +1813,7 @@
             });
         }
 
-        var WA = '212625902686';
+        var WA = '212661854898';
         var MSG = {
             'explorer': "Bonjour Morocco Secrets\nJe souhaite activer le pack *Explorateur* (Gratuit).",
             'standard': "Bonjour Morocco Secrets\nJe souhaite m'abonner au pack *Standard* (49 MAD/mois).\nMerci de me confirmer les modalités de paiement !",
@@ -1821,25 +1821,40 @@
         };
         function setTier(tier) {
             if (tier === 'explorer') {
-                fetch('/set-tier/explorer').then(function (r) { return r.json(); })
-                    .then(function () { window.location.href = '/'; })
-                    .catch(function () { window.location.href = '/'; });
+                startFreeExplorer();
+                return;
+            }
+            if (typeof window.openGlobalPacksView === 'function') {
+                window.openGlobalPacksView();
+                if (tier === 'standard' && typeof window.selectGmPack === 'function') {
+                    window.selectGmPack(2, 'Pack Standard', 49);
+                } else if (tier === 'premium' && typeof window.selectGmPack === 'function') {
+                    window.selectGmPack(3, 'Pack Premium', 99);
+                }
+                if (typeof window.proceedToGmPayment === 'function') {
+                    window.proceedToGmPayment();
+                }
                 return;
             }
             window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(MSG[tier]), '_blank');
         }
 
         function startFreeExplorer() {
-            // 1. Ouvrir le chatbot s'il est fermé
-            const win = document.getElementById('chatWin');
-            if (win && !win.classList.contains('visible')) {
-                if (typeof window.toggleChat === 'function') {
-                    window.toggleChat();
+            if (typeof window.openGlobalAuthOrProfile === 'function') {
+                window.openGlobalAuthOrProfile();
+                if (typeof window.showGmAuthTab === 'function') {
+                    window.showGmAuthTab('register');
                 }
-            }
-            // 2. Afficher le panneau d'authentification et l'onglet inscription
-            if (typeof window.showAuthTab === 'function') {
-                window.showAuthTab('register');
+            } else {
+                const win = document.getElementById('chatWin');
+                if (win && !win.classList.contains('visible')) {
+                    if (typeof window.toggleChat === 'function') {
+                        window.toggleChat();
+                    }
+                }
+                if (typeof window.showAuthTab === 'function') {
+                    window.showAuthTab('register');
+                }
             }
         }
 
@@ -1849,6 +1864,7 @@
             });
         }
         window.addEventListener('scroll', revealCards);
+        window.addEventListener('DOMContentLoaded', revealCards);
         window.addEventListener('load', function () { setTimeout(revealCards, 100); });
         revealCards();
 

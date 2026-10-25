@@ -8,315 +8,6 @@
             autoDisplay: false
         }, 'google_translate_element');
     }
-
-    // ============================================================
-    // GESTION MODALE GLOBALE (AUTH, PROFIL, PACKS, NOTIFICATIONS)
-    // ============================================================
-    let gmSelectedPackId = 2;
-    let gmSelectedPackName = 'Pack Standard';
-    let gmSelectedPackPrice = 49;
-    let isGmAnnual = false;
-
-    function openGlobalAuthOrProfile() {
-        const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-        const modal = document.getElementById('globalUserModal');
-        if (!modal) return;
-
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-
-        if (isAuth) {
-            showGmView('profile');
-            updateProfileView();
-        } else {
-            showGmView('auth');
-            showGmAuthTab('login');
-        }
-    }
-
-    function closeGlobalUserModal() {
-        const modal = document.getElementById('globalUserModal');
-        if (modal) {
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-    }
-
-    function handleGlobalModalOverlayClick(e) {
-        if (e.target && e.target.id === 'globalUserModal') {
-            closeGlobalUserModal();
-        }
-    }
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeGlobalUserModal();
-            const notifBox = document.getElementById('navNotifBox');
-            if (notifBox) notifBox.style.display = 'none';
-        }
-    });
-
-    function showGmView(viewName) {
-        const authView = document.getElementById('gmAuthView');
-        const profileView = document.getElementById('gmProfileView');
-        const packView = document.getElementById('gmPackView');
-        const paymentView = document.getElementById('gmPaymentView');
-
-        if (authView) authView.style.display = (viewName === 'auth') ? 'block' : 'none';
-        if (profileView) profileView.style.display = (viewName === 'profile') ? 'block' : 'none';
-        if (packView) packView.style.display = (viewName === 'pack') ? 'block' : 'none';
-        if (paymentView) paymentView.style.display = (viewName === 'payment') ? 'block' : 'none';
-    }
-
-    function showGmAuthTab(tab) {
-        const loginForm = document.getElementById('gmLoginForm');
-        const regForm = document.getElementById('gmRegisterForm');
-        const loginTab = document.getElementById('gmLoginTab');
-        const regTab = document.getElementById('gmRegisterTab');
-        const errLogin = document.getElementById('gmLoginError');
-        const errReg = document.getElementById('gmRegisterError');
-
-        if (errLogin) errLogin.classList.remove('show');
-        if (errReg) errReg.classList.remove('show');
-
-        if (tab === 'login') {
-            if (loginForm) loginForm.style.display = 'flex';
-            if (regForm) regForm.style.display = 'none';
-            if (loginTab) loginTab.classList.add('active');
-            if (regTab) regTab.classList.remove('active');
-        } else {
-            if (loginForm) loginForm.style.display = 'none';
-            if (regForm) regForm.style.display = 'flex';
-            if (loginTab) loginTab.classList.remove('active');
-            if (regTab) regTab.classList.add('active');
-        }
-    }
-
-    function toggleGmChildrenField(val) {
-        const grp = document.getElementById('gmChildrenFieldGroup');
-        if (grp) {
-            grp.style.display = (val === 'Famille') ? 'block' : 'none';
-        }
-    }
-
-    async function performGmLogin() {
-        const email = document.getElementById('gmLoginEmail').value.trim();
-        const password = document.getElementById('gmLoginPassword').value.trim();
-        const errEl = document.getElementById('gmLoginError');
-        if (errEl) errEl.classList.remove('show');
-
-        if (!email || !password) {
-            if (errEl) {
-                errEl.textContent = 'Veuillez saisir votre email et votre mot de passe.';
-                errEl.classList.add('show');
-            }
-            return;
-        }
-
-        try {
-            const response = await fetch('/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('userName', data.nom || data.message || '');
-                localStorage.setItem('userEmail', data.email || email);
-                localStorage.setItem('userTier', data.tier || 'explorer');
-                localStorage.setItem('userQueriesRemaining', data.remaining_queries != null ? data.remaining_queries : 'Illimité');
-                updateProfileView();
-                showGmView('profile');
-                loadUserNotifications();
-            } else {
-                if (errEl) {
-                    errEl.textContent = data.message || 'Email ou mot de passe incorrect.';
-                    errEl.classList.add('show');
-                }
-            }
-        } catch (error) {
-            console.error('GmLogin error:', error);
-            if (errEl) {
-                errEl.textContent = 'Une erreur est survenue lors de la connexion.';
-                errEl.classList.add('show');
-            }
-        }
-    }
-
-    async function performGmRegister() {
-        const nom = document.getElementById('gmRegisterName').value.trim();
-        const email = document.getElementById('gmRegisterEmail').value.trim();
-        const password = document.getElementById('gmRegisterPassword').value.trim();
-        const age = document.getElementById('gmRegisterAge') ? document.getElementById('gmRegisterAge').value : null;
-        const travel_type = document.getElementById('gmRegisterTravelType') ? document.getElementById('gmRegisterTravelType').value : 'Solo';
-        const children_count = document.getElementById('gmRegisterChildrenCount') ? document.getElementById('gmRegisterChildrenCount').value : 0;
-        const errEl = document.getElementById('gmRegisterError');
-        if (errEl) errEl.classList.remove('show');
-
-        if (!nom || !email || !password) {
-            if (errEl) {
-                errEl.textContent = 'Veuillez remplir tous les champs obligatoires.';
-                errEl.classList.add('show');
-            }
-            return;
-        }
-
-        try {
-            const response = await fetch('/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    nom: nom, 
-                    email: email, 
-                    password: password,
-                    age: age,
-                    travel_type: travel_type,
-                    children_count: children_count
-                })
-            });
-            const data = await response.json();
-
-            if (data.success || data.status === 'success') {
-                localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('userName', data.nom || nom);
-                localStorage.setItem('userEmail', data.email || email);
-                localStorage.setItem('userTier', data.tier || 'explorer');
-                localStorage.setItem('userQueriesRemaining', data.remaining_queries != null ? data.remaining_queries : '50');
-                updateProfileView();
-                showGmView('profile');
-                loadUserNotifications();
-            } else {
-                if (errEl) {
-                    errEl.textContent = data.message || "Erreur lors de l'inscription.";
-                    errEl.classList.add('show');
-                }
-            }
-        } catch (error) {
-            console.error('GmRegister error:', error);
-            if (errEl) {
-                errEl.textContent = "Une erreur est survenue lors de l'inscription.";
-                errEl.classList.add('show');
-            }
-        }
-    }
-
-    async function performGlobalLogout() {
-        await performLogout();
-        updateProfileView();
-        showGmView('auth');
-        showGmAuthTab('login');
-    }
-
-    function openGlobalPacksView() {
-        const modal = document.getElementById('globalUserModal');
-        if (modal) modal.classList.add('active');
-        showGmView('pack');
-    }
-
-    function returnFromPacksView() {
-        const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-        if (isAuth) {
-            showGmView('profile');
-        } else {
-            showGmView('auth');
-        }
-    }
-
-    function toggleGmBillingPeriod() {
-        isGmAnnual = !isGmAnnual;
-        const toggle = document.getElementById('gmBillingToggle');
-        const mLabel = document.getElementById('gmMonthlyLabel');
-        const aLabel = document.getElementById('gmAnnualLabel');
-        const p2 = document.getElementById('gmPack2Amount');
-        const p3 = document.getElementById('gmPack3Amount');
-
-        if (toggle) toggle.classList.toggle('annual', isGmAnnual);
-        if (mLabel) mLabel.classList.toggle('active', !isGmAnnual);
-        if (aLabel) aLabel.classList.toggle('active', isGmAnnual);
-
-        if (p2) p2.textContent = isGmAnnual ? '39 DHS' : '49 DHS';
-        if (p3) p3.textContent = isGmAnnual ? '79 DHS' : '99 DHS';
-    }
-
-    function selectGmPack(id, name, basePrice) {
-        gmSelectedPackId = id;
-        gmSelectedPackName = name;
-        gmSelectedPackPrice = basePrice;
-
-        [1, 2, 3].forEach(i => {
-            const card = document.getElementById('gmPackCard' + i);
-            if (card) {
-                if (i === id) {
-                    card.classList.add('selected');
-                } else {
-                    card.classList.remove('selected');
-                }
-            }
-        });
-    }
-
-    function proceedToGmPayment() {
-        if (gmSelectedPackId === 1) {
-            closeGlobalUserModal();
-            return;
-        }
-
-        const period = isGmAnnual ? 'Annuel' : 'Mensuel';
-        const price = (gmSelectedPackId === 2) ? (isGmAnnual ? 39 : 49) : (isGmAnnual ? 79 : 99);
-        const total = isGmAnnual ? (price * 12) + ' DHS / an' : price + ' DHS / mois';
-
-        const pName = document.getElementById('gmPaymentPackName');
-        const pPeriod = document.getElementById('gmPaymentPeriod');
-        const pTotal = document.getElementById('gmPaymentTotal');
-        const waBtn = document.getElementById('gmWhatsAppBtn');
-
-        if (pName) pName.textContent = gmSelectedPackName;
-        if (pPeriod) pPeriod.textContent = period;
-        if (pTotal) pTotal.textContent = total;
-
-        if (waBtn) {
-            const msg = `Bonjour, je viens d'effectuer un virement pour le ${gmSelectedPackName} (${period} - ${total}). Voici ma capture d'écran de paiement.`;
-            waBtn.href = `https://wa.me/212661854898?text=${encodeURIComponent(msg)}`;
-        }
-
-        showGmView('payment');
-    }
-
-    function copyGmRib() {
-        const rib = document.getElementById('gmRibNumber');
-        if (rib) {
-            navigator.clipboard.writeText(rib.textContent.trim());
-            alert('RIB copié dans le presse-papiers !');
-        }
-    }
-
-    // Toggle Notifications Dropdown in Navbar
-    function toggleNavNotifDropdown(e) {
-        if (e) e.stopPropagation();
-        const box = document.getElementById('navNotifBox');
-        if (!box) return;
-
-        if (box.style.display === 'none' || !box.style.display) {
-            box.style.display = 'flex';
-            loadUserNotifications();
-        } else {
-            box.style.display = 'none';
-        }
-    }
-
-    // Close Nav Notif on outside click
-    document.addEventListener('click', function(e) {
-        const notifBox = document.getElementById('navNotifBox');
-        const notifBtn = document.getElementById('navNotifBtn');
-        if (notifBox && notifBox.style.display !== 'none') {
-            if (!notifBox.contains(e.target) && (!notifBtn || !notifBtn.contains(e.target))) {
-                notifBox.style.display = 'none';
-            }
-        }
-    });
-
 </script>
 <script type="text/javascript"
     src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
@@ -2397,7 +2088,8 @@
         .chatbot-container .chatbot-window { height: calc(100vh - 20px); bottom: 10px; max-height: none; }
     }
 
-    /* --- TOP NAVBAR AUTH & NOTIFICATIONS STYLES --- */
+
+    /* --- TOP NAVBAR AUTH & NOTIFICATIONS --- */
     .nav-auth-btn {
         background: rgba(255, 255, 255, 0.15);
         color: #FFFFFF;
@@ -2694,6 +2386,15 @@
         background: #e5e7eb;
         color: #111;
     }
+
+    /* Force chatbot closed by default unless .visible */
+    .chatbot-window {
+        display: none !important;
+    }
+    .chatbot-window.visible {
+        display: flex !important;
+    }
+
     @media (max-width: 768px) {
         .nav-auth-btn {
             padding: 6px 10px;
@@ -2748,7 +2449,14 @@
             </div>
             <div class="cb-nav-btns">
                 <div class="cb-nav-group">
+                    <!-- Notification Bell Button -->
+                    <button class="cb-btn-nav-group" id="notifBellBtn" onclick="toggleNotifDropdown(event)" style="position: relative;">
+                        <span class="cb-ico">🔔</span>
+                        <span id="notifCountBadge" style="display: none; position: absolute; top: -3px; right: -3px; background: #ef4444; color: white; font-size: 9px; font-weight: 800; border-radius: 50%; width: 16px; height: 16px; align-items: center; justify-content: center; border: 1.5px solid white;">0</span>
+                    </button>
                     <button class="cb-btn-nav-group" id="conversationHistoryToggle" type="button" aria-label="Historique des conversations" title="Historique des conversations"><span class="cb-ico">☰</span></button>
+                    <button class="cb-btn-nav-group" id="navBtn" onclick="switchToView('profile')"><span class="cb-ico">👤</span><span class="cb-lbl">Profil</span></button>
+                    <button class="cb-btn-nav-group" id="upgradeNavBtn" onclick="switchToView('pack')"><span class="cb-ico">✦</span><span class="cb-lbl">Packs</span></button>
                 </div>
                 <button class="cb-btn-close" onclick="toggleChat()">✕</button>
             </div>
@@ -2767,6 +2475,15 @@
         </aside>
 
 
+        <!-- ── Notification Dropdown Box ── -->
+        <div id="cbNotifBox" style="display: none; background: #ffffff; border-bottom: 2px solid var(--cb-desert-gold); box-shadow: 0 8px 20px rgba(0,0,0,0.12); z-index: 100; max-height: 280px; overflow-y: auto; padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #f0f0f0; padding-bottom: 6px;">
+                <span style="font-size: 12px; font-weight: 700; color: var(--cb-grona); text-transform: uppercase; letter-spacing: 0.5px;">Vos Recommandations</span>
+                <span onclick="toggleNotifDropdown()" style="cursor: pointer; font-size: 13px; color: #888;">✕</span>
+            </div>
+            <div id="notifListContainer" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="font-size: 11px; color: #999; text-align: center; padding: 10px;">Chargement des notifications...</div>
+            </div>
         </div>
 
         <!-- ── Chat Content Wrapper ── -->
@@ -3084,7 +2801,6 @@
         </div>
     </div><!-- /chatbot-window -->
 </div><!-- /chatbot-container -->
-
 
 <!-- ============================================================ -->
 <!-- MODAL FLOTTANTE GLOBALE : PROFIL / AUTH / PACKS / PAIEMENT  -->
@@ -4180,7 +3896,7 @@
     }
 
     function updateProfileView() {
-        const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+        const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
         const uName = localStorage.getItem('userName') || 'Utilisateur';
         const uEmail = localStorage.getItem('userEmail') || 'N/A';
         const tierRaw = (localStorage.getItem('userTier') || 'explorer').toString();
@@ -4191,12 +3907,12 @@
         // Update Navbar Auth Button
         const navAuthBtnText = document.getElementById('navAuthBtnText');
         if (navAuthBtnText) {
-            navAuthBtnText.textContent = isAuth ? uName : 'Se connecter';
+            navAuthBtnText.textContent = isAuthenticated ? uName : 'Se connecter';
         }
         // Update Sidebar Auth Link
         const sidebarAuthText = document.getElementById('sidebarAuthText');
         if (sidebarAuthText) {
-            sidebarAuthText.textContent = isAuth ? uName : 'Connexion / Inscription';
+            sidebarAuthText.textContent = isAuthenticated ? uName : 'Connexion / Inscription';
         }
 
         // Update Global Modal Profile fields
@@ -4212,17 +3928,14 @@
         const gmPack = document.getElementById('gmProfilePack');
         if (gmPack) gmPack.textContent = 'Pack ' + tierLabel;
         const gmStatus = document.getElementById('gmProfileStatus');
-        if (gmStatus) gmStatus.textContent = isAuth ? 'Connecté' : 'Invité';
+        if (gmStatus) gmStatus.textContent = isAuthenticated ? 'Connecté' : 'Invité';
         const gmQueries = document.getElementById('gmProfileQueriesRemaining');
         if (gmQueries) gmQueries.textContent = qRemaining;
 
-        // Upgrade button in global modal
         const gmUpgrade = document.getElementById('gmUpgradeBtn');
         if (gmUpgrade) {
             gmUpgrade.style.display = (tierRaw.toLowerCase() === 'premium') ? 'none' : 'inline-flex';
         }
-
-        const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
         document.getElementById('profileName').textContent = localStorage.getItem('userName') || 'Utilisateur';
         document.getElementById('profileEmail').textContent = localStorage.getItem('userEmail') || 'N/A';
         const tierRaw = (localStorage.getItem('userTier') || 'explorer').toString();
@@ -4545,9 +4258,318 @@
         }
     }
 
-    // Charger le profil et les notifications au chargement de la page
+    // Charger les notifications au chargement de la page
     document.addEventListener('DOMContentLoaded', () => {
-        updateProfileView();
         loadUserNotifications();
     });
+
+
+    // ============================================================
+    // GESTION MODALE GLOBALE (AUTH, PROFIL, PACKS, NOTIFICATIONS)
+    // ============================================================
+    let gmSelectedPackId = 2;
+    let gmSelectedPackName = 'Pack Standard';
+    let gmSelectedPackPrice = 49;
+    let isGmAnnual = false;
+
+    function openGlobalAuthOrProfile() {
+        const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+        const modal = document.getElementById('globalUserModal');
+        if (!modal) return;
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        if (isAuth) {
+            showGmView('profile');
+            updateProfileView();
+        } else {
+            showGmView('auth');
+            showGmAuthTab('login');
+        }
+    }
+
+    function closeGlobalUserModal() {
+        const modal = document.getElementById('globalUserModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    function handleGlobalModalOverlayClick(e) {
+        if (e.target && e.target.id === 'globalUserModal') {
+            closeGlobalUserModal();
+        }
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeGlobalUserModal();
+            const notifBox = document.getElementById('navNotifBox');
+            if (notifBox) notifBox.style.display = 'none';
+        }
+    });
+
+    function showGmView(viewName) {
+        const authView = document.getElementById('gmAuthView');
+        const profileView = document.getElementById('gmProfileView');
+        const packView = document.getElementById('gmPackView');
+        const paymentView = document.getElementById('gmPaymentView');
+
+        if (authView) authView.style.display = (viewName === 'auth') ? 'block' : 'none';
+        if (profileView) profileView.style.display = (viewName === 'profile') ? 'block' : 'none';
+        if (packView) packView.style.display = (viewName === 'pack') ? 'block' : 'none';
+        if (paymentView) paymentView.style.display = (viewName === 'payment') ? 'block' : 'none';
+    }
+
+    function showGmAuthTab(tab) {
+        const loginForm = document.getElementById('gmLoginForm');
+        const regForm = document.getElementById('gmRegisterForm');
+        const loginTab = document.getElementById('gmLoginTab');
+        const regTab = document.getElementById('gmRegisterTab');
+        const errLogin = document.getElementById('gmLoginError');
+        const errReg = document.getElementById('gmRegisterError');
+
+        if (errLogin) errLogin.classList.remove('show');
+        if (errReg) errReg.classList.remove('show');
+
+        if (tab === 'login') {
+            if (loginForm) loginForm.style.display = 'flex';
+            if (regForm) regForm.style.display = 'none';
+            if (loginTab) loginTab.classList.add('active');
+            if (regTab) regTab.classList.remove('active');
+        } else {
+            if (loginForm) loginForm.style.display = 'none';
+            if (regForm) regForm.style.display = 'flex';
+            if (loginTab) loginTab.classList.remove('active');
+            if (regTab) regTab.classList.add('active');
+        }
+    }
+
+    function toggleGmChildrenField(val) {
+        const grp = document.getElementById('gmChildrenFieldGroup');
+        if (grp) {
+            grp.style.display = (val === 'Famille') ? 'block' : 'none';
+        }
+    }
+
+    async function performGmLogin() {
+        const email = document.getElementById('gmLoginEmail').value.trim();
+        const password = document.getElementById('gmLoginPassword').value.trim();
+        const errEl = document.getElementById('gmLoginError');
+        if (errEl) errEl.classList.remove('show');
+
+        if (!email || !password) {
+            if (errEl) {
+                errEl.textContent = 'Veuillez saisir votre email et votre mot de passe.';
+                errEl.classList.add('show');
+            }
+            return;
+        }
+
+        try {
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                localStorage.setItem('isAuthenticated', 'true');
+                localStorage.setItem('userName', data.nom || data.message || '');
+                localStorage.setItem('userEmail', data.email || email);
+                localStorage.setItem('userTier', data.tier || 'explorer');
+                localStorage.setItem('userQueriesRemaining', data.remaining_queries != null ? data.remaining_queries : 'Illimité');
+                updateProfileView();
+                showGmView('profile');
+                loadUserNotifications();
+            } else {
+                if (errEl) {
+                    errEl.textContent = data.message || 'Email ou mot de passe incorrect.';
+                    errEl.classList.add('show');
+                }
+            }
+        } catch (error) {
+            console.error('GmLogin error:', error);
+            if (errEl) {
+                errEl.textContent = 'Une erreur est survenue lors de la connexion.';
+                errEl.classList.add('show');
+            }
+        }
+    }
+
+    async function performGmRegister() {
+        const nom = document.getElementById('gmRegisterName').value.trim();
+        const email = document.getElementById('gmRegisterEmail').value.trim();
+        const password = document.getElementById('gmRegisterPassword').value.trim();
+        const age = document.getElementById('gmRegisterAge') ? document.getElementById('gmRegisterAge').value : null;
+        const travel_type = document.getElementById('gmRegisterTravelType') ? document.getElementById('gmRegisterTravelType').value : 'Solo';
+        const children_count = document.getElementById('gmRegisterChildrenCount') ? document.getElementById('gmRegisterChildrenCount').value : 0;
+        const errEl = document.getElementById('gmRegisterError');
+        if (errEl) errEl.classList.remove('show');
+
+        if (!nom || !email || !password) {
+            if (errEl) {
+                errEl.textContent = 'Veuillez remplir tous les champs obligatoires.';
+                errEl.classList.add('show');
+            }
+            return;
+        }
+
+        try {
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    nom: nom, 
+                    email: email, 
+                    password: password,
+                    age: age,
+                    travel_type: travel_type,
+                    children_count: children_count
+                })
+            });
+            const data = await response.json();
+
+            if (data.success || data.status === 'success') {
+                localStorage.setItem('isAuthenticated', 'true');
+                localStorage.setItem('userName', data.nom || nom);
+                localStorage.setItem('userEmail', data.email || email);
+                localStorage.setItem('userTier', data.tier || 'explorer');
+                localStorage.setItem('userQueriesRemaining', data.remaining_queries != null ? data.remaining_queries : '50');
+                updateProfileView();
+                showGmView('profile');
+                loadUserNotifications();
+            } else {
+                if (errEl) {
+                    errEl.textContent = data.message || "Erreur lors de l'inscription.";
+                    errEl.classList.add('show');
+                }
+            }
+        } catch (error) {
+            console.error('GmRegister error:', error);
+            if (errEl) {
+                errEl.textContent = "Une erreur est survenue lors de l'inscription.";
+                errEl.classList.add('show');
+            }
+        }
+    }
+
+    async function performGlobalLogout() {
+        await performLogout();
+        updateProfileView();
+        showGmView('auth');
+        showGmAuthTab('login');
+    }
+
+    function openGlobalPacksView() {
+        const modal = document.getElementById('globalUserModal');
+        if (modal) modal.classList.add('active');
+        showGmView('pack');
+    }
+
+    function returnFromPacksView() {
+        const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+        if (isAuth) {
+            showGmView('profile');
+        } else {
+            showGmView('auth');
+        }
+    }
+
+    function toggleGmBillingPeriod() {
+        isGmAnnual = !isGmAnnual;
+        const toggle = document.getElementById('gmBillingToggle');
+        const mLabel = document.getElementById('gmMonthlyLabel');
+        const aLabel = document.getElementById('gmAnnualLabel');
+        const p2 = document.getElementById('gmPack2Amount');
+        const p3 = document.getElementById('gmPack3Amount');
+
+        if (toggle) toggle.classList.toggle('annual', isGmAnnual);
+        if (mLabel) mLabel.classList.toggle('active', !isGmAnnual);
+        if (aLabel) aLabel.classList.toggle('active', isGmAnnual);
+
+        if (p2) p2.textContent = isGmAnnual ? '39 DHS' : '49 DHS';
+        if (p3) p3.textContent = isGmAnnual ? '79 DHS' : '99 DHS';
+    }
+
+    function selectGmPack(id, name, basePrice) {
+        gmSelectedPackId = id;
+        gmSelectedPackName = name;
+        gmSelectedPackPrice = basePrice;
+
+        [1, 2, 3].forEach(i => {
+            const card = document.getElementById('gmPackCard' + i);
+            if (card) {
+                if (i === id) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            }
+        });
+    }
+
+    function proceedToGmPayment() {
+        if (gmSelectedPackId === 1) {
+            closeGlobalUserModal();
+            return;
+        }
+
+        const period = isGmAnnual ? 'Annuel' : 'Mensuel';
+        const price = (gmSelectedPackId === 2) ? (isGmAnnual ? 39 : 49) : (isGmAnnual ? 79 : 99);
+        const total = isGmAnnual ? (price * 12) + ' DHS / an' : price + ' DHS / mois';
+
+        const pName = document.getElementById('gmPaymentPackName');
+        const pPeriod = document.getElementById('gmPaymentPeriod');
+        const pTotal = document.getElementById('gmPaymentTotal');
+        const waBtn = document.getElementById('gmWhatsAppBtn');
+
+        if (pName) pName.textContent = gmSelectedPackName;
+        if (pPeriod) pPeriod.textContent = period;
+        if (pTotal) pTotal.textContent = total;
+
+        if (waBtn) {
+            const msg = `Bonjour, je viens d'effectuer un virement pour le ${gmSelectedPackName} (${period} - ${total}). Voici ma capture d'écran de paiement.`;
+            waBtn.href = `https://wa.me/212661854898?text=${encodeURIComponent(msg)}`;
+        }
+
+        showGmView('payment');
+    }
+
+    function copyGmRib() {
+        const rib = document.getElementById('gmRibNumber');
+        if (rib) {
+            navigator.clipboard.writeText(rib.textContent.trim());
+            alert('RIB copié dans le presse-papiers !');
+        }
+    }
+
+    // Toggle Notifications Dropdown in Navbar
+    function toggleNavNotifDropdown(e) {
+        if (e) e.stopPropagation();
+        const box = document.getElementById('navNotifBox');
+        if (!box) return;
+
+        if (box.style.display === 'none' || !box.style.display) {
+            box.style.display = 'flex';
+            loadUserNotifications();
+        } else {
+            box.style.display = 'none';
+        }
+    }
+
+    // Close Nav Notif on outside click
+    document.addEventListener('click', function(e) {
+        const notifBox = document.getElementById('navNotifBox');
+        const notifBtn = document.getElementById('navNotifBtn');
+        if (notifBox && notifBox.style.display !== 'none') {
+            if (!notifBox.contains(e.target) && (!notifBtn || !notifBtn.contains(e.target))) {
+                notifBox.style.display = 'none';
+            }
+        }
+    });
+
 </script>
