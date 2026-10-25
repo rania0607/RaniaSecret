@@ -8,6 +8,315 @@
             autoDisplay: false
         }, 'google_translate_element');
     }
+
+    // ============================================================
+    // GESTION MODALE GLOBALE (AUTH, PROFIL, PACKS, NOTIFICATIONS)
+    // ============================================================
+    let gmSelectedPackId = 2;
+    let gmSelectedPackName = 'Pack Standard';
+    let gmSelectedPackPrice = 49;
+    let isGmAnnual = false;
+
+    function openGlobalAuthOrProfile() {
+        const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+        const modal = document.getElementById('globalUserModal');
+        if (!modal) return;
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        if (isAuth) {
+            showGmView('profile');
+            updateProfileView();
+        } else {
+            showGmView('auth');
+            showGmAuthTab('login');
+        }
+    }
+
+    function closeGlobalUserModal() {
+        const modal = document.getElementById('globalUserModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    function handleGlobalModalOverlayClick(e) {
+        if (e.target && e.target.id === 'globalUserModal') {
+            closeGlobalUserModal();
+        }
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeGlobalUserModal();
+            const notifBox = document.getElementById('navNotifBox');
+            if (notifBox) notifBox.style.display = 'none';
+        }
+    });
+
+    function showGmView(viewName) {
+        const authView = document.getElementById('gmAuthView');
+        const profileView = document.getElementById('gmProfileView');
+        const packView = document.getElementById('gmPackView');
+        const paymentView = document.getElementById('gmPaymentView');
+
+        if (authView) authView.style.display = (viewName === 'auth') ? 'block' : 'none';
+        if (profileView) profileView.style.display = (viewName === 'profile') ? 'block' : 'none';
+        if (packView) packView.style.display = (viewName === 'pack') ? 'block' : 'none';
+        if (paymentView) paymentView.style.display = (viewName === 'payment') ? 'block' : 'none';
+    }
+
+    function showGmAuthTab(tab) {
+        const loginForm = document.getElementById('gmLoginForm');
+        const regForm = document.getElementById('gmRegisterForm');
+        const loginTab = document.getElementById('gmLoginTab');
+        const regTab = document.getElementById('gmRegisterTab');
+        const errLogin = document.getElementById('gmLoginError');
+        const errReg = document.getElementById('gmRegisterError');
+
+        if (errLogin) errLogin.classList.remove('show');
+        if (errReg) errReg.classList.remove('show');
+
+        if (tab === 'login') {
+            if (loginForm) loginForm.style.display = 'flex';
+            if (regForm) regForm.style.display = 'none';
+            if (loginTab) loginTab.classList.add('active');
+            if (regTab) regTab.classList.remove('active');
+        } else {
+            if (loginForm) loginForm.style.display = 'none';
+            if (regForm) regForm.style.display = 'flex';
+            if (loginTab) loginTab.classList.remove('active');
+            if (regTab) regTab.classList.add('active');
+        }
+    }
+
+    function toggleGmChildrenField(val) {
+        const grp = document.getElementById('gmChildrenFieldGroup');
+        if (grp) {
+            grp.style.display = (val === 'Famille') ? 'block' : 'none';
+        }
+    }
+
+    async function performGmLogin() {
+        const email = document.getElementById('gmLoginEmail').value.trim();
+        const password = document.getElementById('gmLoginPassword').value.trim();
+        const errEl = document.getElementById('gmLoginError');
+        if (errEl) errEl.classList.remove('show');
+
+        if (!email || !password) {
+            if (errEl) {
+                errEl.textContent = 'Veuillez saisir votre email et votre mot de passe.';
+                errEl.classList.add('show');
+            }
+            return;
+        }
+
+        try {
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                localStorage.setItem('isAuthenticated', 'true');
+                localStorage.setItem('userName', data.nom || data.message || '');
+                localStorage.setItem('userEmail', data.email || email);
+                localStorage.setItem('userTier', data.tier || 'explorer');
+                localStorage.setItem('userQueriesRemaining', data.remaining_queries != null ? data.remaining_queries : 'Illimité');
+                updateProfileView();
+                showGmView('profile');
+                loadUserNotifications();
+            } else {
+                if (errEl) {
+                    errEl.textContent = data.message || 'Email ou mot de passe incorrect.';
+                    errEl.classList.add('show');
+                }
+            }
+        } catch (error) {
+            console.error('GmLogin error:', error);
+            if (errEl) {
+                errEl.textContent = 'Une erreur est survenue lors de la connexion.';
+                errEl.classList.add('show');
+            }
+        }
+    }
+
+    async function performGmRegister() {
+        const nom = document.getElementById('gmRegisterName').value.trim();
+        const email = document.getElementById('gmRegisterEmail').value.trim();
+        const password = document.getElementById('gmRegisterPassword').value.trim();
+        const age = document.getElementById('gmRegisterAge') ? document.getElementById('gmRegisterAge').value : null;
+        const travel_type = document.getElementById('gmRegisterTravelType') ? document.getElementById('gmRegisterTravelType').value : 'Solo';
+        const children_count = document.getElementById('gmRegisterChildrenCount') ? document.getElementById('gmRegisterChildrenCount').value : 0;
+        const errEl = document.getElementById('gmRegisterError');
+        if (errEl) errEl.classList.remove('show');
+
+        if (!nom || !email || !password) {
+            if (errEl) {
+                errEl.textContent = 'Veuillez remplir tous les champs obligatoires.';
+                errEl.classList.add('show');
+            }
+            return;
+        }
+
+        try {
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    nom: nom, 
+                    email: email, 
+                    password: password,
+                    age: age,
+                    travel_type: travel_type,
+                    children_count: children_count
+                })
+            });
+            const data = await response.json();
+
+            if (data.success || data.status === 'success') {
+                localStorage.setItem('isAuthenticated', 'true');
+                localStorage.setItem('userName', data.nom || nom);
+                localStorage.setItem('userEmail', data.email || email);
+                localStorage.setItem('userTier', data.tier || 'explorer');
+                localStorage.setItem('userQueriesRemaining', data.remaining_queries != null ? data.remaining_queries : '50');
+                updateProfileView();
+                showGmView('profile');
+                loadUserNotifications();
+            } else {
+                if (errEl) {
+                    errEl.textContent = data.message || "Erreur lors de l'inscription.";
+                    errEl.classList.add('show');
+                }
+            }
+        } catch (error) {
+            console.error('GmRegister error:', error);
+            if (errEl) {
+                errEl.textContent = "Une erreur est survenue lors de l'inscription.";
+                errEl.classList.add('show');
+            }
+        }
+    }
+
+    async function performGlobalLogout() {
+        await performLogout();
+        updateProfileView();
+        showGmView('auth');
+        showGmAuthTab('login');
+    }
+
+    function openGlobalPacksView() {
+        const modal = document.getElementById('globalUserModal');
+        if (modal) modal.classList.add('active');
+        showGmView('pack');
+    }
+
+    function returnFromPacksView() {
+        const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+        if (isAuth) {
+            showGmView('profile');
+        } else {
+            showGmView('auth');
+        }
+    }
+
+    function toggleGmBillingPeriod() {
+        isGmAnnual = !isGmAnnual;
+        const toggle = document.getElementById('gmBillingToggle');
+        const mLabel = document.getElementById('gmMonthlyLabel');
+        const aLabel = document.getElementById('gmAnnualLabel');
+        const p2 = document.getElementById('gmPack2Amount');
+        const p3 = document.getElementById('gmPack3Amount');
+
+        if (toggle) toggle.classList.toggle('annual', isGmAnnual);
+        if (mLabel) mLabel.classList.toggle('active', !isGmAnnual);
+        if (aLabel) aLabel.classList.toggle('active', isGmAnnual);
+
+        if (p2) p2.textContent = isGmAnnual ? '39 DHS' : '49 DHS';
+        if (p3) p3.textContent = isGmAnnual ? '79 DHS' : '99 DHS';
+    }
+
+    function selectGmPack(id, name, basePrice) {
+        gmSelectedPackId = id;
+        gmSelectedPackName = name;
+        gmSelectedPackPrice = basePrice;
+
+        [1, 2, 3].forEach(i => {
+            const card = document.getElementById('gmPackCard' + i);
+            if (card) {
+                if (i === id) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            }
+        });
+    }
+
+    function proceedToGmPayment() {
+        if (gmSelectedPackId === 1) {
+            closeGlobalUserModal();
+            return;
+        }
+
+        const period = isGmAnnual ? 'Annuel' : 'Mensuel';
+        const price = (gmSelectedPackId === 2) ? (isGmAnnual ? 39 : 49) : (isGmAnnual ? 79 : 99);
+        const total = isGmAnnual ? (price * 12) + ' DHS / an' : price + ' DHS / mois';
+
+        const pName = document.getElementById('gmPaymentPackName');
+        const pPeriod = document.getElementById('gmPaymentPeriod');
+        const pTotal = document.getElementById('gmPaymentTotal');
+        const waBtn = document.getElementById('gmWhatsAppBtn');
+
+        if (pName) pName.textContent = gmSelectedPackName;
+        if (pPeriod) pPeriod.textContent = period;
+        if (pTotal) pTotal.textContent = total;
+
+        if (waBtn) {
+            const msg = `Bonjour, je viens d'effectuer un virement pour le ${gmSelectedPackName} (${period} - ${total}). Voici ma capture d'écran de paiement.`;
+            waBtn.href = `https://wa.me/212661854898?text=${encodeURIComponent(msg)}`;
+        }
+
+        showGmView('payment');
+    }
+
+    function copyGmRib() {
+        const rib = document.getElementById('gmRibNumber');
+        if (rib) {
+            navigator.clipboard.writeText(rib.textContent.trim());
+            alert('RIB copié dans le presse-papiers !');
+        }
+    }
+
+    // Toggle Notifications Dropdown in Navbar
+    function toggleNavNotifDropdown(e) {
+        if (e) e.stopPropagation();
+        const box = document.getElementById('navNotifBox');
+        if (!box) return;
+
+        if (box.style.display === 'none' || !box.style.display) {
+            box.style.display = 'flex';
+            loadUserNotifications();
+        } else {
+            box.style.display = 'none';
+        }
+    }
+
+    // Close Nav Notif on outside click
+    document.addEventListener('click', function(e) {
+        const notifBox = document.getElementById('navNotifBox');
+        const notifBtn = document.getElementById('navNotifBtn');
+        if (notifBox && notifBox.style.display !== 'none') {
+            if (!notifBox.contains(e.target) && (!notifBtn || !notifBtn.contains(e.target))) {
+                notifBox.style.display = 'none';
+            }
+        }
+    });
+
 </script>
 <script type="text/javascript"
     src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
@@ -2087,6 +2396,319 @@
     @media (max-height: 500px) {
         .chatbot-container .chatbot-window { height: calc(100vh - 20px); bottom: 10px; max-height: none; }
     }
+
+    /* --- TOP NAVBAR AUTH & NOTIFICATIONS STYLES --- */
+    .nav-auth-btn {
+        background: rgba(255, 255, 255, 0.15);
+        color: #FFFFFF;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        padding: 8px 16px;
+        font-family: inherit;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 20px;
+        cursor: pointer;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        white-space: nowrap;
+        text-decoration: none;
+    }
+    .nav-auth-btn:hover {
+        background: rgba(197, 157, 95, 0.35);
+        border-color: #c59d5f;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(197, 157, 95, 0.3);
+    }
+    .nav-auth-btn i {
+        font-size: 0.85rem;
+        color: #c59d5f;
+    }
+
+    .nav-notif-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+    .nav-notif-btn {
+        background: rgba(255, 255, 255, 0.15);
+        color: #FFFFFF;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        position: relative;
+        padding: 0;
+    }
+    .nav-notif-btn:hover {
+        background: rgba(197, 157, 95, 0.35);
+        border-color: #c59d5f;
+        transform: translateY(-2px);
+    }
+    .nav-notif-ico {
+        font-size: 15px;
+        line-height: 1;
+    }
+    .nav-notif-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: #ef4444;
+        color: #fff;
+        font-size: 9px;
+        font-weight: 800;
+        border-radius: 50%;
+        width: 17px;
+        height: 17px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border: 1.5px solid #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .nav-notif-dropdown {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        width: 320px;
+        max-height: 380px;
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1.5px solid #c59d5f;
+        box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+        z-index: 10000;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        animation: gmDropdownFade 0.2s ease;
+    }
+    @keyframes gmDropdownFade {
+        from { opacity: 0; transform: translateY(-8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .nav-notif-header {
+        background: linear-gradient(135deg, #6b1d1d, #8a2525);
+        color: #fff;
+        padding: 12px 16px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .nav-notif-close {
+        cursor: pointer;
+        font-size: 14px;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+    }
+    .nav-notif-close:hover {
+        opacity: 1;
+    }
+    .nav-notif-list {
+        overflow-y: auto;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 320px;
+    }
+
+    /* --- GLOBAL USER MODAL (AUTH & PROFILE & PACKS) --- */
+    .global-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(12, 8, 8, 0.72);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 999999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+    .global-modal-overlay.active {
+        display: flex;
+        opacity: 1;
+    }
+    .global-modal-card {
+        position: relative;
+        background: #ffffff;
+        width: 100%;
+        max-width: 490px;
+        max-height: 90vh;
+        border-radius: 24px;
+        overflow-y: auto;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(197, 157, 95, 0.35);
+        border: 2px solid rgba(197, 157, 95, 0.5);
+        padding: 28px 24px;
+        transform: scale(0.94);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .global-modal-overlay.active .global-modal-card {
+        transform: scale(1);
+    }
+    .global-modal-close-btn {
+        position: absolute;
+        top: 16px;
+        right: 18px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #f3f4f6;
+        border: none;
+        color: #6b7280;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        z-index: 10;
+    }
+    .global-modal-close-btn:hover {
+        background: #fee2e2;
+        color: #dc2626;
+        transform: rotate(90deg);
+    }
+    .gm-modal-header {
+        text-align: center;
+        margin-bottom: 18px;
+    }
+    .gm-modal-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: rgba(197, 157, 95, 0.15);
+        color: #6b1d1d;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        border-radius: 20px;
+        margin-bottom: 8px;
+    }
+    .gm-modal-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 22px;
+        color: #1a1a1a;
+        margin: 0 0 6px;
+        font-weight: 800;
+    }
+    .gm-modal-title em {
+        color: #c59d5f;
+        font-style: italic;
+    }
+    .gm-modal-subtitle {
+        font-size: 13px;
+        color: #6b7280;
+        margin: 0;
+        line-height: 1.45;
+    }
+    .gm-tabs {
+        margin-bottom: 12px;
+        border-radius: 12px;
+    }
+    .gm-auth-footer-links {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 10px;
+        font-size: 12px;
+    }
+    .gm-sep {
+        color: #d1d5db;
+    }
+    .gm-pack-link {
+        color: #c59d5f;
+        font-weight: 600;
+        text-decoration: none;
+        transition: color 0.2s;
+        cursor: pointer;
+    }
+    .gm-pack-link:hover {
+        color: #6b1d1d;
+        text-decoration: underline;
+    }
+    .gm-select-input {
+        width: 100%;
+        padding: 12px 12px 12px 42px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 14px;
+        background: #f9fafb;
+        color: #333;
+        outline: none;
+        font-family: inherit;
+    }
+    .gm-profile-card-top {
+        text-align: center;
+        padding-bottom: 18px;
+        border-bottom: 1px solid #f0f0f0;
+        margin-bottom: 18px;
+    }
+    .gm-profile-info {
+        margin-bottom: 22px;
+    }
+    .gm-profile-actions {
+        display: flex;
+        gap: 10px;
+    }
+    .gm-pack-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+    .gm-back-btn {
+        background: #f3f4f6;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        color: #4b5563;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .gm-back-btn:hover {
+        background: #e5e7eb;
+        color: #111;
+    }
+    @media (max-width: 768px) {
+        .nav-auth-btn {
+            padding: 6px 10px;
+            font-size: 0.7rem;
+        }
+        .nav-notif-dropdown {
+            right: -60px;
+            width: 290px;
+        }
+        .global-modal-card {
+            padding: 22px 16px;
+            border-radius: 20px;
+        }
+    }
+
 </style>
 
 <!-- ═══ HTML ═══ -->
@@ -2126,14 +2748,7 @@
             </div>
             <div class="cb-nav-btns">
                 <div class="cb-nav-group">
-                    <!-- Notification Bell Button -->
-                    <button class="cb-btn-nav-group" id="notifBellBtn" onclick="toggleNotifDropdown(event)" style="position: relative;">
-                        <span class="cb-ico">🔔</span>
-                        <span id="notifCountBadge" style="display: none; position: absolute; top: -3px; right: -3px; background: #ef4444; color: white; font-size: 9px; font-weight: 800; border-radius: 50%; width: 16px; height: 16px; align-items: center; justify-content: center; border: 1.5px solid white;">0</span>
-                    </button>
                     <button class="cb-btn-nav-group" id="conversationHistoryToggle" type="button" aria-label="Historique des conversations" title="Historique des conversations"><span class="cb-ico">☰</span></button>
-                    <button class="cb-btn-nav-group" id="navBtn" onclick="switchToView('profile')"><span class="cb-ico">👤</span><span class="cb-lbl">Profil</span></button>
-                    <button class="cb-btn-nav-group" id="upgradeNavBtn" onclick="switchToView('pack')"><span class="cb-ico">✦</span><span class="cb-lbl">Packs</span></button>
                 </div>
                 <button class="cb-btn-close" onclick="toggleChat()">✕</button>
             </div>
@@ -2152,15 +2767,6 @@
         </aside>
 
 
-        <!-- ── Notification Dropdown Box ── -->
-        <div id="cbNotifBox" style="display: none; background: #ffffff; border-bottom: 2px solid var(--cb-desert-gold); box-shadow: 0 8px 20px rgba(0,0,0,0.12); z-index: 100; max-height: 280px; overflow-y: auto; padding: 12px 14px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #f0f0f0; padding-bottom: 6px;">
-                <span style="font-size: 12px; font-weight: 700; color: var(--cb-grona); text-transform: uppercase; letter-spacing: 0.5px;">Vos Recommandations</span>
-                <span onclick="toggleNotifDropdown()" style="cursor: pointer; font-size: 13px; color: #888;">✕</span>
-            </div>
-            <div id="notifListContainer" style="display: flex; flex-direction: column; gap: 8px;">
-                <div style="font-size: 11px; color: #999; text-align: center; padding: 10px;">Chargement des notifications...</div>
-            </div>
         </div>
 
         <!-- ── Chat Content Wrapper ── -->
@@ -2478,6 +3084,275 @@
         </div>
     </div><!-- /chatbot-window -->
 </div><!-- /chatbot-container -->
+
+
+<!-- ============================================================ -->
+<!-- MODAL FLOTTANTE GLOBALE : PROFIL / AUTH / PACKS / PAIEMENT  -->
+<!-- ============================================================ -->
+<div id="globalUserModal" class="global-modal-overlay" onclick="handleGlobalModalOverlayClick(event)">
+    <div class="global-modal-card">
+        <button class="global-modal-close-btn" onclick="closeGlobalUserModal()" type="button" aria-label="Fermer">✕</button>
+
+        <!-- VIEW 1: AUTH (CONNEXION & INSCRIPTION) -->
+        <div id="gmAuthView">
+            <div class="gm-modal-header">
+                <div class="gm-modal-badge">✨ Espace Voyageur</div>
+                <h3 class="gm-modal-title" id="gmAuthTitle">Bienvenue sur <em>Morocco Secrets</em></h3>
+                <p class="gm-modal-subtitle">Connectez-vous pour retrouver vos favoris, votre itinéraire et vos recommandations personnalisées.</p>
+            </div>
+
+            <div class="cb-auth-tabs gm-tabs">
+                <button class="cb-auth-tab active" id="gmLoginTab" onclick="showGmAuthTab('login')" type="button">Connexion</button>
+                <button class="cb-auth-tab" id="gmRegisterTab" onclick="showGmAuthTab('register')" type="button">Inscription</button>
+            </div>
+
+            <!-- Login Form -->
+            <div class="cb-auth-form" id="gmLoginForm" style="padding: 10px 0;">
+                <div class="cb-input-group">
+                    <i class="fa-solid fa-envelope cb-input-icon"></i>
+                    <input type="email" id="gmLoginEmail" placeholder="Votre email" required autocomplete="email">
+                </div>
+                <div class="cb-input-group">
+                    <i class="fa-solid fa-lock cb-input-icon"></i>
+                    <input type="password" id="gmLoginPassword" placeholder="Votre mot de passe" required autocomplete="current-password">
+                </div>
+                <div class="cb-auth-err" id="gmLoginError"></div>
+                <button class="cb-auth-submit" onclick="performGmLogin()" type="button">
+                    <i class="fa-solid fa-right-to-bracket" style="margin-right: 6px;"></i> Se connecter
+                </button>
+                <div class="gm-auth-footer-links">
+                    <a href="javascript:void(0)" class="cb-auth-skip" onclick="closeGlobalUserModal()">Continuer en tant qu'invité</a>
+                    <span class="gm-sep">•</span>
+                    <a href="javascript:void(0)" class="gm-pack-link" onclick="openGlobalPacksView()">Voir les packs</a>
+                </div>
+            </div>
+
+            <!-- Register Form -->
+            <div class="cb-auth-form" id="gmRegisterForm" style="display: none; padding: 10px 0;">
+                <div class="cb-input-group">
+                    <i class="fa-solid fa-user cb-input-icon"></i>
+                    <input type="text" id="gmRegisterName" placeholder="Nom complet ou pseudo" required autocomplete="name">
+                </div>
+                <div class="cb-input-group">
+                    <i class="fa-solid fa-envelope cb-input-icon"></i>
+                    <input type="email" id="gmRegisterEmail" placeholder="Votre email" required autocomplete="email">
+                </div>
+                <div class="cb-input-group">
+                    <i class="fa-solid fa-lock cb-input-icon"></i>
+                    <input type="password" id="gmRegisterPassword" placeholder="Créer un mot de passe" required autocomplete="new-password">
+                </div>
+                <div class="cb-input-group">
+                    <i class="fa-solid fa-calendar-days cb-input-icon"></i>
+                    <input type="number" id="gmRegisterAge" placeholder="Âge (optionnel)" min="14" max="100">
+                </div>
+                <div class="cb-input-group">
+                    <i class="fa-solid fa-compass cb-input-icon"></i>
+                    <select id="gmRegisterTravelType" onchange="toggleGmChildrenField(this.value)" class="gm-select-input">
+                        <option value="Solo">Voyageur Solo 🎒</option>
+                        <option value="Couple">En Couple 💑</option>
+                        <option value="Famille">En Famille 👨‍👩‍👧‍👦</option>
+                        <option value="Amis">Entre Amis 🎉</option>
+                    </select>
+                </div>
+                <div class="cb-input-group" id="gmChildrenFieldGroup" style="display: none;">
+                    <i class="fa-solid fa-child cb-input-icon"></i>
+                    <input type="number" id="gmRegisterChildrenCount" placeholder="Nombre d'enfants" min="0" max="15" value="0">
+                </div>
+                <div class="cb-auth-err" id="gmRegisterError"></div>
+                <button class="cb-auth-submit" onclick="performGmRegister()" type="button">
+                    <i class="fa-solid fa-user-plus" style="margin-right: 6px;"></i> S'inscrire
+                </button>
+                <div class="gm-auth-footer-links">
+                    <a href="javascript:void(0)" class="cb-auth-skip" onclick="closeGlobalUserModal()">Continuer en tant qu'invité</a>
+                    <span class="gm-sep">•</span>
+                    <a href="javascript:void(0)" class="gm-pack-link" onclick="openGlobalPacksView()">Voir les packs</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: PROFILE -->
+        <div id="gmProfileView" style="display: none;">
+            <div class="gm-profile-card-top">
+                <div class="profile-avatar">
+                    <img src="{{ cdn_url }}villes/trippy.jpg" alt="Trippy" id="gmProfileAvatarImg"
+                        onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2745%27 fill=%27%23ffffff%27/%3E%3Ctext x=%2750%27 y=%2770%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%236b1d1d%27%3ET%3C/text%3E%3C/svg%3E'">
+                </div>
+                <div class="profile-name" id="gmProfileName">Utilisateur</div>
+                <div class="profile-tier explorer" id="gmProfileTier">Explorateur</div>
+            </div>
+
+            <div class="profile-info gm-profile-info">
+                <div class="profile-row">
+                    <span class="profile-label"><i class="fa-solid fa-envelope" style="margin-right: 6px; color: #c59d5f;"></i>Email</span>
+                    <span class="profile-value" id="gmProfileEmail"></span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label"><i class="fa-solid fa-circle-check" style="margin-right: 6px; color: #10b981;"></i>Statut</span>
+                    <span class="profile-value" id="gmProfileStatus">Connecté</span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label"><i class="fa-solid fa-crown" style="margin-right: 6px; color: #c59d5f;"></i>Pack actuel</span>
+                    <span class="profile-value standard" id="gmProfilePack">Pack Explorateur</span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label"><i class="fa-solid fa-message" style="margin-right: 6px; color: #6b1d1d;"></i>Requêtes restantes</span>
+                    <span class="profile-value" id="gmProfileQueriesRemaining">Illimité</span>
+                </div>
+            </div>
+
+            <div class="profile-actions gm-profile-actions">
+                <button class="profile-btn primary" onclick="performGlobalLogout()" type="button">
+                    <i class="fa-solid fa-right-from-bracket" style="margin-right: 6px;"></i> Se déconnecter
+                </button>
+                <button class="profile-btn upgrade" onclick="openGlobalPacksView()" type="button" id="gmUpgradeBtn">
+                    <i class="fa-solid fa-gem" style="margin-right: 6px;"></i> Améliorer mon pack
+                </button>
+            </div>
+        </div>
+
+        <!-- VIEW 3: PACKS -->
+        <div id="gmPackView" style="display: none;">
+            <div class="gm-pack-header">
+                <button class="gm-back-btn" onclick="returnFromPacksView()" type="button" title="Retour"><i class="fa-solid fa-arrow-left"></i></button>
+                <div>
+                    <div class="pack-view-title">Packs Premium</div>
+                    <h2 class="pack-view-h2" style="font-size: 20px; margin: 0;">Améliorez votre <em>expérience</em></h2>
+                </div>
+            </div>
+            <p class="pack-view-sub" style="text-align: center; margin-bottom: 14px; font-size: 12px;">Débloquez des fonctionnalités exclusives et un accès prioritaire à Trippy.</p>
+
+            <div class="pack-billing-row" style="margin-bottom: 14px;">
+                <span class="pack-billing-label monthly active" id="gmMonthlyLabel">Mensuel</span>
+                <div class="pack-toggle-sw" id="gmBillingToggle" onclick="toggleGmBillingPeriod()"></div>
+                <span class="pack-billing-label annual" id="gmAnnualLabel">Annuel</span>
+                <div class="pack-save-pill">-20%</div>
+            </div>
+
+            <div class="pack-cards-list">
+                <!-- PACK 1: EXPLORATEUR -->
+                <div class="pack-card selected" id="gmPackCard1" onclick="selectGmPack(1, 'Pack Explorateur', 0)">
+                    <div class="pack-card-inner">
+                        <img src="{{ cdn_url }}icons/pack-explorer.png" alt="Explorer Pack" class="pack-card-img" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 56 56%27%3E%3Crect width=%2756%27 height=%2756%27 rx=%2712%27 fill=%27%23f2e6d9%27/%3E%3Ctext x=%2728%27 y=%2738%27 text-anchor=%27middle%27 font-size=%2726%27%3E%E2%9C%A6%3C/text%3E%3C/svg%3E'">
+                        <div class="pack-card-info">
+                            <div class="pack-card-name">Pack Explorateur</div>
+                            <p class="pack-card-desc">Accès de base aux fonctionnalités IA</p>
+                        </div>
+                        <div class="pack-card-price">
+                            <div class="pack-card-amount explorer">Gratuit</div>
+                            <div class="pack-card-period">À vie</div>
+                        </div>
+                        <div class="pack-selected-check"><i class="fa-solid fa-check"></i></div>
+                    </div>
+                    <div class="pack-card-feats">
+                        <span class="pack-feat-chip">50 requêtes/jour</span>
+                        <span class="pack-feat-chip">Support Communautaire</span>
+                    </div>
+                </div>
+
+                <!-- PACK 2: STANDARD -->
+                <div class="pack-card" id="gmPackCard2" onclick="selectGmPack(2, 'Pack Standard', 49)">
+                    <div class="pack-card-inner">
+                        <img src="{{ cdn_url }}icons/pack-standard.png" alt="Standard Pack" class="pack-card-img" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 56 56%27%3E%3Crect width=%2756%27 height=%2756%27 rx=%2712%27 fill=%27%23f2e6d9%27/%3E%3Ctext x=%2728%27 y=%2738%27 text-anchor=%27middle%27 font-size=%2726%27%3E%E2%9C%A6%3C/text%3E%3C/svg%3E'">
+                        <div class="pack-card-info">
+                            <div class="pack-card-name">Pack Standard</div>
+                            <p class="pack-card-desc">Idéal pour les voyageurs réguliers</p>
+                        </div>
+                        <div class="pack-card-price">
+                            <div class="pack-card-amount standard" id="gmPack2Amount">49 DHS</div>
+                            <div class="pack-card-period">/mois</div>
+                        </div>
+                        <div class="pack-popular-badge">Populaire</div>
+                        <div class="pack-selected-check"><i class="fa-solid fa-check"></i></div>
+                    </div>
+                    <div class="pack-card-feats">
+                        <span class="pack-feat-chip star"><i class="fa-solid fa-star"></i> Populaire</span>
+                        <span class="pack-feat-chip">Accès Illimité</span>
+                        <span class="pack-feat-chip">Support Prioritaire</span>
+                    </div>
+                </div>
+
+                <!-- PACK 3: PREMIUM -->
+                <div class="pack-card" id="gmPackCard3" onclick="selectGmPack(3, 'Pack Premium', 99)">
+                    <div class="pack-card-inner">
+                        <img src="{{ cdn_url }}icons/pack-premium.png" alt="Premium Pack" class="pack-card-img" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 56 56%27%3E%3Crect width=%2756%27 height=%2756%27 rx=%2712%27 fill=%27%23f2e6d9%27/%3E%3Ctext x=%2728%27 y=%2738%27 text-anchor=%27middle%27 font-size=%2726%27%3E%E2%9C%A6%3C/text%3E%3C/svg%3E'">
+                        <div class="pack-card-info">
+                            <div class="pack-card-name">Pack Premium</div>
+                            <p class="pack-card-desc">L'expérience ultime de voyage</p>
+                        </div>
+                        <div class="pack-card-price">
+                            <div class="pack-card-amount premium" id="gmPack3Amount">99 DHS</div>
+                            <div class="pack-card-period">/mois</div>
+                        </div>
+                        <div class="pack-selected-check"><i class="fa-solid fa-check"></i></div>
+                    </div>
+                    <div class="pack-card-feats">
+                        <span class="pack-feat-chip star"><i class="fa-solid fa-star"></i> VIP Support</span>
+                        <span class="pack-feat-chip">Accès Illimité</span>
+                        <span class="pack-feat-chip">Expériences Exclusives</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pack-cta-bar" style="margin-top: 14px;">
+                <button class="pack-cta-main" onclick="proceedToGmPayment()" type="button" id="gmProceedPaymentBtn">Choisir ce pack</button>
+            </div>
+        </div>
+
+        <!-- VIEW 4: PAYMENT -->
+        <div id="gmPaymentView" style="display: none;">
+            <div class="payment-header">
+                <button class="payment-back-btn" onclick="openGlobalPacksView()" type="button" title="Retour aux packs"><i class="fa-solid fa-arrow-left"></i></button>
+                <h3 class="payment-header-title">Finaliser votre <em>Paiement</em></h3>
+                <p class="payment-header-sub">Virement bancaire ou espèces</p>
+            </div>
+
+            <div class="payment-summary">
+                <div class="payment-sum-row">
+                    <span class="payment-sum-label">Pack</span>
+                    <span class="payment-sum-val" id="gmPaymentPackName">Pack Standard</span>
+                </div>
+                <div class="payment-sum-row">
+                    <span class="payment-sum-label">Période</span>
+                    <span class="payment-sum-val" id="gmPaymentPeriod">Mensuel</span>
+                </div>
+                <div class="payment-total-row">
+                    <span class="payment-total-label">Total à régler</span>
+                    <span class="payment-total-amount" id="gmPaymentTotal">49 DHS</span>
+                </div>
+            </div>
+
+            <div class="payment-steps">
+                <div class="payment-step">
+                    <span class="payment-step-num">1</span>
+                    <div class="payment-step-text">
+                        <div class="payment-step-title">Effectuez votre virement</div>
+                        <div class="payment-step-desc">Veuillez effectuer un virement du montant indiqué au RIB suivant :</div>
+                        <div class="rib-block">
+                            <span class="rib-number" id="gmRibNumber">007 640 0001042000216503 64</span>
+                            <button class="rib-copy-btn" onclick="copyGmRib()" type="button">Copier</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="payment-step">
+                    <span class="payment-step-num">2</span>
+                    <div class="payment-step-text">
+                        <div class="payment-step-title">Confirmez sur WhatsApp</div>
+                        <div class="payment-step-desc">Envoyez la capture d'écran du virement au support via WhatsApp pour validation immédiate.</div>
+                        <div class="wa-cta-block">
+                            <p class="wa-cta-title">Confirmation Rapide</p>
+                            <p class="wa-cta-sub">Cliquez ci-dessous pour ouvrir directement la discussion.</p>
+                            <a id="gmWhatsAppBtn" href="https://wa.me/212661854898?text=Bonjour,%20je%20viens%20d%27effectuer%20un%20virement%20pour%20le%20Pack%20Standard%20Mensuel.%20Voici%20la%20capture." target="_blank" class="wa-cta-btn">
+                                <i class="fa-brands fa-whatsapp"></i> Envoyer le reçu sur WhatsApp
+                            </a>
+                            <p class="wa-cta-hint">Support disponible 7j/7 de 9h à 21h</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
 <script>
@@ -3305,6 +4180,48 @@
     }
 
     function updateProfileView() {
+        const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+        const uName = localStorage.getItem('userName') || 'Utilisateur';
+        const uEmail = localStorage.getItem('userEmail') || 'N/A';
+        const tierRaw = (localStorage.getItem('userTier') || 'explorer').toString();
+        const tierMap = { explorer: 'Explorateur', explorateur: 'Explorateur', standard: 'Standard', premium: 'Premium' };
+        const tierLabel = tierMap[tierRaw.toLowerCase()] || tierRaw;
+        const qRemaining = localStorage.getItem('userQueriesRemaining') || 'Illimité';
+
+        // Update Navbar Auth Button
+        const navAuthBtnText = document.getElementById('navAuthBtnText');
+        if (navAuthBtnText) {
+            navAuthBtnText.textContent = isAuth ? uName : 'Se connecter';
+        }
+        // Update Sidebar Auth Link
+        const sidebarAuthText = document.getElementById('sidebarAuthText');
+        if (sidebarAuthText) {
+            sidebarAuthText.textContent = isAuth ? uName : 'Connexion / Inscription';
+        }
+
+        // Update Global Modal Profile fields
+        const gmName = document.getElementById('gmProfileName');
+        if (gmName) gmName.textContent = uName;
+        const gmEmail = document.getElementById('gmProfileEmail');
+        if (gmEmail) gmEmail.textContent = uEmail;
+        const gmTier = document.getElementById('gmProfileTier');
+        if (gmTier) {
+            gmTier.textContent = tierLabel;
+            gmTier.className = 'profile-tier ' + tierRaw.toLowerCase();
+        }
+        const gmPack = document.getElementById('gmProfilePack');
+        if (gmPack) gmPack.textContent = 'Pack ' + tierLabel;
+        const gmStatus = document.getElementById('gmProfileStatus');
+        if (gmStatus) gmStatus.textContent = isAuth ? 'Connecté' : 'Invité';
+        const gmQueries = document.getElementById('gmProfileQueriesRemaining');
+        if (gmQueries) gmQueries.textContent = qRemaining;
+
+        // Upgrade button in global modal
+        const gmUpgrade = document.getElementById('gmUpgradeBtn');
+        if (gmUpgrade) {
+            gmUpgrade.style.display = (tierRaw.toLowerCase() === 'premium') ? 'none' : 'inline-flex';
+        }
+
         const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
         document.getElementById('profileName').textContent = localStorage.getItem('userName') || 'Utilisateur';
         document.getElementById('profileEmail').textContent = localStorage.getItem('userEmail') || 'N/A';
@@ -3551,64 +4468,86 @@
     }
 
     async function loadUserNotifications() {
+        const navContainer = document.getElementById('navNotifList');
+        const navBadge = document.getElementById('navNotifBadge');
+        const sidebarBadge = document.getElementById('sidebarNotifBadge');
         const container = document.getElementById('notifListContainer');
         const badge = document.getElementById('notifCountBadge');
-        if (!container) return;
+        if (!navContainer && !container) return;
 
         try {
             const res = await fetch('/api/notifications');
             if (res.status === 401) {
-                container.innerHTML = '<div style="font-size: 11px; color: #888; text-align: center; padding: 10px;">Connectez-vous pour voir vos recommandations personnalisées.</div>';
+                const msg = '<div style="font-size: 12px; color: #888; text-align: center; padding: 15px;">Connectez-vous pour voir vos recommandations personnalisées.</div>';
+                if (container) container.innerHTML = msg;
+                if (navContainer) navContainer.innerHTML = msg;
                 if (badge) badge.style.display = 'none';
+                if (navBadge) navBadge.style.display = 'none';
+                if (sidebarBadge) sidebarBadge.style.display = 'none';
                 return;
             }
 
             const data = await res.json();
             if (data.status === 'success' && data.notifications && data.notifications.length > 0) {
-                container.innerHTML = '';
+                if (container) container.innerHTML = '';
+                if (navContainer) navContainer.innerHTML = '';
                 let unreadCount = 0;
 
                 data.notifications.forEach(n => {
                     if (!n.is_read) unreadCount++;
 
-                    const item = document.createElement('div');
-                    item.style.cssText = `padding: 10px; border-radius: 10px; background: ${n.is_read ? '#f9fafb' : '#fef6ee'}; border-left: 3px solid ${n.is_read ? '#d1d5db' : '#c59d5f'}; cursor: pointer; transition: all 0.2s;`;
-                    item.innerHTML = `
-                        <div style="font-size: 12px; font-weight: 700; color: #6b1d1d; margin-bottom: 2px;">${n.title}</div>
-                        <div style="font-size: 11px; color: #4b5563; line-height: 1.4;">${n.message}</div>
-                        <div style="font-size: 9px; color: #9ca3af; margin-top: 4px; text-align: right;">${n.created_at || ''}</div>
-                    `;
-
-                    // Clic pour marquer comme lu
-                    item.onclick = async () => {
-                        if (!n.is_read) {
-                            await fetch(`/api/notifications/${n.id}/read`, { method: 'POST' });
-                            loadUserNotifications();
-                        }
+                    const createItemEl = () => {
+                        const item = document.createElement('div');
+                        item.style.cssText = `padding: 10px; border-radius: 10px; background: ${n.is_read ? '#f9fafb' : '#fef6ee'}; border-left: 3px solid ${n.is_read ? '#d1d5db' : '#c59d5f'}; cursor: pointer; transition: all 0.2s; margin-bottom: 6px;`;
+                        item.innerHTML = `
+                            <div style="font-size: 12px; font-weight: 700; color: #6b1d1d; margin-bottom: 2px;">${n.title}</div>
+                            <div style="font-size: 11px; color: #4b5563; line-height: 1.4;">${n.message}</div>
+                            <div style="font-size: 9px; color: #9ca3af; margin-top: 4px; text-align: right;">${n.created_at || ''}</div>
+                        `;
+                        item.onclick = async () => {
+                            if (!n.is_read) {
+                                await fetch(`/api/notifications/${n.id}/read`, { method: 'POST' });
+                                loadUserNotifications();
+                            }
+                        };
+                        return item;
                     };
-                    container.appendChild(item);
+
+                    if (container) container.appendChild(createItemEl());
+                    if (navContainer) navContainer.appendChild(createItemEl());
                 });
 
-                if (badge) {
-                    if (unreadCount > 0) {
-                        badge.textContent = unreadCount;
-                        badge.style.display = 'flex';
+                const applyBadge = (b, count) => {
+                    if (!b) return;
+                    if (count > 0) {
+                        b.textContent = count;
+                        b.style.display = 'flex';
                     } else {
-                        badge.style.display = 'none';
+                        b.style.display = 'none';
                     }
-                }
+                };
+                applyBadge(badge, unreadCount);
+                applyBadge(navBadge, unreadCount);
+                applyBadge(sidebarBadge, unreadCount);
             } else {
-                container.innerHTML = '<div style="font-size: 11px; color: #888; text-align: center; padding: 10px;">Aucune notification pour le moment.</div>';
+                const emptyMsg = '<div style="font-size: 11px; color: #888; text-align: center; padding: 15px;">Aucune recommandation pour le moment.</div>';
+                if (container) container.innerHTML = emptyMsg;
+                if (navContainer) navContainer.innerHTML = emptyMsg;
                 if (badge) badge.style.display = 'none';
+                if (navBadge) navBadge.style.display = 'none';
+                if (sidebarBadge) sidebarBadge.style.display = 'none';
             }
         } catch (err) {
             console.error('Erreur chargement notifications:', err);
-            container.innerHTML = '<div style="font-size: 11px; color: #ef4444; text-align: center; padding: 10px;">Erreur de connexion.</div>';
+            const errMsg = '<div style="font-size: 11px; color: #ef4444; text-align: center; padding: 15px;">Erreur de connexion.</div>';
+            if (container) container.innerHTML = errMsg;
+            if (navContainer) navContainer.innerHTML = errMsg;
         }
     }
 
-    // Charger les notifications au chargement de la page
+    // Charger le profil et les notifications au chargement de la page
     document.addEventListener('DOMContentLoaded', () => {
+        updateProfileView();
         loadUserNotifications();
     });
 </script>
