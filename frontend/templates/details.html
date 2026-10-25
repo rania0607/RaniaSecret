@@ -1053,85 +1053,310 @@
     {% endif %}
 <!-- Section Artisanat Textile -->
 {% if textile_crafts %}
-<section class="section-wrapper" id="patrimoine-textile" style="background: var(--grona); color: white;">
-    <h2 class="section-heading" style="color: white;"
+<section class="section-wrapper" id="patrimoine-textile" style="background: var(--grona); color: white; position: relative;">
+    <h2 class="section-heading" style="color: white; margin-bottom: 28px;"
         data-ar="<i class='fa-solid fa-scroll'></i>التراث <span>النسيجي</span>">
         <i class="fa-solid fa-scroll"></i>Patrimoine <span>Textile</span>
     </h2>
-    <div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
-        {% for craft in textile_crafts %}
-        <div class="list-item-pro" style="display:flex; gap:20px; background:rgba(255,255,255,0.08); border-radius:var(--radius); border-bottom:3px solid var(--desert-gold); padding:18px 22px; flex-wrap:wrap; align-items:center; margin-bottom:0;">
-            <!-- Colonne gauche : Image + Nom + Description -->
-            <div style="flex:0 1 280px; min-width:220px; display:flex; flex-direction:column; gap:10px;">
-                {% if craft.image_url %}
-                <img src="{% if craft.image_url.startswith('http') %}{{ craft.image_url }}{% else %}{{ cdn_url }}{{ craft.image_url }}{% endif %}" alt="{{ craft.nom }}"
-                     style="width:100%; height:155px; object-fit:cover; border-radius:12px;"
-                     onerror="this.style.display='none'">
-                {% endif %}
-                <h3 style="font-family:'Playfair Display',serif; font-size:1.15rem; color:var(--desert-gold); margin:0; line-height:1.3;">{{ craft.nom }}</h3>
-                {% if craft.description %}
-                <p style="color:rgba(255,255,255,0.9); font-size:0.85rem; line-height:1.5; margin:0;">{{ craft.description }}</p>
-                {% endif %}
-            </div>
-            <!-- Colonne droite : Fiche pratique -->
-            <div style="flex:1; min-width:240px;">
-                <table style="width:100%; border-collapse:collapse;">
-                    {% if craft.atelier_nom %}
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
-                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; width:38%; text-transform:uppercase;"><i class="fa-solid fa-store" style="margin-right:6px;"></i>Atelier</td>
-                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;">{{ craft.atelier_nom }}</td>
-                    </tr>
+
+    <style>
+        .tx-carousel-wrap {
+            position: relative;
+            max-width: 1250px;
+            margin: 0 auto;
+            padding: 0 8px;
+        }
+        .tx-track {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: calc((100% - 44px) / 3);
+            gap: 22px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+            padding: 6px 4px 16px;
+        }
+        .tx-track::-webkit-scrollbar {
+            display: none;
+        }
+        @media (max-width: 1024px) {
+            .tx-track {
+                grid-auto-columns: calc((100% - 22px) / 2);
+            }
+        }
+        @media (max-width: 680px) {
+            .tx-track {
+                grid-auto-columns: 90%;
+            }
+        }
+        .tx-card {
+            scroll-snap-align: start;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(197, 157, 95, 0.28);
+            border-bottom: 3px solid var(--desert-gold);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        }
+        .tx-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.11);
+            box-shadow: 0 14px 32px rgba(0, 0, 0, 0.25);
+        }
+        .tx-img-wrap {
+            position: relative;
+            height: 175px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .tx-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+        .tx-card:hover .tx-img-wrap img {
+            transform: scale(1.06);
+        }
+        .tx-img-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 45%, rgba(35,8,8,0.85) 100%);
+        }
+        .tx-badge-price {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: var(--desert-gold);
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 5px 12px;
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            letter-spacing: 0.3px;
+        }
+        .tx-badge-duration {
+            position: absolute;
+            bottom: 10px;
+            left: 12px;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .tx-body {
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 10px;
+        }
+        .tx-atelier {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--desert-gold);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .tx-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            color: #ffffff;
+            margin: 0;
+            line-height: 1.3;
+        }
+        .tx-desc {
+            font-size: 0.83rem;
+            line-height: 1.55;
+            color: rgba(255, 255, 255, 0.84);
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .tx-desc.expanded {
+            -webkit-line-clamp: unset;
+        }
+        .tx-meta-list {
+            margin-top: auto;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.79rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .tx-meta-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            line-height: 1.35;
+        }
+        .tx-meta-row i {
+            color: var(--desert-gold);
+            margin-top: 3px;
+            width: 14px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .tx-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .tx-btn {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .tx-btn-gold {
+            background: var(--desert-gold);
+            color: #fff;
+        }
+        .tx-btn-gold:hover {
+            filter: brightness(1.1);
+        }
+        .tx-btn-outline {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+        }
+        .tx-btn-outline:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .tx-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 1px solid rgba(197, 157, 95, 0.5);
+            background: rgba(74, 20, 20, 0.9);
+            color: var(--desert-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 5;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+            transition: all 0.25s ease;
+        }
+        .tx-nav-btn:hover {
+            background: var(--desert-gold);
+            color: #fff;
+        }
+        .tx-nav-prev { left: -10px; }
+        .tx-nav-next { right: -10px; }
+        @media (max-width: 768px) {
+            .tx-nav-btn { display: none; }
+        }
+    </style>
+
+    <div class="tx-carousel-wrap">
+        {% if textile_crafts|length > 3 %}
+        <button type="button" class="tx-nav-btn tx-nav-prev" onclick="document.getElementById('txTrack').scrollBy({left: -380, behavior: 'smooth'})" aria-label="Précédent">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <button type="button" class="tx-nav-btn tx-nav-next" onclick="document.getElementById('txTrack').scrollBy({left: 380, behavior: 'smooth'})" aria-label="Suivant">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+        {% endif %}
+
+        <div class="tx-track" id="txTrack">
+            {% for craft in textile_crafts %}
+            <div class="tx-card">
+                <div class="tx-img-wrap">
+                    {% if craft.image_url %}
+                    <img src="{% if craft.image_url.startswith('http') %}{{ craft.image_url }}{% else %}{{ cdn_url }}{{ craft.image_url }}{% endif %}" alt="{{ craft.nom }}"
+                         onerror="this.style.display='none'">
                     {% endif %}
-                    {% if craft.adresse %}
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
-                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; text-transform:uppercase;"><i class="fa-solid fa-location-dot" style="margin-right:6px;"></i>Adresse</td>
-                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;">{{ craft.adresse }}</td>
-                    </tr>
-                    {% endif %}
-                    {% if craft.contact %}
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
-                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; text-transform:uppercase;"><i class="fa-solid fa-phone" style="margin-right:6px;"></i>Contact</td>
-                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;"><a href="tel:{{ craft.contact }}" style="color:var(--desert-gold); font-weight:600; text-decoration:none;">{{ craft.contact }}</a></td>
-                    </tr>
-                    {% endif %}
-                    {% if craft.localisation %}
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
-                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; text-transform:uppercase;"><i class="fa-solid fa-map-pin" style="margin-right:6px;"></i>Localisation</td>
-                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;"><a href="{{ craft.localisation }}" target="_blank" style="color:var(--desert-gold); font-weight:600; text-decoration:none;">&#128205; Voir sur Google Maps</a></td>
-                    </tr>
-                    {% endif %}
+                    <div class="tx-img-overlay"></div>
                     {% if craft.prix %}
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
-                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; text-transform:uppercase;"><i class="fa-solid fa-tag" style="margin-right:6px;"></i>Prix</td>
-                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;">{{ craft.prix }}</td>
-                    </tr>
+                    <span class="tx-badge-price"><i class="fa-solid fa-tag"></i> {{ craft.prix }}</span>
                     {% endif %}
                     {% if craft.duree %}
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
-                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; text-transform:uppercase;"><i class="fa-solid fa-clock" style="margin-right:6px;"></i>Durée</td>
-                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;">{{ craft.duree }}</td>
-                    </tr>
+                    <span class="tx-badge-duration"><i class="fa-regular fa-clock"></i> {{ craft.duree }}</span>
                     {% endif %}
-                    {% if craft.horaires %}
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.12);">
-                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; text-transform:uppercase;"><i class="fa-solid fa-calendar" style="margin-right:6px;"></i>Horaires</td>
-                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;">{{ craft.horaires }}</td>
-                    </tr>
+                </div>
+
+                <div class="tx-body">
+                    {% if craft.atelier_nom %}
+                    <div class="tx-atelier"><i class="fa-solid fa-store"></i> {{ craft.atelier_nom }}</div>
                     {% endif %}
-                    {% if craft.reservation_info or craft.reservation_link %}
-                    <tr>
-                        <td style="padding:7px 8px; color:var(--desert-gold); font-weight:700; font-size:0.75rem; text-transform:uppercase;"><i class="fa-solid fa-calendar-check" style="margin-right:6px;"></i>Réservation</td>
-                        <td style="padding:7px 8px; color:rgba(255,255,255,0.92); font-size:0.84rem;">
-                            {% if craft.reservation_link %}
-                            <a href="{{ craft.reservation_link }}" target="_blank" class="btn-gold" style="padding:6px 14px; border-radius:20px; font-size:0.78rem;">Réserver &rarr;</a>
-                            {% else %}{{ craft.reservation_info }}{% endif %}
-                        </td>
-                    </tr>
+
+                    <h3 class="tx-title">{{ craft.nom }}</h3>
+
+                    {% if craft.description %}
+                    <p class="tx-desc" onclick="this.classList.toggle('expanded')" title="Cliquez pour lire la suite">{{ craft.description }}</p>
                     {% endif %}
-                </table>
+
+                    <div class="tx-meta-list">
+                        {% if craft.adresse %}
+                        <div class="tx-meta-row">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <span>{{ craft.adresse }}</span>
+                        </div>
+                        {% endif %}
+                        {% if craft.horaires %}
+                        <div class="tx-meta-row">
+                            <i class="fa-regular fa-calendar"></i>
+                            <span>{{ craft.horaires }}</span>
+                        </div>
+                        {% endif %}
+                        {% if craft.reservation_info and not craft.reservation_link %}
+                        <div class="tx-meta-row">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>{{ craft.reservation_info }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="tx-actions">
+                        {% if craft.contact %}
+                        <a href="tel:{{ craft.contact }}" class="tx-btn tx-btn-outline">
+                            <i class="fa-solid fa-phone"></i> {{ craft.contact }}
+                        </a>
+                        {% endif %}
+                        {% if craft.localisation %}
+                        <a href="{{ craft.localisation }}" target="_blank" class="tx-btn tx-btn-gold">
+                            <i class="fa-solid fa-map-location-dot"></i> Google Maps
+                        </a>
+                        {% elif craft.reservation_link %}
+                        <a href="{{ craft.reservation_link }}" target="_blank" class="tx-btn tx-btn-gold">
+                            <i class="fa-solid fa-calendar-check"></i> Réserver
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
 </section>
 {% endif %}
