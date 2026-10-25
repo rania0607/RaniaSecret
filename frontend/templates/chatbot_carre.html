@@ -2482,13 +2482,13 @@
             <div class="cb-nav-btns">
                 <div class="cb-nav-group">
                     <!-- Notification Bell Button -->
-                    <button class="cb-btn-nav-group" id="notifBellBtn" onclick="toggleNotifDropdown(event)" style="position: relative;">
+                    <button class="cb-btn-nav-group" id="notifBellBtn" onclick="toggleNotifDropdown(event)" style="position: relative; display: none !important;">
                         <span class="cb-ico">🔔</span>
                         <span id="notifCountBadge" style="display: none; position: absolute; top: -3px; right: -3px; background: #ef4444; color: white; font-size: 9px; font-weight: 800; border-radius: 50%; width: 16px; height: 16px; align-items: center; justify-content: center; border: 1.5px solid white;">0</span>
                     </button>
                     <button class="cb-btn-nav-group" id="conversationHistoryToggle" type="button" aria-label="Historique des conversations" title="Historique des conversations"><span class="cb-ico">☰</span></button>
-                    <button class="cb-btn-nav-group" id="navBtn" onclick="switchToView('profile')"><span class="cb-ico">👤</span><span class="cb-lbl">Profil</span></button>
-                    <button class="cb-btn-nav-group" id="upgradeNavBtn" onclick="switchToView('pack')"><span class="cb-ico">✦</span><span class="cb-lbl">Packs</span></button>
+                    <button class="cb-btn-nav-group" id="navBtn" onclick="switchToView('profile')" style="display: none !important;"><span class="cb-ico">👤</span><span class="cb-lbl">Profil</span></button>
+                    <button class="cb-btn-nav-group" id="upgradeNavBtn" onclick="switchToView('pack')" style="display: none !important;"><span class="cb-ico">✦</span><span class="cb-lbl">Packs</span></button>
                 </div>
                 <button class="cb-btn-close" onclick="toggleChat()">✕</button>
             </div>
@@ -3695,6 +3695,15 @@
             buttonElement.classList.add('msg-btn', 'msg-btn-explorer'); // Default style
             buttonElement.textContent = label;
             messageElement.appendChild(buttonElement);
+        } else if (sender === 'bot') {
+            const escaped = String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            messageElement.innerHTML = escaped
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
         } else {
             messageElement.textContent = text;
         }

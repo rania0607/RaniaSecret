@@ -28,7 +28,7 @@ load_dotenv(dotenv_path=env_path)
 try:
     from rag_engine import rag_retrieve_and_augment
 except ImportError:
-    def rag_retrieve_and_augment(message, limit_info=None):
+    def rag_retrieve_and_augment(message, limit_info=None, history=None):
         return {"system_prompt": "Expert Maroc", "user_prompt": message,
                 "has_context": False, "ville_detec": None, "intent_detec": None}
 
@@ -1374,8 +1374,10 @@ def chat():
             if remaining <= 2:
                 limit_info = f"Il reste {remaining} requêtes gratuites à l'utilisateur aujourd'hui. Propose-lui de consulter les offres."
 
-        rag = rag_retrieve_and_augment(message, limit_info)
+        rag = rag_retrieve_and_augment(message, limit_info, history=history)
         response_text = call_groq(rag['system_prompt'], rag['user_prompt'], history)
+        if not response_text:
+            response_text = rag.get('fallback_response')
         if not response_text:
             return jsonify({
                 'error': "Trippy ne peut pas répondre pour le moment. Réessayez plus tard."
