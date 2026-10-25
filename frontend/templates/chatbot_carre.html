@@ -2821,7 +2821,7 @@
                         <div class="wa-cta-block">
                             <p class="wa-cta-title">Confirmer via WhatsApp</p>
                             <p class="wa-cta-sub">Cliquez ci-dessous pour ouvrir la discussion.</p>
-                            <a href="https://wa.me/212661854898?text=Bonjour,%20je%20viens%20d%27effectuer%20un%20virement%20pour%20le%20pack%20[Nom_du_Pack]%20[Période_du_Pack].%20Voici%20la%20capture%20d%27écran%20de%20mon%20paiement."
+                            <a href="https://wa.me/212625902686?text=Bonjour,%20je%20viens%20d%27effectuer%20un%20virement%20pour%20le%20pack%20[Nom_du_Pack]%20[Période_du_Pack].%20Voici%20la%20capture%20d%27écran%20de%20mon%20paiement."
                                 target="_blank" class="wa-cta-btn">
                                 <i class="fa-brands fa-whatsapp"></i> Envoyer le reçu
                             </a>
@@ -3089,7 +3089,7 @@
                         <div class="wa-cta-block">
                             <p class="wa-cta-title">Confirmation Rapide</p>
                             <p class="wa-cta-sub">Cliquez ci-dessous pour ouvrir directement la discussion.</p>
-                            <a id="gmWhatsAppBtn" href="https://wa.me/212661854898?text=Bonjour,%20je%20viens%20d%27effectuer%20un%20virement%20pour%20le%20Pack%20Standard%20Mensuel.%20Voici%20la%20capture." target="_blank" class="wa-cta-btn">
+                            <a id="gmWhatsAppBtn" href="https://wa.me/212625902686?text=Bonjour,%20je%20viens%20d%27effectuer%20un%20virement%20pour%20le%20Pack%20Standard%20Mensuel.%20Voici%20la%20capture." target="_blank" class="wa-cta-btn">
                                 <i class="fa-brands fa-whatsapp"></i> Envoyer le reçu sur WhatsApp
                             </a>
                             <p class="wa-cta-hint">Support disponible 7j/7 de 9h à 21h</p>
@@ -4089,7 +4089,7 @@
         if (wa) {
             const periodTxt = isAnnualBilling ? 'annuel' : 'mensuel';
             const txt = `Bonjour, je viens d'effectuer un virement pour le ${packName} (${periodTxt}, ${totalAmount}). Voici la capture d'écran de mon paiement.`;
-            wa.href = 'https://wa.me/212661854898?text=' + encodeURIComponent(txt);
+            wa.href = 'https://wa.me/212625902686?text=' + encodeURIComponent(txt);
         }
 
         switchToView('payment');
@@ -4578,7 +4578,7 @@
 
         if (waBtn) {
             const msg = `Bonjour, je viens d'effectuer un virement pour le ${gmSelectedPackName} (${period} - ${total}). Voici ma capture d'écran de paiement.`;
-            waBtn.href = `https://wa.me/212661854898?text=${encodeURIComponent(msg)}`;
+            waBtn.href = `https://wa.me/212625902686?text=${encodeURIComponent(msg)}`;
         }
 
         showGmView('payment');
