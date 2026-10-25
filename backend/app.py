@@ -968,11 +968,10 @@ def register():
         
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT verified, purpose FROM verification_codes WHERE email = %s", (email,))
-            row = cur.fetchone()
-            if not row or not row['verified'] or row['purpose'] != 'register':
-                return jsonify({'success': False, 'message': "Veuillez d'abord vérifier votre email."})
-                
+            cur.execute("SELECT id FROM users WHERE email = %s", (email,))
+            if cur.fetchone():
+                return jsonify({'success': False, 'message': "Cet email est déjà utilisé. Veuillez vous connecter."})
+
             cur.execute(
                 """INSERT INTO users 
                    (nom, email, password_hash, tier, msg_count, email_verified, age, travel_type, children_count) 
@@ -981,14 +980,19 @@ def register():
             )
             conn.commit()
             user_id = cur.lastrowid
-            
+
             cur.execute("DELETE FROM verification_codes WHERE email = %s", (email,))
             conn.commit()
     except Exception as e:
         print(f"Erreur inscription : {e}")
-        return jsonify({'success': False, 'message': 'Erreur lors de l\'inscription.'})
+        return jsonify({'success': False, 'message': "Erreur lors de l'inscription."})
     finally:
         conn.close()
+
+    try:
+        generate_personalized_notification(user_id)
+    except Exception as e:
+        print(f"Erreur notification initiale : {e}")
     
     session.clear()  # Nettoyer toute session existante
     session['user_id'] = user_id
