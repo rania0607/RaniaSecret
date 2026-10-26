@@ -23,6 +23,8 @@
     window.performGmRegister = performGmRegister;
     window.performGlobalLogout = performGlobalLogout;
     window.loadUserNotifications = loadUserNotifications;
+    window.closeSidebar = closeSidebar;
+    window.openSidebar = openSidebar;
 
 </script>
 <script type="text/javascript"
@@ -41,6 +43,8 @@
     window.performGmRegister = performGmRegister;
     window.performGlobalLogout = performGlobalLogout;
     window.loadUserNotifications = loadUserNotifications;
+    window.closeSidebar = closeSidebar;
+    window.openSidebar = openSidebar;
 
 </script>
 
@@ -3219,11 +3223,23 @@
     }
 
     function openSidebar() {
-        if (mobileSidebar) mobileSidebar.classList.add('active');
+        const s = document.getElementById('mobileSidebar');
+        const o = document.getElementById('sidebarOverlay');
+        const b = document.getElementById('hamburgerBtn');
+        if (s) s.classList.add('open', 'active');
+        if (o) o.classList.add('open', 'active');
+        if (b) b.classList.add('open', 'active');
+        document.body.style.overflow = 'hidden';
     }
 
     function closeSidebar() {
-        if (mobileSidebar) mobileSidebar.classList.remove('active');
+        const s = document.getElementById('mobileSidebar');
+        const o = document.getElementById('sidebarOverlay');
+        const b = document.getElementById('hamburgerBtn');
+        if (s) s.classList.remove('open', 'active');
+        if (o) o.classList.remove('open', 'active');
+        if (b) b.classList.remove('open', 'active');
+        document.body.style.overflow = '';
     }
 
     // LANGUAGE DROPDOWNS (outside chatbot interaction for global site)
@@ -4666,5 +4682,7 @@
     window.performGmRegister = performGmRegister;
     window.performGlobalLogout = performGlobalLogout;
     window.loadUserNotifications = loadUserNotifications;
+    window.closeSidebar = closeSidebar;
+    window.openSidebar = openSidebar;
 
 </script>
