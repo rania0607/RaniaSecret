@@ -2754,7 +2754,7 @@
                             <p class="pack-card-desc">L'expérience ultime de voyage</p>
                         </div>
                         <div class="pack-card-price">
-                            <div class="pack-card-amount premium" data-monthly="99" data-annual="79">99 DHS</div>
+                            <div class="pack-card-amount premium" data-monthly="499" data-annual="399">499 DHS</div>
                             <div class="pack-card-period">/mois</div>
                         </div>
                         <div class="pack-selected-check"><i class="fa-solid fa-check"></i></div>
@@ -3020,7 +3020,7 @@
                 </div>
 
                 <!-- PACK 3: PREMIUM -->
-                <div class="pack-card" id="gmPackCard3" onclick="selectGmPack(3, 'Pack Premium', 99)">
+                <div class="pack-card" id="gmPackCard3" onclick="selectGmPack(3, 'Pack Premium', 499)">
                     <div class="pack-card-inner">
                         <img src="{{ cdn_url }}icons/pack-premium.png" alt="Premium Pack" class="pack-card-img" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 56 56%27%3E%3Crect width=%2756%27 height=%2756%27 rx=%2712%27 fill=%27%23f2e6d9%27/%3E%3Ctext x=%2728%27 y=%2738%27 text-anchor=%27middle%27 font-size=%2726%27%3E%E2%9C%A6%3C/text%3E%3C/svg%3E'">
                         <div class="pack-card-info">
@@ -3028,7 +3028,7 @@
                             <p class="pack-card-desc">L'expérience ultime de voyage</p>
                         </div>
                         <div class="pack-card-price">
-                            <div class="pack-card-amount premium" id="gmPack3Amount">99 DHS</div>
+                            <div class="pack-card-amount premium" id="gmPack3Amount">499 DHS</div>
                             <div class="pack-card-period">/mois</div>
                         </div>
                         <div class="pack-selected-check"><i class="fa-solid fa-check"></i></div>
@@ -4537,7 +4537,7 @@
         if (aLabel) aLabel.classList.toggle('active', isGmAnnual);
 
         if (p2) p2.textContent = isGmAnnual ? '39 DHS' : '49 DHS';
-        if (p3) p3.textContent = isGmAnnual ? '79 DHS' : '99 DHS';
+        if (p3) p3.textContent = isGmAnnual ? '399 DHS' : '499 DHS';
     }
 
     function selectGmPack(id, name, basePrice) {
@@ -4564,7 +4564,7 @@
         }
 
         const period = isGmAnnual ? 'Annuel' : 'Mensuel';
-        const price = (gmSelectedPackId === 2) ? (isGmAnnual ? 39 : 49) : (isGmAnnual ? 79 : 99);
+        const price = (gmSelectedPackId === 2) ? (isGmAnnual ? 39 : 49) : (isGmAnnual ? 399 : 499);
         const total = isGmAnnual ? (price * 12) + ' DHS / an' : price + ' DHS / mois';
 
         const pName = document.getElementById('gmPaymentPackName');

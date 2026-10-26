@@ -1655,7 +1655,7 @@
                 </div>
                 <div class="plan-price-block">
                     <div class="plan-price">
-                        <span class="price-amount" data-monthly="99" data-annual="79">99</span>
+                        <span class="price-amount" data-monthly="499" data-annual="399">499</span>
                         <span class="price-currency" data-ar=" درهم"> MAD</span>
                         <span class="price-period" data-ar="/شهرياً">/mois</span>
                     </div>
@@ -1817,7 +1817,7 @@
         var MSG = {
             'explorer': "Bonjour Morocco Secrets\nJe souhaite activer le pack *Explorateur* (Gratuit).",
             'standard': "Bonjour Morocco Secrets\nJe souhaite m'abonner au pack *Standard* (49 MAD/mois).\nMerci de me confirmer les modalités de paiement !",
-            'premium': "Bonjour Morocco Secrets\nJe souhaite m'abonner au pack *Premium* (99 MAD/mois).\nMerci de me confirmer les modalités de paiement !"
+            'premium': "Bonjour Morocco Secrets\nJe souhaite m'abonner au pack *Premium* (499 MAD/mois).\nMerci de me confirmer les modalités de paiement !"
         };
         function setTier(tier) {
             if (tier === 'explorer') {
@@ -1829,7 +1829,7 @@
                 if (tier === 'standard' && typeof window.selectGmPack === 'function') {
                     window.selectGmPack(2, 'Pack Standard', 49);
                 } else if (tier === 'premium' && typeof window.selectGmPack === 'function') {
-                    window.selectGmPack(3, 'Pack Premium', 99);
+                    window.selectGmPack(3, 'Pack Premium', 499);
                 }
                 if (typeof window.proceedToGmPayment === 'function') {
                     window.proceedToGmPayment();
