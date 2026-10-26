@@ -1069,25 +1069,48 @@
         .tx-track {
             display: grid;
             grid-auto-flow: column;
-            grid-auto-columns: calc((100% - 44px) / 3);
-            gap: 22px;
+            grid-auto-columns: calc((100% - 48px) / 3);
+            gap: 24px;
             overflow-x: auto;
             scroll-snap-type: x mandatory;
             scroll-behavior: smooth;
             scrollbar-width: none;
             padding: 6px 4px 16px;
         }
+        .tx-track.tx-count-1 {
+            grid-auto-columns: minmax(320px, 500px);
+            justify-content: center;
+        }
+        .tx-track.tx-count-2 {
+            grid-auto-columns: minmax(320px, 460px);
+            justify-content: center;
+            gap: 28px;
+        }
+        .tx-track.tx-count-3 {
+            grid-auto-columns: minmax(290px, 390px);
+            justify-content: center;
+        }
         .tx-track::-webkit-scrollbar {
             display: none;
         }
         @media (max-width: 1024px) {
-            .tx-track {
-                grid-auto-columns: calc((100% - 22px) / 2);
+            .tx-track,
+            .tx-track.tx-count-2,
+            .tx-track.tx-count-3 {
+                grid-auto-columns: calc((100% - 24px) / 2);
+                justify-content: start;
+            }
+            .tx-track.tx-count-2 {
+                justify-content: center;
             }
         }
         @media (max-width: 680px) {
-            .tx-track {
+            .tx-track,
+            .tx-track.tx-count-1,
+            .tx-track.tx-count-2,
+            .tx-track.tx-count-3 {
                 grid-auto-columns: 90%;
+                justify-content: start;
             }
         }
         .tx-card {
@@ -1288,7 +1311,7 @@
         </button>
         {% endif %}
 
-        <div class="tx-track" id="txTrack">
+        <div class="tx-track {% if textile_crafts|length <= 3 %}tx-count-{{ textile_crafts|length }}{% endif %}" id="txTrack">
             {% for craft in textile_crafts %}
             <div class="tx-card">
                 <div class="tx-img-wrap">
