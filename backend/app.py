@@ -834,13 +834,14 @@ L'équipe Morocco Secrets"""
     try:
         import smtplib
         from email.mime.text import MIMEText
+        from email.header import Header
         smtp_server = os.getenv('MAIL_SERVER') or 'smtp.gmail.com'
         smtp_port = int(os.getenv('MAIL_PORT') or 587)
         smtp_user = sender_email
         smtp_pass = (os.getenv('MAIL_PASSWORD') or 'vobvbhumbzpvcmhu').strip()
         if smtp_user and smtp_pass:
             msg = MIMEText(body, 'plain', 'utf-8')
-            msg['Subject'] = subject
+            msg['Subject'] = Header(subject, 'utf-8')
             msg['From'] = f"Morocco Secrets <{smtp_user}>"
             msg['To'] = email
             with smtplib.SMTP(smtp_server, smtp_port, timeout=12) as server:
@@ -848,7 +849,7 @@ L'équipe Morocco Secrets"""
                 server.starttls()
                 server.ehlo()
                 server.login(smtp_user, smtp_pass)
-                server.sendmail(smtp_user, [email], msg.as_string())
+                server.sendmail(smtp_user, [email], msg.as_bytes())
             print(f"[SMTP] Email envoyé à {email} (purpose: {purpose})")
             return True, "Code envoyé."
     except Exception as smtp_err:
