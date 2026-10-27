@@ -441,7 +441,7 @@
             position: fixed;
             inset: 0;
             background: rgba(0, 0, 0, 0.45);
-            z-index: 2050;
+            z-index: 100010;
         }
 
         .sidebar-overlay.open {
@@ -457,7 +457,7 @@
             max-width: 290px;
             background: var(--grona);
             border-left: 2px solid var(--desert-gold);
-            z-index: 2100;
+            z-index: 100020;
             display: flex;
             flex-direction: column;
             transform: translateX(100%);
@@ -1868,95 +1868,10 @@
         window.addEventListener('load', function () { setTimeout(revealCards, 100); });
         revealCards();
 
-        function changeLanguage(langCode, langName) {
-            document.getElementById('currentLangText').innerText = langName;
-            document.querySelector('.custom-lang-list').classList.remove('show');
-
-            var select = document.querySelector('.goog-te-combo');
-            if (select) {
-                select.value = langCode === 'fr' ? '' : langCode;
-                select.dispatchEvent(new Event('change'));
-            } else {
-                // S'il ne le trouve pas immédiatement, essayer encore dans un délai
-                setTimeout(() => {
-                    var select = document.querySelector('.goog-te-combo');
-                    if (select) {
-                        select.value = langCode === 'fr' ? '' : langCode;
-                        select.dispatchEvent(new Event('change'));
-                    }
-                }, 500);
-            }
-            setTimeout(applyManualTranslation, 100);
-        }
-
-        function applyManualTranslation() {
-            function getCookie(name) {
-                let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
-                return v ? v[2] : null;
-            }
-
-            let googtrans = getCookie('googtrans');
-            let lang = 'fr';
-            if (googtrans) {
-                let parts = googtrans.split('/');
-                lang = parts[parts.length - 1];
-            }
-
-            const isAr = (lang === 'ar');
-
-            document.querySelectorAll('[data-ar]').forEach(el => {
-                if (!el.hasAttribute('data-fr')) {
-                    el.setAttribute('data-fr', el.innerHTML);
-                }
-
-                if (isAr) {
-                    el.innerHTML = el.getAttribute('data-ar');
-                    el.classList.add('notranslate');
-                    el.setAttribute('dir', 'rtl');
-                } else {
-                    el.innerHTML = el.getAttribute('data-fr');
-                    el.classList.remove('notranslate');
-                    el.removeAttribute('dir');
-                }
-            });
-
-            if (isAr) {
-                document.body.classList.add('lang-ar');
-                document.documentElement.setAttribute('dir', 'rtl');
-                document.body.setAttribute('dir', 'rtl');
-            } else {
-                document.body.classList.remove('lang-ar');
-                document.documentElement.removeAttribute('dir');
-                document.body.removeAttribute('dir');
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            applyManualTranslation();
-            const observer = new MutationObserver((mutations) => {
-                applyManualTranslation();
-            });
-            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'lang'] });
-
-            // Custom lang selector toggle
-            var btn = document.querySelector('.custom-lang-btn');
-            var list = document.querySelector('.custom-lang-list');
-            if (btn && list) {
-                btn.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    list.classList.toggle('show');
-                });
-                document.addEventListener('click', function (e) {
-                    if (!list.contains(e.target) && !btn.contains(e.target)) {
-                        list.classList.remove('show');
-                    }
-                });
-            }
-        });
     </script>
 
-    {% include 'manual_lang.html' %}
     {% include 'chatbot_carre.html' %}
+    {% include 'manual_lang.html' %}
 
 </body>
 

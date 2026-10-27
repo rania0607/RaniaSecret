@@ -788,45 +788,74 @@ def send_code_email(email, code, purpose="inscription"):
     subject = f"🔐 Code de vérification - Morocco Secrets ({purpose})"
     body = f"""Bonjour,
 
-Votre code de vérification pour {purpose} est : {code}
+Votre code de vérification pour {purpose} sur Morocco Secrets est :
+
+{code}
 
 Ce code expirera dans 10 minutes.
 
-Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.
+Si vous n'êtes pas à l'origine de cette demande, ignorez simplement cet email.
 
-Merci de votre confiance."""
+Merci de votre confiance,
+L'équipe Morocco Secrets"""
 
-    brevo_api_key = os.getenv('BREVO_API_KEY')
-    if not brevo_api_key:
-        print("[BREVO] Clé API manquante.")
-        return False, "Configuration Email manquante sur le serveur."
+    sender_email = os.getenv('MAIL_USERNAME') or 'moroccosecrets201@gmail.com'
+    brevo_api_key = (os.getenv('BREVO_API_KEY') or '').strip()
+    errors = []
 
-    sender_email = os.getenv('MAIL_USERNAME', 'moroccosecrets201@gmail.com')
+    if brevo_api_key:
+        payload = {
+            "sender": {"name": "Morocco Secrets", "email": sender_email},
+            "to": [{"email": email}],
+            "subject": subject,
+            "textContent": body
+        }
+        req = urllib.request.Request(
+            'https://api.brevo.com/v3/smtp/email',
+            data=json.dumps(payload).encode('utf-8'),
+            headers={'api-key': brevo_api_key, 'Content-Type': 'application/json', 'Accept': 'application/json'},
+            method='POST'
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=10) as response:
+                print(f"[BREVO] Email envoyé à {email} (purpose: {purpose})")
+                return True, "Code envoyé."
+        except Exception as e:
+            error_msg = f"Erreur Brevo API: {str(e)}"
+            if hasattr(e, 'read'):
+                try:
+                    error_msg += f" - {e.read().decode('utf-8')}"
+                except Exception:
+                    pass
+            print(f"[BREVO] {error_msg}")
+            errors.append(error_msg)
 
-    payload = {
-        "sender": {"name": "Morocco Secrets", "email": sender_email},
-        "to": [{"email": email}],
-        "subject": subject,
-        "textContent": body
-    }
-
-    req = urllib.request.Request(
-        'https://api.brevo.com/v3/smtp/email',
-        data=json.dumps(payload).encode('utf-8'),
-        headers={'api-key': brevo_api_key, 'Content-Type': 'application/json', 'Accept': 'application/json'},
-        method='POST'
-    )
-    
+    # Fallback SMTP (Gmail / Flask-Mail)
     try:
-        with urllib.request.urlopen(req, timeout=10) as response:
-            print(f"[BREVO] Email envoyé à {email} (purpose: {purpose})")
+        import smtplib
+        from email.mime.text import MIMEText
+        smtp_server = os.getenv('MAIL_SERVER') or 'smtp.gmail.com'
+        smtp_port = int(os.getenv('MAIL_PORT') or 587)
+        smtp_user = sender_email
+        smtp_pass = (os.getenv('MAIL_PASSWORD') or 'vobvbhumbzpvcmhu').strip()
+        if smtp_user and smtp_pass:
+            msg = MIMEText(body, 'plain', 'utf-8')
+            msg['Subject'] = subject
+            msg['From'] = f"Morocco Secrets <{smtp_user}>"
+            msg['To'] = email
+            with smtplib.SMTP(smtp_server, smtp_port, timeout=12) as server:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+                server.login(smtp_user, smtp_pass)
+                server.sendmail(smtp_user, [email], msg.as_string())
+            print(f"[SMTP] Email envoyé à {email} (purpose: {purpose})")
             return True, "Code envoyé."
-    except Exception as e:
-        error_msg = f"Erreur Brevo API: {str(e)}"
-        if hasattr(e, 'read'):
-            error_msg += f" - {e.read().decode('utf-8')}"
-        print(f"[BREVO] {error_msg}")
-        return False, error_msg
+    except Exception as smtp_err:
+        print(f"[SMTP] Erreur: {smtp_err}")
+        errors.append(f"SMTP: {smtp_err}")
+
+    return False, (" ; ".join(errors) if errors else "Configuration Email manquante sur le serveur.")
 
 # ---------- Étape 1 : Envoyer code pour inscription ----------
 @app.route('/send-verification', methods=['POST'])

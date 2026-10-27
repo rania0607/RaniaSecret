@@ -9,22 +9,7 @@
         }, 'google_translate_element');
     }
 
-    // Explicit global window bindings
-    window.openGlobalAuthOrProfile = openGlobalAuthOrProfile;
-    window.closeGlobalUserModal = closeGlobalUserModal;
-    window.toggleNavNotifDropdown = toggleNavNotifDropdown;
-    window.toggleChat = toggleChat;
-    window.showGmAuthTab = showGmAuthTab;
-    window.openGlobalPacksView = openGlobalPacksView;
-    window.selectGmPack = selectGmPack;
-    window.proceedToGmPayment = proceedToGmPayment;
-    window.copyGmRib = copyGmRib;
-    window.performGmLogin = performGmLogin;
-    window.performGmRegister = performGmRegister;
-    window.performGlobalLogout = performGlobalLogout;
-    window.loadUserNotifications = loadUserNotifications;
-    window.closeSidebar = closeSidebar;
-    window.openSidebar = openSidebar;
+
 
 </script>
 <script type="text/javascript"
@@ -45,6 +30,11 @@
     window.loadUserNotifications = loadUserNotifications;
     window.closeSidebar = closeSidebar;
     window.openSidebar = openSidebar;
+    window.showGmForgotPassword = showGmForgotPassword;
+    window.openGlobalForgotFromChat = openGlobalForgotFromChat;
+    window.sendGmForgotCode = sendGmForgotCode;
+    window.verifyGmForgotCode = verifyGmForgotCode;
+    window.submitGmResetPassword = submitGmResetPassword;
 
 </script>
 
@@ -2602,6 +2592,9 @@
                     <i class="fa-solid fa-lock cb-input-icon"></i>
                     <input type="password" id="loginPassword" placeholder="Mot de passe" required>
                 </div>
+                <div style="width: 100%; text-align: right; margin: -4px 0 6px;">
+                    <a href="javascript:void(0)" onclick="openGlobalForgotFromChat()" style="font-size: 12px; color: #c59d5f; font-weight: 600; text-decoration: none;">Mot de passe oublié ?</a>
+                </div>
                 <div class="cb-auth-err" id="loginError"></div>
                 <button class="cb-auth-submit" onclick="performLogin()">Se connecter</button>
                 <a href="#" class="cb-auth-skip" onclick="switchToView('chat'); hideAuthPanel()">Continuer en invité</a>
@@ -2868,6 +2861,12 @@
                     <i class="fa-solid fa-lock cb-input-icon"></i>
                     <input type="password" id="gmLoginPassword" placeholder="Votre mot de passe" required autocomplete="current-password">
                 </div>
+                <div style="width: 100%; text-align: right; margin: -2px 0 6px;">
+                    <a href="javascript:void(0)" onclick="showGmForgotPassword()" style="font-size: 12.5px; color: #6b1d1d; font-weight: 600; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#c59d5f'" onmouseout="this.style.color='#6b1d1d'">
+                        <i class="fa-solid fa-key" style="margin-right: 5px; color: #c59d5f;"></i>Mot de passe oublié ?
+                    </a>
+                </div>
+                <div id="gmLoginSuccess" style="display: none; width: 100%; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 10px 12px; border-radius: 10px; font-size: 12.5px; font-weight: 600; text-align: center; margin-bottom: 6px;"></div>
                 <div class="cb-auth-err" id="gmLoginError"></div>
                 <button class="cb-auth-submit" onclick="performGmLogin()" type="button">
                     <i class="fa-solid fa-right-to-bracket" style="margin-right: 6px;"></i> Se connecter
@@ -2918,6 +2917,65 @@
                     <a href="javascript:void(0)" class="cb-auth-skip" onclick="closeGlobalUserModal()">Continuer en tant qu'invité</a>
                     <span class="gm-sep">•</span>
                     <a href="javascript:void(0)" class="gm-pack-link" onclick="openGlobalPacksView()">Voir les packs</a>
+                </div>
+            </div>
+
+            <!-- Forgot Password Form (3 steps: Email -> Code -> New Password) -->
+            <div class="cb-auth-form" id="gmForgotForm" style="display: none; padding: 10px 0;">
+                <div id="gmForgotStep1" style="width: 100%; display: flex; flex-direction: column; gap: 12px;">
+                    <p style="font-size: 13px; color: #555; margin: 0 0 4px; text-align: center; line-height: 1.45;">
+                        Entrez l'adresse email associée à votre compte pour recevoir un code de vérification à 6 chiffres.
+                    </p>
+                    <div class="cb-input-group">
+                        <i class="fa-solid fa-envelope cb-input-icon"></i>
+                        <input type="email" id="gmForgotEmail" placeholder="Votre email" required autocomplete="email">
+                    </div>
+                    <button class="cb-auth-submit" id="gmForgotSendBtn" onclick="sendGmForgotCode()" type="button">
+                        <i class="fa-solid fa-paper-plane" style="margin-right: 6px;"></i> Envoyer le code
+                    </button>
+                </div>
+
+                <div id="gmForgotStep2" style="width: 100%; display: none; flex-direction: column; gap: 12px;">
+                    <p style="font-size: 13px; color: #065f46; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 10px 12px; border-radius: 10px; margin: 0; text-align: center; line-height: 1.4;">
+                        📩 Un code à 6 chiffres a été envoyé à <strong id="gmForgotEmailDisplay"></strong>.
+                    </p>
+                    <div class="cb-input-group">
+                        <i class="fa-solid fa-shield-halved cb-input-icon"></i>
+                        <input type="text" id="gmForgotCode" placeholder="Code à 6 chiffres (ex: 123456)" maxlength="6" inputmode="numeric" style="letter-spacing: 3px; font-weight: 700;" required>
+                    </div>
+                    <button class="cb-auth-submit" id="gmForgotVerifyBtn" onclick="verifyGmForgotCode()" type="button">
+                        <i class="fa-solid fa-circle-check" style="margin-right: 6px;"></i> Vérifier le code
+                    </button>
+                    <div style="text-align: center;">
+                        <a href="javascript:void(0)" onclick="sendGmForgotCode()" style="font-size: 12px; color: #c59d5f; font-weight: 600; text-decoration: none;">
+                            <i class="fa-solid fa-rotate-right" style="margin-right: 4px;"></i>Renvoyer un code
+                        </a>
+                    </div>
+                </div>
+
+                <div id="gmForgotStep3" style="width: 100%; display: none; flex-direction: column; gap: 12px;">
+                    <p style="font-size: 13px; color: #065f46; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 10px 12px; border-radius: 10px; margin: 0; text-align: center;">
+                        ✅ Code vérifié ! Choisissez maintenant votre nouveau mot de passe :
+                    </p>
+                    <div class="cb-input-group">
+                        <i class="fa-solid fa-lock cb-input-icon"></i>
+                        <input type="password" id="gmForgotNewPassword" placeholder="Nouveau mot de passe (min. 6 caractères)" required autocomplete="new-password">
+                    </div>
+                    <div class="cb-input-group">
+                        <i class="fa-solid fa-lock cb-input-icon"></i>
+                        <input type="password" id="gmForgotConfirmPassword" placeholder="Confirmer le nouveau mot de passe" required autocomplete="new-password">
+                    </div>
+                    <button class="cb-auth-submit" id="gmForgotResetBtn" onclick="submitGmResetPassword()" type="button">
+                        <i class="fa-solid fa-key" style="margin-right: 6px;"></i> Enregistrer le nouveau mot de passe
+                    </button>
+                </div>
+
+                <div class="cb-auth-err" id="gmForgotError"></div>
+
+                <div class="gm-auth-footer-links" style="margin-top: 8px;">
+                    <a href="javascript:void(0)" class="cb-auth-skip" onclick="showGmAuthTab('login')">
+                        <i class="fa-solid fa-arrow-left" style="margin-right: 4px;"></i> Retour à la connexion
+                    </a>
                 </div>
             </div>
         </div>
@@ -3244,37 +3302,7 @@
 
     // LANGUAGE DROPDOWNS (outside chatbot interaction for global site)
     document.addEventListener('DOMContentLoaded', function () {
-        const customLangDropdowns = document.querySelectorAll('.custom-lang-selector');
 
-        customLangDropdowns.forEach(dropdown => {
-            const btn = dropdown.querySelector('.custom-lang-btn');
-            const list = dropdown.querySelector('.custom-lang-list');
-            const currentLangText = dropdown.querySelector('#currentLangText') || dropdown.querySelector('#currentLangTextSidebar');
-
-            if (btn && list) {
-                btn.addEventListener('click', function (event) {
-                    list.classList.toggle('show');
-                    event.stopPropagation();
-                });
-
-                list.addEventListener('click', function (event) {
-                    const lang = event.target.dataset.lang;
-                    if (lang) {
-                        setLanguage(lang);
-                        if (currentLangText) currentLangText.textContent = lang.toUpperCase();
-                        list.classList.remove('show');
-                        event.stopPropagation();
-                    }
-                });
-
-                // Close dropdown if clicked outside
-                document.addEventListener('click', function (event) {
-                    if (list.classList.contains('show') && !dropdown.contains(event.target)) {
-                        list.classList.remove('show');
-                    }
-                });
-            }
-        });
 
         // Close sidebar if clicked outside
         document.addEventListener('click', function (event) {
@@ -4193,37 +4221,7 @@
         // ... other types
     }
 
-    // Initial setup for the language dropdowns
-    document.addEventListener('DOMContentLoaded', function () {
-        const customLangDropdown = document.getElementById('customLangDropdown');
-        if (!customLangDropdown) return;
-        const customLangList = customLangDropdown.querySelector('.custom-lang-list');
-        const customLangBtn = customLangDropdown.querySelector('.custom-lang-btn');
 
-        if (customLangBtn) {
-            customLangBtn.addEventListener('click', function (event) {
-                customLangList.classList.toggle('show');
-                event.stopPropagation();
-            });
-        }
-
-        if (customLangList) {
-            customLangList.addEventListener('click', function (event) {
-                const lang = event.target.dataset.lang;
-                if (lang) {
-                    setLanguage(lang);
-                    document.getElementById('currentLangText').textContent = lang.toUpperCase();
-                    customLangList.classList.remove('show');
-                }
-            });
-        }
-
-        document.addEventListener('click', function (event) {
-            if (customLangList && customLangList.classList.contains('show') && !customLangDropdown.contains(event.target)) {
-                customLangList.classList.remove('show');
-            }
-        });
-    });
 
     // ============================================================
     // GESTION DES NOTIFICATIONS PERSONNALISEES
@@ -4387,13 +4385,21 @@
     function showGmAuthTab(tab) {
         const loginForm = document.getElementById('gmLoginForm');
         const regForm = document.getElementById('gmRegisterForm');
+        const forgotForm = document.getElementById('gmForgotForm');
+        const tabsWrap = document.querySelector('#gmAuthView .gm-tabs');
         const loginTab = document.getElementById('gmLoginTab');
         const regTab = document.getElementById('gmRegisterTab');
         const errLogin = document.getElementById('gmLoginError');
         const errReg = document.getElementById('gmRegisterError');
+        const errForgot = document.getElementById('gmForgotError');
+        const sucLogin = document.getElementById('gmLoginSuccess');
 
         if (errLogin) errLogin.classList.remove('show');
         if (errReg) errReg.classList.remove('show');
+        if (errForgot) errForgot.classList.remove('show');
+        if (sucLogin) sucLogin.style.display = 'none';
+        if (forgotForm) forgotForm.style.display = 'none';
+        if (tabsWrap) tabsWrap.style.display = 'flex';
 
         if (tab === 'login') {
             if (loginForm) loginForm.style.display = 'flex';
@@ -4405,6 +4411,231 @@
             if (regForm) regForm.style.display = 'flex';
             if (loginTab) loginTab.classList.remove('active');
             if (regTab) regTab.classList.add('active');
+        }
+    }
+
+    function openGlobalForgotFromChat() {
+        const chatEmail = document.getElementById('loginEmail') ? document.getElementById('loginEmail').value.trim() : '';
+        const modal = document.getElementById('globalUserModal');
+        if (modal) modal.classList.add('active');
+        showGmView('auth');
+        showGmForgotPassword(chatEmail);
+    }
+
+    function showGmForgotPassword(prefillEmail) {
+        const loginForm = document.getElementById('gmLoginForm');
+        const regForm = document.getElementById('gmRegisterForm');
+        const forgotForm = document.getElementById('gmForgotForm');
+        const tabsWrap = document.querySelector('#gmAuthView .gm-tabs');
+        const errForgot = document.getElementById('gmForgotError');
+        const step1 = document.getElementById('gmForgotStep1');
+        const step2 = document.getElementById('gmForgotStep2');
+        const step3 = document.getElementById('gmForgotStep3');
+        const forgotEmailInput = document.getElementById('gmForgotEmail');
+        const loginEmailInput = document.getElementById('gmLoginEmail');
+
+        if (loginForm) loginForm.style.display = 'none';
+        if (regForm) regForm.style.display = 'none';
+        if (tabsWrap) tabsWrap.style.display = 'none';
+        if (forgotForm) forgotForm.style.display = 'flex';
+        if (errForgot) errForgot.classList.remove('show');
+
+        if (step1) step1.style.display = 'flex';
+        if (step2) step2.style.display = 'none';
+        if (step3) step3.style.display = 'none';
+
+        if (forgotEmailInput) {
+            const candidate = prefillEmail || (loginEmailInput ? loginEmailInput.value.trim() : '');
+            if (candidate) forgotEmailInput.value = candidate;
+            forgotEmailInput.focus();
+        }
+    }
+
+    async function sendGmForgotCode() {
+        const emailInput = document.getElementById('gmForgotEmail');
+        const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+        const errEl = document.getElementById('gmForgotError');
+        const btn = document.getElementById('gmForgotSendBtn');
+        if (errEl) errEl.classList.remove('show');
+
+        if (!email || !email.includes('@')) {
+            if (errEl) {
+                errEl.textContent = 'Veuillez saisir une adresse email valide.';
+                errEl.classList.add('show');
+            }
+            return;
+        }
+
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 6px;"></i> Envoi en cours...';
+        }
+
+        try {
+            const res = await fetch('/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const disp = document.getElementById('gmForgotEmailDisplay');
+                if (disp) disp.textContent = email;
+                const step1 = document.getElementById('gmForgotStep1');
+                const step2 = document.getElementById('gmForgotStep2');
+                const step3 = document.getElementById('gmForgotStep3');
+                if (step1) step1.style.display = 'none';
+                if (step2) step2.style.display = 'flex';
+                if (step3) step3.style.display = 'none';
+                const codeInput = document.getElementById('gmForgotCode');
+                if (codeInput) {
+                    codeInput.value = '';
+                    codeInput.focus();
+                }
+            } else {
+                if (errEl) {
+                    errEl.textContent = data.message || "Impossible d'envoyer le code.";
+                    errEl.classList.add('show');
+                }
+            }
+        } catch (err) {
+            console.error('sendGmForgotCode error:', err);
+            if (errEl) {
+                errEl.textContent = "Erreur réseau lors de l'envoi du code.";
+                errEl.classList.add('show');
+            }
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml || '<i class="fa-solid fa-paper-plane" style="margin-right: 6px;"></i> Envoyer le code';
+            }
+        }
+    }
+
+    async function verifyGmForgotCode() {
+        const email = document.getElementById('gmForgotEmail') ? document.getElementById('gmForgotEmail').value.trim().toLowerCase() : '';
+        const code = document.getElementById('gmForgotCode') ? document.getElementById('gmForgotCode').value.trim() : '';
+        const errEl = document.getElementById('gmForgotError');
+        const btn = document.getElementById('gmForgotVerifyBtn');
+        if (errEl) errEl.classList.remove('show');
+
+        if (!code || code.length < 4) {
+            if (errEl) {
+                errEl.textContent = 'Veuillez saisir le code à 6 chiffres reçu par email.';
+                errEl.classList.add('show');
+            }
+            return;
+        }
+
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 6px;"></i> Vérification...';
+        }
+
+        try {
+            const res = await fetch('/verify-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, code })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const step1 = document.getElementById('gmForgotStep1');
+                const step2 = document.getElementById('gmForgotStep2');
+                const step3 = document.getElementById('gmForgotStep3');
+                if (step1) step1.style.display = 'none';
+                if (step2) step2.style.display = 'none';
+                if (step3) step3.style.display = 'flex';
+                const p1 = document.getElementById('gmForgotNewPassword');
+                const p2 = document.getElementById('gmForgotConfirmPassword');
+                if (p1) { p1.value = ''; p1.focus(); }
+                if (p2) p2.value = '';
+            } else {
+                if (errEl) {
+                    errEl.textContent = data.message || 'Code invalide ou expiré.';
+                    errEl.classList.add('show');
+                }
+            }
+        } catch (err) {
+            console.error('verifyGmForgotCode error:', err);
+            if (errEl) {
+                errEl.textContent = 'Erreur réseau lors de la vérification.';
+                errEl.classList.add('show');
+            }
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml || '<i class="fa-solid fa-circle-check" style="margin-right: 6px;"></i> Vérifier le code';
+            }
+        }
+    }
+
+    async function submitGmResetPassword() {
+        const email = document.getElementById('gmForgotEmail') ? document.getElementById('gmForgotEmail').value.trim().toLowerCase() : '';
+        const p1 = document.getElementById('gmForgotNewPassword') ? document.getElementById('gmForgotNewPassword').value.trim() : '';
+        const p2 = document.getElementById('gmForgotConfirmPassword') ? document.getElementById('gmForgotConfirmPassword').value.trim() : '';
+        const errEl = document.getElementById('gmForgotError');
+        const btn = document.getElementById('gmForgotResetBtn');
+        if (errEl) errEl.classList.remove('show');
+
+        if (!p1 || p1.length < 6) {
+            if (errEl) {
+                errEl.textContent = 'Le mot de passe doit contenir au moins 6 caractères.';
+                errEl.classList.add('show');
+            }
+            return;
+        }
+        if (p1 !== p2) {
+            if (errEl) {
+                errEl.textContent = 'Les deux mots de passe ne correspondent pas.';
+                errEl.classList.add('show');
+            }
+            return;
+        }
+
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 6px;"></i> Enregistrement...';
+        }
+
+        try {
+            const res = await fetch('/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password: p1 })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showGmAuthTab('login');
+                const loginEmail = document.getElementById('gmLoginEmail');
+                const loginPass = document.getElementById('gmLoginPassword');
+                const sucEl = document.getElementById('gmLoginSuccess');
+                if (loginEmail) loginEmail.value = email;
+                if (loginPass) { loginPass.value = ''; loginPass.focus(); }
+                if (sucEl) {
+                    sucEl.textContent = '✅ Votre mot de passe a été modifié ! Vous pouvez maintenant vous connecter.';
+                    sucEl.style.display = 'block';
+                }
+            } else {
+                if (errEl) {
+                    errEl.textContent = data.message || 'Erreur lors de la réinitialisation.';
+                    errEl.classList.add('show');
+                }
+            }
+        } catch (err) {
+            console.error('submitGmResetPassword error:', err);
+            if (errEl) {
+                errEl.textContent = 'Erreur réseau lors de la réinitialisation.';
+                errEl.classList.add('show');
+            }
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml || '<i class="fa-solid fa-key" style="margin-right: 6px;"></i> Enregistrer le nouveau mot de passe';
+            }
         }
     }
 
@@ -4684,5 +4915,10 @@
     window.loadUserNotifications = loadUserNotifications;
     window.closeSidebar = closeSidebar;
     window.openSidebar = openSidebar;
+    window.showGmForgotPassword = showGmForgotPassword;
+    window.openGlobalForgotFromChat = openGlobalForgotFromChat;
+    window.sendGmForgotCode = sendGmForgotCode;
+    window.verifyGmForgotCode = verifyGmForgotCode;
+    window.submitGmResetPassword = submitGmResetPassword;
 
 </script>
