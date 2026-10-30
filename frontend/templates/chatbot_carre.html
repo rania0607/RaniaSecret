@@ -28,6 +28,9 @@
     window.performGmRegister = performGmRegister;
     window.performGlobalLogout = performGlobalLogout;
     window.loadUserNotifications = loadUserNotifications;
+    window.selectRecMood = selectRecMood;
+    window.refreshRecCards = refreshRecCards;
+    window.askTrippyAboutRec = askTrippyAboutRec;
     window.closeSidebar = closeSidebar;
     window.openSidebar = openSidebar;
     window.showGmForgotPassword = showGmForgotPassword;
@@ -2200,12 +2203,12 @@
         position: absolute;
         top: calc(100% + 10px);
         right: 0;
-        width: 320px;
-        max-height: 380px;
+        width: 376px;
+        max-height: 520px;
         background: #ffffff;
-        border-radius: 16px;
+        border-radius: 18px;
         border: 1.5px solid #c59d5f;
-        box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+        box-shadow: 0 20px 48px rgba(0,0,0,0.28);
         z-index: 10000;
         overflow: hidden;
         display: flex;
@@ -2238,12 +2241,239 @@
         opacity: 1;
     }
     .nav-notif-list {
-        overflow-y: auto;
-        padding: 10px;
+        overflow: hidden;
+        padding: 0;
         display: flex;
         flex-direction: column;
+        gap: 0;
+        max-height: 465px;
+    }
+    .rec-quiz-bar {
+        background: linear-gradient(180deg, #fdf8f0 0%, #ffffff 100%);
+        padding: 10px 12px 9px;
+        border-bottom: 1px solid #f0e3cf;
+    }
+    .rec-quiz-subtitle {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: #7c5832;
+        margin-bottom: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+    }
+    .rec-mood-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    .rec-mood-pill {
+        border: 1px solid #e6d4b8;
+        background: #ffffff;
+        color: #5a341e;
+        font-size: 10.8px;
+        font-weight: 700;
+        padding: 4.5px 9px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-family: inherit;
+    }
+    .rec-mood-pill:hover {
+        border-color: #c59d5f;
+        background: #fcf5ea;
+    }
+    .rec-mood-pill.active {
+        background: linear-gradient(135deg, #6b1d1d, #8e2828);
+        color: #ffffff;
+        border-color: #c59d5f;
+        box-shadow: 0 3px 10px rgba(107, 29, 29, 0.24);
+    }
+    .rec-cards-scroll {
+        overflow-y: auto;
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        max-height: 315px;
+    }
+    .rec-visual-card {
+        display: flex;
+        gap: 10px;
+        padding: 9px;
+        border-radius: 13px;
+        background: #fffdf9;
+        border: 1px solid #ede0cc;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        align-items: stretch;
+    }
+    .rec-visual-card:hover {
+        transform: translateY(-1.5px);
+        border-color: #c59d5f;
+        box-shadow: 0 6px 16px rgba(107, 29, 29, 0.11);
+    }
+    .rec-card-thumb {
+        width: 76px;
+        min-width: 76px;
+        height: 84px;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #f3ece2;
+        display: block;
+        flex-shrink: 0;
+    }
+    .rec-card-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.35s ease;
+    }
+    .rec-visual-card:hover .rec-card-thumb img {
+        transform: scale(1.06);
+    }
+    .rec-card-body {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .rec-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 5px;
+        margin-bottom: 2px;
+    }
+    .rec-card-badge {
+        font-size: 9.5px;
+        font-weight: 700;
+        color: #8a5a19;
+        background: #fbf1df;
+        border: 1px solid #ebd3a7;
+        padding: 1.5px 6px;
+        border-radius: 999px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+    }
+    .rec-card-city {
+        font-size: 9.5px;
+        font-weight: 600;
+        color: #6b7280;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 95px;
+    }
+    .rec-card-title {
+        font-size: 12.5px;
+        font-weight: 800;
+        color: #6b1d1d;
+        text-decoration: none;
+        line-height: 1.25;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .rec-card-title:hover {
+        color: #a13030;
+    }
+    .rec-card-desc {
+        font-size: 10.6px;
+        color: #4b5563;
+        line-height: 1.35;
+        margin: 2px 0 6px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .rec-card-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .rec-btn-explore {
+        font-size: 10.2px;
+        font-weight: 700;
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #6b1d1d, #8a2525);
+        padding: 4px 9px;
+        border-radius: 7px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: opacity 0.2s ease;
+    }
+    .rec-btn-explore:hover {
+        opacity: 0.9;
+    }
+    .rec-btn-trippy {
+        font-size: 10.2px;
+        font-weight: 700;
+        color: #6b1d1d;
+        background: #f9efe0;
+        border: 1px solid #dfc192;
+        padding: 3.5px 8px;
+        border-radius: 7px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-family: inherit;
+        transition: all 0.2s ease;
+    }
+    .rec-btn-trippy:hover {
+        background: #f3e2c6;
+        border-color: #c59d5f;
+    }
+    .rec-footer-bar {
+        padding: 8px 12px;
+        background: #faf5ec;
+        border-top: 1px solid #efe2ce;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         gap: 8px;
-        max-height: 320px;
+    }
+    .rec-refresh-btn {
+        border: 1px solid #d7b785;
+        background: #ffffff;
+        color: #6b1d1d;
+        font-size: 10.8px;
+        font-weight: 700;
+        padding: 5px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-family: inherit;
+        transition: all 0.2s ease;
+    }
+    .rec-refresh-btn:hover {
+        background: #6b1d1d;
+        color: #ffffff;
+        border-color: #6b1d1d;
+    }
+    .rec-all-link {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: #8a5a19;
+        text-decoration: none;
+    }
+    .rec-all-link:hover {
+        text-decoration: underline;
     }
 
     /* --- GLOBAL USER MODAL (AUTH & PROFILE & PACKS) --- */
@@ -4356,8 +4586,200 @@
 
 
     // ============================================================
-    // GESTION DES NOTIFICATIONS PERSONNALISEES
+    // GESTION DES RECOMMANDATIONS VISUELLES PAR HUMEUR (MINI-QUIZ + CARTES PHOTO)
     // ============================================================
+    const REC_CDN_BASE = '{{ cdn_url }}';
+    let currentRecMood = 'auto';
+    let shownRecKeysByMood = { auto: [], mer: [], aventure: [], culture: [], gastro: [] };
+
+    const REC_MOODS = [
+        { id: 'auto', label: '✨ Pour vous' },
+        { id: 'mer', label: '🌊 Mer' },
+        { id: 'aventure', label: '🏜️ Aventure' },
+        { id: 'culture', label: '🕌 Culture' },
+        { id: 'gastro', label: '🥘 Gastronomie' }
+    ];
+
+    function resolveRecImageUrl(path, cdnBase) {
+        const base = cdnBase || REC_CDN_BASE || '';
+        const p = (path || '').trim();
+        if (!p) return base + 'villes/maroc_bg.png';
+        if (p.startsWith('http://') || p.startsWith('https://') || p.startsWith('/')) return p;
+        return base + p;
+    }
+
+    function escapeRecHtml(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function buildTrippyRecPrompt(place, city, topic) {
+        const lang = typeof getChatActiveLang === 'function' ? getChatActiveLang() : 'fr';
+        const isCityOnly = !place || place === city;
+        const prompts = {
+            fr: topic === 'gastro'
+                ? `Quelles sont les spécialités culinaires et les meilleurs restaurants à ${city} ?`
+                : (isCityOnly ? `Que visiter et quelles activités faire à ${city} ?` : `Parle-moi de ${place} à ${city} et que faire aux alentours ?`),
+            en: topic === 'gastro'
+                ? `What are the local food specialties and best restaurants in ${city}?`
+                : (isCityOnly ? `What to visit and what activities to do in ${city}?` : `Tell me about ${place} in ${city} and what to do nearby?`),
+            es: topic === 'gastro'
+                ? `¿Cuáles son las especialidades culinarias y los mejores restaurantes en ${city}?`
+                : (isCityOnly ? `¿Qué visitar y qué actividades hacer en ${city}?` : `Háblame de ${place} en ${city} y qué hacer cerca.`),
+            ar: topic === 'gastro'
+                ? `ما هي الأطباق التقليدية وأفضل المطاعم في ${city}؟`
+                : (isCityOnly ? `ما هي أهم المعالم والأنشطة في ${city}؟` : `حدثني عن ${place} في ${city} وأفضل الأنشطة القريبة.`),
+            de: `Was kann man in ${city} (${place}) entdecken und unternehmen?`,
+            it: `Cosa vedere e fare a ${city} (${place})?`,
+            pt: `O que visitar e fazer em ${city} (${place})?`,
+            ru: `Что посмотреть и чем заняться в ${city} (${place})?`,
+            'zh-CN': `请介绍摩洛哥${city}的${place}以及周边推荐活动。`,
+            ja: `${city}の${place}の見どころとおすすめアクティビティを教えてください。`,
+            ko: `${city}의 ${place} 명소와 추천 활동을 알려주세요.`
+        };
+        return prompts[lang] || prompts.fr;
+    }
+
+    function askTrippyAboutRec(event, place, city, topic) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        const navBox = document.getElementById('navNotifBox');
+        const cbBox = document.getElementById('cbNotifBox');
+        if (navBox) navBox.style.display = 'none';
+        if (cbBox) cbBox.style.display = 'none';
+
+        if (chatWin && !chatWin.classList.contains('visible')) {
+            toggleChat();
+        }
+        if (typeof switchToView === 'function') {
+            switchToView('chat');
+        }
+        const prompt = buildTrippyRecPrompt(place, city, topic);
+        if (userInput) {
+            userInput.value = prompt;
+            sendMessage();
+        }
+    }
+
+    function selectRecMood(event, moodId) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        currentRecMood = moodId || 'auto';
+        loadUserNotifications({ mood: currentRecMood, refresh: false });
+    }
+
+    function refreshRecCards(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        loadUserNotifications({ mood: currentRecMood, refresh: true });
+    }
+
+    function renderRecWidgetInto(targetEl, payload, isLoading) {
+        if (!targetEl) return;
+
+        let quizBar = targetEl.querySelector('.rec-quiz-bar');
+        let cardsWrap = targetEl.querySelector('.rec-cards-scroll');
+        let footerBar = targetEl.querySelector('.rec-footer-bar');
+
+        if (!quizBar || !cardsWrap || !footerBar) {
+            targetEl.innerHTML = `
+                <div class="rec-quiz-bar">
+                    <div class="rec-quiz-subtitle">
+                        <span class="rec-quiz-user-hint">🧭 Quelle est votre envie du moment ?</span>
+                    </div>
+                    <div class="rec-mood-pills"></div>
+                </div>
+                <div class="rec-cards-scroll"></div>
+                <div class="rec-footer-bar">
+                    <button type="button" class="rec-refresh-btn" onclick="refreshRecCards(event)">
+                        🔄 Autres idées
+                    </button>
+                    <a href="/villes" class="rec-all-link">Toutes les villes →</a>
+                </div>
+            `;
+            quizBar = targetEl.querySelector('.rec-quiz-bar');
+            cardsWrap = targetEl.querySelector('.rec-cards-scroll');
+            footerBar = targetEl.querySelector('.rec-footer-bar');
+        }
+
+        const hintEl = quizBar.querySelector('.rec-quiz-user-hint');
+        if (hintEl && payload && payload.user && payload.user.logged && payload.user.nom) {
+            const tType = payload.user.travel_type ? ` · ${escapeRecHtml(payload.user.travel_type)}` : '';
+            hintEl.innerHTML = `🧭 Envies pour <strong>${escapeRecHtml(payload.user.nom)}</strong>${tType}`;
+        }
+
+        const pillsContainer = quizBar.querySelector('.rec-mood-pills');
+        if (pillsContainer) {
+            pillsContainer.innerHTML = REC_MOODS.map(m => `
+                <button type="button"
+                    class="rec-mood-pill ${m.id === currentRecMood ? 'active' : ''}"
+                    onclick="selectRecMood(event, '${m.id}')">${m.label}</button>
+            `).join('');
+        }
+
+        if (isLoading) {
+            cardsWrap.innerHTML = '<div style="font-size: 11.5px; color: #7c5832; text-align: center; padding: 24px 12px;"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 6px; color: #c59d5f;"></i>Sélection de vos pépites...</div>';
+            return;
+        }
+
+        const recs = (payload && Array.isArray(payload.recommendations)) ? payload.recommendations : [];
+        const cdnBase = (payload && payload.cdn_url) ? payload.cdn_url : REC_CDN_BASE;
+
+        if (!recs.length) {
+            cardsWrap.innerHTML = '<div style="font-size: 11.5px; color: #888; text-align: center; padding: 20px;">Aucune suggestion trouvée pour ce filtre.</div>';
+            return;
+        }
+
+        cardsWrap.innerHTML = recs.map(item => {
+            const imgUrl = escapeRecHtml(resolveRecImageUrl(item.image_path, cdnBase));
+            const fallbackUrl = escapeRecHtml(resolveRecImageUrl(item.fallback_image || 'villes/maroc_bg.png', cdnBase));
+            const title = escapeRecHtml(item.title);
+            const ville = escapeRecHtml(item.ville);
+            const badge = escapeRecHtml(item.badge || '✨ Recommandé');
+            const desc = escapeRecHtml(item.subtitle || '');
+            const url = escapeRecHtml(item.url || '/villes');
+            const jsPlace = String(item.trippy_place || item.title || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            const jsCity = String(item.trippy_city || item.ville || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            const jsTopic = String(item.trippy_topic || 'general').replace(/'/g, '');
+
+            return `
+                <div class="rec-visual-card">
+                    <a href="${url}" class="rec-card-thumb">
+                        <img src="${imgUrl}" alt="${title}" loading="lazy"
+                             onerror="this.onerror=null; this.src='${fallbackUrl}';">
+                    </a>
+                    <div class="rec-card-body">
+                        <div>
+                            <div class="rec-card-top">
+                                <span class="rec-card-badge">${badge}</span>
+                                <span class="rec-card-city">📍 ${ville}</span>
+                            </div>
+                            <a href="${url}" class="rec-card-title">${title}</a>
+                            <div class="rec-card-desc">${desc}</div>
+                        </div>
+                        <div class="rec-card-actions">
+                            <a href="${url}" class="rec-btn-explore">Découvrir →</a>
+                            <button type="button" class="rec-btn-trippy"
+                                onclick="askTrippyAboutRec(event, '${jsPlace}', '${jsCity}', '${jsTopic}')">
+                                ✨ Trippy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
     function toggleNotifDropdown(e) {
         if (e) e.stopPropagation();
         const box = document.getElementById('cbNotifBox');
@@ -4365,93 +4787,90 @@
 
         if (box.style.display === 'none' || !box.style.display) {
             box.style.display = 'block';
-            loadUserNotifications();
+            loadUserNotifications({ mood: currentRecMood, markRead: true });
         } else {
             box.style.display = 'none';
         }
     }
 
-    async function loadUserNotifications() {
-        const navContainer = document.getElementById('navNotifList');
+    async function refreshNotificationBadgesOnly() {
         const navBadge = document.getElementById('navNotifBadge');
         const sidebarBadge = document.getElementById('sidebarNotifBadge');
-        const container = document.getElementById('notifListContainer');
         const badge = document.getElementById('notifCountBadge');
-        if (!navContainer && !container) return;
-
+        const hideAll = () => {
+            [badge, navBadge, sidebarBadge].forEach(b => { if (b) b.style.display = 'none'; });
+        };
         try {
             const res = await fetch('/api/notifications');
-            if (res.status === 401) {
-                const msg = '<div style="font-size: 12px; color: #888; text-align: center; padding: 15px;">Connectez-vous pour voir vos recommandations personnalisées.</div>';
-                if (container) container.innerHTML = msg;
-                if (navContainer) navContainer.innerHTML = msg;
-                if (badge) badge.style.display = 'none';
-                if (navBadge) navBadge.style.display = 'none';
-                if (sidebarBadge) sidebarBadge.style.display = 'none';
+            if (!res.ok) {
+                hideAll();
                 return;
             }
-
             const data = await res.json();
-            if (data.status === 'success' && data.notifications && data.notifications.length > 0) {
-                if (container) container.innerHTML = '';
-                if (navContainer) navContainer.innerHTML = '';
-                let unreadCount = 0;
-
-                data.notifications.forEach(n => {
-                    if (!n.is_read) unreadCount++;
-
-                    const createItemEl = () => {
-                        const item = document.createElement('div');
-                        item.style.cssText = `padding: 10px; border-radius: 10px; background: ${n.is_read ? '#f9fafb' : '#fef6ee'}; border-left: 3px solid ${n.is_read ? '#d1d5db' : '#c59d5f'}; cursor: pointer; transition: all 0.2s; margin-bottom: 6px;`;
-                        item.innerHTML = `
-                            <div style="font-size: 12px; font-weight: 700; color: #6b1d1d; margin-bottom: 2px;">${n.title}</div>
-                            <div style="font-size: 11px; color: #4b5563; line-height: 1.4;">${n.message}</div>
-                            <div style="font-size: 9px; color: #9ca3af; margin-top: 4px; text-align: right;">${n.created_at || ''}</div>
-                        `;
-                        item.onclick = async () => {
-                            if (!n.is_read) {
-                                await fetch(`/api/notifications/${n.id}/read`, { method: 'POST' });
-                                loadUserNotifications();
-                            }
-                        };
-                        return item;
-                    };
-
-                    if (container) container.appendChild(createItemEl());
-                    if (navContainer) navContainer.appendChild(createItemEl());
-                });
-
-                const applyBadge = (b, count) => {
-                    if (!b) return;
-                    if (count > 0) {
-                        b.textContent = count;
-                        b.style.display = 'flex';
-                    } else {
-                        b.style.display = 'none';
-                    }
-                };
-                applyBadge(badge, unreadCount);
-                applyBadge(navBadge, unreadCount);
-                applyBadge(sidebarBadge, unreadCount);
-            } else {
-                const emptyMsg = '<div style="font-size: 11px; color: #888; text-align: center; padding: 15px;">Aucune recommandation pour le moment.</div>';
-                if (container) container.innerHTML = emptyMsg;
-                if (navContainer) navContainer.innerHTML = emptyMsg;
-                if (badge) badge.style.display = 'none';
-                if (navBadge) navBadge.style.display = 'none';
-                if (sidebarBadge) sidebarBadge.style.display = 'none';
-            }
-        } catch (err) {
-            console.error('Erreur chargement notifications:', err);
-            const errMsg = '<div style="font-size: 11px; color: #ef4444; text-align: center; padding: 15px;">Erreur de connexion.</div>';
-            if (container) container.innerHTML = errMsg;
-            if (navContainer) navContainer.innerHTML = errMsg;
+            const unread = (data.notifications || []).filter(n => !n.is_read).length;
+            [badge, navBadge, sidebarBadge].forEach(b => {
+                if (!b) return;
+                if (unread > 0) {
+                    b.textContent = unread;
+                    b.style.display = 'flex';
+                } else {
+                    b.style.display = 'none';
+                }
+            });
+        } catch (e) {
+            hideAll();
         }
     }
 
-    // Charger les notifications au chargement de la page
+    async function loadUserNotifications(options) {
+        const opts = options || {};
+        const mood = opts.mood || currentRecMood || 'auto';
+        currentRecMood = mood;
+
+        const navContainer = document.getElementById('navNotifList');
+        const container = document.getElementById('notifListContainer');
+        const navBadge = document.getElementById('navNotifBadge');
+        const sidebarBadge = document.getElementById('sidebarNotifBadge');
+        const badge = document.getElementById('notifCountBadge');
+        if (!navContainer && !container) return;
+
+        if (navContainer) renderRecWidgetInto(navContainer, null, true);
+        if (container) renderRecWidgetInto(container, null, true);
+
+        const prevKeys = shownRecKeysByMood[mood] || [];
+        const excludeParam = opts.refresh && prevKeys.length ? `&exclude=${encodeURIComponent(prevKeys.join(','))}` : '';
+
+        try {
+            const res = await fetch(`/api/recommendations?mood=${encodeURIComponent(mood)}&limit=3${excludeParam}`);
+            const data = await res.json();
+
+            if (data.status === 'success' && Array.isArray(data.recommendations)) {
+                const newKeys = data.recommendations.map(r => r.key).filter(Boolean);
+                if (opts.refresh) {
+                    const merged = prevKeys.concat(newKeys);
+                    shownRecKeysByMood[mood] = merged.slice(-12);
+                } else {
+                    shownRecKeysByMood[mood] = newKeys;
+                }
+                if (navContainer) renderRecWidgetInto(navContainer, data, false);
+                if (container) renderRecWidgetInto(container, data, false);
+            }
+
+            if (opts.markRead) {
+                [badge, navBadge, sidebarBadge].forEach(b => { if (b) b.style.display = 'none'; });
+                fetch('/api/notifications/read-all', { method: 'POST' }).catch(() => {});
+            }
+        } catch (err) {
+            console.error('Erreur chargement recommandations:', err);
+            const errHtml = '<div style="font-size: 11px; color: #ef4444; text-align: center; padding: 16px;">Impossible de charger les recommandations.</div>';
+            if (navContainer) navContainer.innerHTML = errHtml;
+            if (container) container.innerHTML = errHtml;
+        }
+    }
+
+    // Vérifier le badge au chargement de la page
     document.addEventListener('DOMContentLoaded', () => {
-        loadUserNotifications();
+        refreshNotificationBadgesOnly();
     });
 
 
@@ -4990,7 +5409,7 @@
             box.style.left = '50%';
             box.style.right = 'auto';
             box.style.transform = 'translateX(-50%)';
-            box.style.width = 'min(92vw, 350px)';
+            box.style.width = 'min(94vw, 376px)';
             box.style.zIndex = '100005';
         } else {
             const wrapper = document.querySelector('.nav-notif-wrapper');
@@ -5009,7 +5428,7 @@
         const fromSidebar = e && e.target && e.target.closest && e.target.closest('.sidebar-notif-link');
         if (fromSidebar || box.style.display === 'none' || !box.style.display) {
             box.style.display = 'flex';
-            loadUserNotifications();
+            loadUserNotifications({ mood: currentRecMood, markRead: true });
         } else {
             box.style.display = 'none';
         }
@@ -5045,6 +5464,9 @@
     window.performGmRegister = performGmRegister;
     window.performGlobalLogout = performGlobalLogout;
     window.loadUserNotifications = loadUserNotifications;
+    window.selectRecMood = selectRecMood;
+    window.refreshRecCards = refreshRecCards;
+    window.askTrippyAboutRec = askTrippyAboutRec;
     window.closeSidebar = closeSidebar;
     window.openSidebar = openSidebar;
     window.showGmForgotPassword = showGmForgotPassword;

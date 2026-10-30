@@ -19,6 +19,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from recommendation_engine import (
     get_recommendations,
+    get_user_profile,
     generate_personalized_notification
 )
 
@@ -1560,8 +1561,28 @@ def set_tier(tier):
 @app.route('/api/recommendations', methods=['GET'])
 def api_recommendations():
     user_id = session.get('user_id')
-    recs = get_recommendations(user_id=user_id, limit=6)
-    return jsonify({'status': 'success', 'recommendations': recs})
+    mood = (request.args.get('mood') or 'auto').strip().lower()
+    try:
+        limit = min(max(int(request.args.get('limit', 3) or 3), 1), 8)
+    except ValueError:
+        limit = 3
+    raw_exclude = request.args.get('exclude', '')
+    exclude_keys = [k.strip() for k in raw_exclude.split(',') if k.strip()][:30]
+
+    recs, profile = get_recommendations(
+        user_id=user_id, mood=mood, limit=limit, exclude_keys=exclude_keys, return_profile=True
+    )
+    return jsonify({
+        'status': 'success',
+        'mood': mood,
+        'cdn_url': CDN_URL,
+        'user': {
+            'logged': bool(profile),
+            'nom': profile.get('nom') if profile else None,
+            'travel_type': profile.get('travel_type') if profile else None,
+        },
+        'recommendations': recs
+    })
 
 @app.route('/api/notifications', methods=['GET'])
 def api_notifications():
@@ -1632,6 +1653,27 @@ def api_mark_notification_read(notif_id):
         return jsonify({'status': 'success'})
     except Exception as e:
         print(f"[API Read Notification Error] : {e}")
+        return jsonify({'status': 'error'}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/notifications/read-all', methods=['POST'])
+def api_mark_all_notifications_read():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'status': 'unauthorized'}), 401
+
+    conn = get_db()
+    if not conn:
+        return jsonify({'status': 'error'}), 500
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE notifications SET is_read = 1 WHERE user_id = %s AND is_read = 0", (user_id,))
+            conn.commit()
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        print(f"[API Read All Notifications Error] : {e}")
         return jsonify({'status': 'error'}), 500
     finally:
         conn.close()
