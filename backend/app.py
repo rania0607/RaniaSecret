@@ -1086,6 +1086,7 @@ def login():
             'nom':       user['nom'],
             'tier':      user_tier,
             'email':     user['email'],
+            'travel_type': user.get('travel_type') or 'Solo',
             'msg_count': msg_count,
             'history':   [{'role': m['role'], 'message': m['message']} for m in history],
             'remaining_queries': max(0, TIER_LIMITS[user_tier] - msg_count)
@@ -1213,11 +1214,13 @@ def me():
         return jsonify({'logged': False})
     session['user_tier'] = user_tier
     msg_count = count_today_messages(user_id) if user_tier == 'explorer' else 0
+    profile = get_user_profile(user_id)
     return jsonify({
         'logged':    True,
         'nom':       session.get('user_nom'),
         'email':     session.get('user_email'),
         'tier':      user_tier,
+        'travel_type': (profile.get('travel_type') if profile else None) or 'Solo',
         'msg_count': msg_count,
         'remaining_queries': max(0, TIER_LIMITS[user_tier] - msg_count)
             if user_tier == 'explorer' else 'Illimité'
@@ -1558,10 +1561,54 @@ def set_tier(tier):
 # API RECOMMANDATIONS & NOTIFICATIONS
 # ============================================================
 
+@app.route('/api/profile/travel-type', methods=['POST'])
+def api_update_travel_type():
+    data = request.get_json(silent=True) or {}
+    travel_type = (data.get('travel_type') or '').strip()
+    valid_types = ('Solo', 'Couple', 'Famille', 'Amis')
+    if travel_type not in valid_types:
+        return jsonify({'status': 'error', 'message': 'Type de voyage invalide.'}), 400
+
+    try:
+        children_count = max(0, min(15, int(data.get('children_count', 0) or 0)))
+    except (TypeError, ValueError):
+        children_count = 0
+    if travel_type != 'Famille':
+        children_count = 0
+
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'status': 'success', 'logged': False, 'travel_type': travel_type})
+
+    conn = get_db()
+    if not conn:
+        return jsonify({'status': 'error', 'message': 'Base de données indisponible.'}), 503
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET travel_type = %s, children_count = %s WHERE id = %s",
+                (travel_type, children_count, user_id)
+            )
+            conn.commit()
+        return jsonify({
+            'status': 'success',
+            'logged': True,
+            'travel_type': travel_type,
+            'children_count': children_count
+        })
+    except Exception as e:
+        print(f"[API Update Travel Type Error] : {e}")
+        return jsonify({'status': 'error', 'message': 'Impossible de mettre à jour le profil.'}), 500
+    finally:
+        conn.close()
+
 @app.route('/api/recommendations', methods=['GET'])
 def api_recommendations():
     user_id = session.get('user_id')
     mood = (request.args.get('mood') or 'auto').strip().lower()
+    ville = (request.args.get('ville') or '').strip()
+    override_travel_type = (request.args.get('travel_type') or '').strip()
     try:
         limit = min(max(int(request.args.get('limit', 3) or 3), 1), 8)
     except ValueError:
@@ -1569,17 +1616,30 @@ def api_recommendations():
     raw_exclude = request.args.get('exclude', '')
     exclude_keys = [k.strip() for k in raw_exclude.split(',') if k.strip()][:30]
 
-    recs, profile = get_recommendations(
-        user_id=user_id, mood=mood, limit=limit, exclude_keys=exclude_keys, return_profile=True
+    recs, profile, villes_list = get_recommendations(
+        user_id=user_id,
+        mood=mood,
+        limit=limit,
+        exclude_keys=exclude_keys,
+        return_profile=True,
+        ville_filter=ville,
+        override_travel_type=override_travel_type,
+    )
+    effective_type = (
+        override_travel_type
+        if override_travel_type in ('Solo', 'Couple', 'Famille', 'Amis')
+        else (profile.get('travel_type') if profile else None)
     )
     return jsonify({
         'status': 'success',
         'mood': mood,
+        'ville': ville,
+        'villes': villes_list,
         'cdn_url': CDN_URL,
         'user': {
             'logged': bool(profile),
             'nom': profile.get('nom') if profile else None,
-            'travel_type': profile.get('travel_type') if profile else None,
+            'travel_type': effective_type,
         },
         'recommendations': recs
     })

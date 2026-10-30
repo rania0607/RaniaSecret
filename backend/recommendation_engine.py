@@ -189,41 +189,231 @@ def _build_attraction_card(a, badge, mood_topic="general"):
     }
 
 
-def get_recommendations(user_id=None, mood="auto", limit=3, exclude_keys=None, return_profile=False):
+import re
+
+
+def _profile_badge_and_regex(travel_type, ctx):
+    if travel_type == "Amis":
+        return (
+            "🎉 Entre Amis",
+            "LOWER(type_ville) REGEXP 'côtier|cotier|cotiere|sahar|mont'",
+            "aventure|plage|surf|désert|desert|cascade|loisir|quad|randonnée",
+        )
+    if travel_type == "Famille":
+        return (
+            "👨‍👩‍👧 En Famille",
+            "LOWER(type_ville) REGEXP 'côtier|cotier|cotiere|cultur'",
+            "parc|jardin|zoo|plage|famille|nature|musée|musee",
+        )
+    if travel_type == "Couple":
+        return (
+            "💑 En Couple",
+            "LOWER(type_ville) REGEXP 'cultur|côtier|cotier|sahar'",
+            "jardin|palais|plage|coucher|panorama|kasbah|médina|medina",
+        )
+    if travel_type == "Solo":
+        return (
+            "🎒 Voyage Solo",
+            "LOWER(type_ville) REGEXP 'cultur|mont|côtier|cotier'",
+            "médina|medina|monument|culture|randonnée|musée|souk",
+        )
+    if ctx["season"] == "ete":
+        return (
+            "☀️ Top cet Été",
+            "LOWER(type_ville) REGEXP 'côtier|cotier|cotiere|mont'",
+            "plage|mer|cascade|jardin|fraîcheur",
+        )
+    if ctx["season"] == "hiver":
+        return (
+            "✨ Coup de Cœur Saison",
+            "LOWER(type_ville) REGEXP 'sahar|cultur|mont'",
+            "désert|desert|monument|palais|neige|soleil",
+        )
+    return (
+        "🌟 Idée Week-end" if ctx["is_weekend"] else "🌟 Incontournable",
+        "1=1",
+        "monument|jardin|plage|kasbah|médina|cascade",
+    )
+
+
+def get_recommendations(
+    user_id=None,
+    mood="auto",
+    limit=3,
+    exclude_keys=None,
+    return_profile=False,
+    ville_filter=None,
+    override_travel_type=None,
+):
     """
     Génère des cartes visuelles de recommandations personnalisées (Villes & Attractions)
-    filtrées par humeur ('auto', 'mer', 'aventure', 'culture', 'gastro') et profil utilisateur.
+    filtrées par humeur ('auto', 'mer', 'aventure', 'culture', 'gastro'), ville optionnelle
+    et type de voyage ('Solo', 'Couple', 'Famille', 'Amis').
     """
     mood = (mood or "auto").strip().lower()
+    ville_clean = (ville_filter or "").strip()
+    if ville_clean.lower() in ("all", "toutes", ""):
+        ville_clean = ""
     exclude_set = set(exclude_keys or [])
     ctx = get_context()
 
     conn = get_db_connection()
     if not conn:
-        return ([], None) if return_profile else []
+        return ([], None, []) if return_profile else []
 
     candidates = []
+    secondary_candidates = []
     profile = None
+    villes_names = []
+    target_ville = None
+
     try:
         profile = get_user_profile(user_id, conn=conn) if user_id else None
-        travel_type = profile.get("travel_type", "Solo") if profile else None
-        preferred_type = get_user_preferred_type(user_id, conn=conn) if (user_id and mood == "auto") else None
-        chat_cities = get_user_recent_chat_cities(user_id, conn=conn) if (user_id and mood == "auto") else []
+        valid_types = ("Solo", "Couple", "Famille", "Amis")
+        if override_travel_type in valid_types:
+            travel_type = override_travel_type
+            if profile:
+                profile["travel_type"] = override_travel_type
+        else:
+            travel_type = profile.get("travel_type", "Solo") if profile else None
+
+        preferred_type = get_user_preferred_type(user_id, conn=conn) if (user_id and mood == "auto" and not ville_clean) else None
+        chat_cities = get_user_recent_chat_cities(user_id, conn=conn) if (user_id and mood == "auto" and not ville_clean) else []
 
         with conn.cursor() as cur:
-            # ── HUMEUR 1 : MER & DÉTENTE ─────────────────────────────────────
-            if mood == "mer":
-                cur.execute("""
-                    SELECT id, nom_ville, slogan, description, type_ville, image_path
-                    FROM villes
-                    WHERE LOWER(type_ville) LIKE '%côtier%'
-                       OR LOWER(type_ville) LIKE '%cotiere%'
-                       OR LOWER(type_ville) LIKE '%cotier%'
-                       OR LOWER(type_ville) LIKE '%côtière%'
-                """)
-                for r in cur.fetchall():
-                    v = _row_dict(r, ["id", "nom_ville", "slogan", "description", "type_ville", "image_path"])
-                    candidates.append(_build_city_card(v, "🌊 Mer & Plages", "mer"))
+            cur.execute("SELECT id, nom_ville, slogan, description, type_ville, image_path FROM villes ORDER BY nom_ville")
+            all_villes_rows = [
+                _row_dict(r, ["id", "nom_ville", "slogan", "description", "type_ville", "image_path"])
+                for r in cur.fetchall()
+            ]
+            villes_names = [v["nom_ville"] for v in all_villes_rows if v.get("nom_ville")]
+
+            if ville_clean:
+                target_ville = next(
+                    (v for v in all_villes_rows if (v.get("nom_ville") or "").lower() == ville_clean.lower()),
+                    None,
+                )
+
+            # ══════════════════════════════════════════════════════════════════
+            # CAS A : FILTRE SUR UNE VILLE SPÉCIFIQUE
+            # ══════════════════════════════════════════════════════════════════
+            if target_ville:
+                v_name = target_ville["nom_ville"]
+                city_img = (target_ville.get("image_path") or "").strip() or "villes/maroc_bg.png"
+
+                if mood == "gastro":
+                    cur.execute(
+                        "SELECT nom, description, specialites, lien FROM restaurants WHERE nom_ville = %s LIMIT 10",
+                        (v_name,),
+                    )
+                    restos = [_row_dict(r, ["nom", "description", "specialites", "lien"]) for r in cur.fetchall()]
+                    cur.execute(
+                        "SELECT nom_plat FROM specialites_ville WHERE nom_ville = %s LIMIT 10",
+                        (v_name,),
+                    )
+                    plats = [(_row_dict(r, ["nom_plat"]).get("nom_plat") or "").strip() for r in cur.fetchall()]
+                    plats = [p for p in plats if p]
+
+                    if plats:
+                        candidates.append({
+                            "key": f"gastro_plats:{v_name}",
+                            "item_type": "ville",
+                            "id": target_ville.get("id"),
+                            "title": f"Spécialités de {v_name}",
+                            "ville": v_name,
+                            "category": "Gastronomie locale",
+                            "badge": "🥘 Saveurs Locales",
+                            "subtitle": _shorten("À goûter absolument : " + ", ".join(plats), 95),
+                            "image_path": city_img,
+                            "fallback_image": "villes/maroc_bg.png",
+                            "url": f"/ville/{quote(v_name)}",
+                            "trippy_city": v_name,
+                            "trippy_place": v_name,
+                            "trippy_topic": "gastro",
+                        })
+
+                    for idx, r in enumerate(restos):
+                        r_nom = r.get("nom") or f"Adresse gourmande {idx + 1}"
+                        sp = f"Spécialités : {r['specialites']} — " if r.get("specialites") else ""
+                        ds = r.get("description") or f"Table recommandée à {v_name}."
+                        candidates.append({
+                            "key": f"resto:{v_name}:{r_nom}",
+                            "item_type": "ville",
+                            "id": target_ville.get("id"),
+                            "title": r_nom,
+                            "ville": v_name,
+                            "category": "Restaurant",
+                            "badge": "🍽️ Table Recommandée",
+                            "subtitle": _shorten(sp + ds, 95),
+                            "image_path": city_img,
+                            "fallback_image": "villes/maroc_bg.png",
+                            "url": (r.get("lien") or "").strip() or f"/ville/{quote(v_name)}",
+                            "trippy_city": v_name,
+                            "trippy_place": r_nom,
+                            "trippy_topic": "gastro",
+                        })
+
+                    if not candidates:
+                        candidates.append(_build_city_card(target_ville, "🥘 Découverte Gourmande", "gastro"))
+                else:
+                    if mood == "mer":
+                        mood_badge, mood_topic, mood_rx = "🌊 Mer & Détente", "mer", r"plage|mer|côte|cote|océan|ocean|surf|baie|lagune|corniche|port"
+                    elif mood == "aventure":
+                        mood_badge, mood_topic, mood_rx = "🏜️ Aventure & Nature", "aventure", r"désert|desert|aventure|montagne|nature|cascade|parc|sport|dune|randonnée|trek|quad|atlas|gorge"
+                    elif mood == "culture":
+                        mood_badge, mood_topic, mood_rx = "🕌 Culture & Médina", "culture", r"historique|monument|culture|musée|musee|médina|medina|palais|religieu|kasbah|unesco|artisanat|rempart"
+                    else:
+                        mood_badge, _, mood_rx = _profile_badge_and_regex(travel_type, ctx)
+                        mood_topic = "general"
+
+                    cur.execute(
+                        "SELECT id, nom, nom_ville, description, type_attraction, image_path FROM attractions WHERE nom_ville = %s",
+                        (v_name,),
+                    )
+                    city_atts = [
+                        _row_dict(r, ["id", "nom", "nom_ville", "description", "type_attraction", "image_path"])
+                        for r in cur.fetchall()
+                    ]
+                    rx_compiled = re.compile(mood_rx, re.IGNORECASE)
+                    for a in city_atts:
+                        a["city_image"] = city_img
+                        haystack = f"{a.get('type_attraction') or ''} {a.get('description') or ''} {a.get('nom') or ''}"
+                        if rx_compiled.search(haystack):
+                            candidates.append(_build_attraction_card(a, mood_badge, mood_topic))
+                        else:
+                            secondary_candidates.append(_build_attraction_card(a, f"📍 À voir à {v_name}", mood_topic))
+
+                    # Compléter avec la fiche ville et ses activités si la ville a peu d'attractions
+                    secondary_candidates.append(_build_city_card(target_ville, mood_badge, mood_topic))
+                    cur.execute("SELECT description FROM activites WHERE nom_ville = %s LIMIT 4", (v_name,))
+                    for idx, r in enumerate(cur.fetchall()):
+                        act_desc = (_row_dict(r, ["description"]).get("description") or "").strip()
+                        if act_desc:
+                            secondary_candidates.append({
+                                "key": f"act:{v_name}:{idx}",
+                                "item_type": "ville",
+                                "id": target_ville.get("id"),
+                                "title": f"Expérience à {v_name}",
+                                "ville": v_name,
+                                "category": "Activité",
+                                "badge": mood_badge,
+                                "subtitle": _shorten(act_desc, 95),
+                                "image_path": city_img,
+                                "fallback_image": "villes/maroc_bg.png",
+                                "url": f"/ville/{quote(v_name)}",
+                                "trippy_city": v_name,
+                                "trippy_place": v_name,
+                                "trippy_topic": mood_topic,
+                            })
+
+            # ══════════════════════════════════════════════════════════════════
+            # CAS B : TOUTES LES VILLES DU MAROC
+            # ══════════════════════════════════════════════════════════════════
+            elif mood == "mer":
+                for v in all_villes_rows:
+                    tv = (v.get("type_ville") or "").lower()
+                    if any(k in tv for k in ("côtier", "cotiere", "cotier", "côtière")):
+                        candidates.append(_build_city_card(v, "🌊 Mer & Plages", "mer"))
 
                 cur.execute("""
                     SELECT a.id, a.nom, a.nom_ville, a.description, a.type_attraction, a.image_path,
@@ -238,18 +428,12 @@ def get_recommendations(user_id=None, mood="auto", limit=3, exclude_keys=None, r
                     a = _row_dict(r, ["id", "nom", "nom_ville", "description", "type_attraction", "image_path", "city_image"])
                     candidates.append(_build_attraction_card(a, "🏖️ Évasion Côtière", "mer"))
 
-            # ── HUMEUR 2 : AVENTURE & DÉSERT / MONTAGNE ──────────────────────
             elif mood == "aventure":
-                cur.execute("""
-                    SELECT id, nom_ville, slogan, description, type_ville, image_path
-                    FROM villes
-                    WHERE LOWER(type_ville) LIKE '%sahar%'
-                       OR LOWER(type_ville) LIKE '%mont%'
-                """)
-                for r in cur.fetchall():
-                    v = _row_dict(r, ["id", "nom_ville", "slogan", "description", "type_ville", "image_path"])
-                    b = "🐪 Désert & Dunes" if "sahar" in (v.get("type_ville") or "").lower() else "🏔️ Montagne & Trek"
-                    candidates.append(_build_city_card(v, b, "aventure"))
+                for v in all_villes_rows:
+                    tv = (v.get("type_ville") or "").lower()
+                    if "sahar" in tv or "mont" in tv:
+                        b = "🐪 Désert & Dunes" if "sahar" in tv else "🏔️ Montagne & Trek"
+                        candidates.append(_build_city_card(v, b, "aventure"))
 
                 cur.execute("""
                     SELECT a.id, a.nom, a.nom_ville, a.description, a.type_attraction, a.image_path,
@@ -264,17 +448,11 @@ def get_recommendations(user_id=None, mood="auto", limit=3, exclude_keys=None, r
                     a = _row_dict(r, ["id", "nom", "nom_ville", "description", "type_attraction", "image_path", "city_image"])
                     candidates.append(_build_attraction_card(a, "🏜️ Aventure & Nature", "aventure"))
 
-            # ── HUMEUR 3 : CULTURE & MÉDINA ──────────────────────────────────
             elif mood == "culture":
-                cur.execute("""
-                    SELECT id, nom_ville, slogan, description, type_ville, image_path
-                    FROM villes
-                    WHERE LOWER(type_ville) LIKE '%cultur%'
-                       OR LOWER(type_ville) LIKE '%histor%'
-                """)
-                for r in cur.fetchall():
-                    v = _row_dict(r, ["id", "nom_ville", "slogan", "description", "type_ville", "image_path"])
-                    candidates.append(_build_city_card(v, "🕌 Cité Historique", "culture"))
+                for v in all_villes_rows:
+                    tv = (v.get("type_ville") or "").lower()
+                    if "cultur" in tv or "histor" in tv:
+                        candidates.append(_build_city_card(v, "🕌 Cité Historique", "culture"))
 
                 cur.execute("""
                     SELECT a.id, a.nom, a.nom_ville, a.description, a.type_attraction, a.image_path,
@@ -289,7 +467,6 @@ def get_recommendations(user_id=None, mood="auto", limit=3, exclude_keys=None, r
                     a = _row_dict(r, ["id", "nom", "nom_ville", "description", "type_attraction", "image_path", "city_image"])
                     candidates.append(_build_attraction_card(a, "🏛️ Patrimoine & Médina", "culture"))
 
-            # ── HUMEUR 4 : GASTRONOMIE ───────────────────────────────────────
             elif mood == "gastro":
                 cur.execute("""
                     SELECT v.id, v.nom_ville, v.slogan, v.description, v.type_ville, v.image_path,
@@ -313,10 +490,8 @@ def get_recommendations(user_id=None, mood="auto", limit=3, exclude_keys=None, r
                         sub = f"Tables recommandées : {restos}"
                     candidates.append(_build_city_card(v, "🥘 Saveurs Locales", "gastro", custom_subtitle=sub))
 
-            # ── HUMEUR PAR DÉFAUT : POUR VOUS (PERSONNALISÉE) ────────────────
             else:
-                # 1. Lieux liés aux villes discutées dans le chatbot
-                if chat_cities:
+                if chat_cities and not override_travel_type:
                     placeholders = ",".join(["%s"] * len(chat_cities))
                     cur.execute(f"""
                         SELECT a.id, a.nom, a.nom_ville, a.description, a.type_attraction, a.image_path,
@@ -324,56 +499,26 @@ def get_recommendations(user_id=None, mood="auto", limit=3, exclude_keys=None, r
                         FROM attractions a
                         LEFT JOIN villes v ON a.nom_ville = v.nom_ville
                         WHERE a.nom_ville IN ({placeholders})
-                        LIMIT 8
+                        LIMIT 6
                     """, tuple(chat_cities))
                     for r in cur.fetchall():
                         a = _row_dict(r, ["id", "nom", "nom_ville", "description", "type_attraction", "image_path", "city_image"])
                         candidates.append(_build_attraction_card(a, f"💬 Autour de {a['nom_ville']}", "general"))
 
-                # 2. Lieux liés au type d'attraction consulté récemment
-                if preferred_type:
+                if preferred_type and not override_travel_type:
                     cur.execute("""
                         SELECT a.id, a.nom, a.nom_ville, a.description, a.type_attraction, a.image_path,
                                v.image_path AS city_image
                         FROM attractions a
                         LEFT JOIN villes v ON a.nom_ville = v.nom_ville
                         WHERE a.type_attraction = %s
-                        LIMIT 8
+                        LIMIT 6
                     """, (preferred_type,))
                     for r in cur.fetchall():
                         a = _row_dict(r, ["id", "nom", "nom_ville", "description", "type_attraction", "image_path", "city_image"])
                         candidates.append(_build_attraction_card(a, "❤️ Selon vos visites", "general"))
 
-                # 3. Sélection selon le profil de voyage (Amis, Famille, Couple, Solo) ou la saison
-                if travel_type == "Amis":
-                    badge_label = "👥 Parfait entre Amis"
-                    city_filter = "LOWER(type_ville) REGEXP 'côtier|cotier|cotiere|sahar|mont'"
-                    att_regex = "aventure|plage|surf|désert|desert|cascade|loisir|quad|randonnée"
-                elif travel_type == "Famille":
-                    badge_label = "👨‍👩‍👧 Idéal en Famille"
-                    city_filter = "LOWER(type_ville) REGEXP 'côtier|cotier|cotiere|cultur'"
-                    att_regex = "parc|jardin|zoo|plage|famille|nature|musée|musee"
-                elif travel_type == "Couple":
-                    badge_label = "💑 Escapade Couple"
-                    city_filter = "LOWER(type_ville) REGEXP 'cultur|côtier|cotier|sahar'"
-                    att_regex = "jardin|palais|plage|coucher|panorama|kasbah|médina|medina"
-                elif travel_type == "Solo":
-                    badge_label = "🎒 Pépite Solo"
-                    city_filter = "LOWER(type_ville) REGEXP 'cultur|mont|côtier|cotier'"
-                    att_regex = "médina|medina|monument|culture|randonnée|musée|souk"
-                else:
-                    if ctx["season"] == "ete":
-                        badge_label = "☀️ Top cet Été"
-                        city_filter = "LOWER(type_ville) REGEXP 'côtier|cotier|cotiere|mont'"
-                        att_regex = "plage|mer|cascade|jardin|fraîcheur"
-                    elif ctx["season"] == "hiver":
-                        badge_label = "✨ Coup de Cœur Saison"
-                        city_filter = "LOWER(type_ville) REGEXP 'sahar|cultur|mont'"
-                        att_regex = "désert|desert|monument|palais|neige|soleil"
-                    else:
-                        badge_label = "🌟 Incontournable" if not ctx["is_weekend"] else "🌟 Idée Week-end"
-                        city_filter = "1=1"
-                        att_regex = "monument|jardin|plage|kasbah|médina|cascade"
+                badge_label, city_filter, att_regex = _profile_badge_and_regex(travel_type, ctx)
 
                 cur.execute(f"""
                     SELECT id, nom_ville, slogan, description, type_ville, image_path
@@ -398,42 +543,37 @@ def get_recommendations(user_id=None, mood="auto", limit=3, exclude_keys=None, r
                     a = _row_dict(r, ["id", "nom", "nom_ville", "description", "type_attraction", "image_path", "city_image"])
                     candidates.append(_build_attraction_card(a, badge_label, "general"))
 
-            # Fallback global si jamais la base a peu d'entrées pour un filtre
-            if len(candidates) < limit:
-                cur.execute("""
-                    SELECT id, nom_ville, slogan, description, type_ville, image_path
-                    FROM villes
-                    LIMIT 10
-                """)
-                for r in cur.fetchall():
-                    v = _row_dict(r, ["id", "nom_ville", "slogan", "description", "type_ville", "image_path"])
-                    candidates.append(_build_city_card(v, "✨ Découverte Maroc", "general"))
+            if len(candidates) + len(secondary_candidates) < limit:
+                for v in all_villes_rows[:10]:
+                    secondary_candidates.append(_build_city_card(v, "✨ Découverte Maroc", "general"))
 
     except Exception as e:
         print(f"[Recommendation Query Error] : {e}")
     finally:
         conn.close()
 
-    # Déduplication par clé tout en gardant la diversité des villes
+    # Déduplication par clé en préservant l'ordre (prioritaires d'abord, secondaires ensuite)
+    random.shuffle(candidates)
+    random.shuffle(secondary_candidates)
     unique_items = []
     seen_keys = set()
-    for item in candidates:
+    for item in candidates + secondary_candidates:
         if item["key"] not in seen_keys:
             seen_keys.add(item["key"])
             unique_items.append(item)
 
-    # Exclure les cartes déjà affichées si possible (pour le bouton "Autres idées")
     filtered = [it for it in unique_items if it["key"] not in exclude_set]
     pool = filtered if len(filtered) >= limit else unique_items
 
     if not pool:
-        return ([], profile) if return_profile else []
+        return ([], profile, villes_names) if return_profile else []
 
-    # Mélange intelligent : en mode 'auto' avec historique chat, garder au moins 1 item prioritaire en tête
+    if target_ville:
+        final_list = pool[:limit]
+        return (final_list, profile, villes_names) if return_profile else final_list
+
     priority_items = [it for it in pool if it["badge"].startswith(("💬", "❤️"))]
     other_items = [it for it in pool if it not in priority_items]
-    random.shuffle(priority_items)
-    random.shuffle(other_items)
 
     selected = []
     used_cities = set()
@@ -446,7 +586,6 @@ def get_recommendations(user_id=None, mood="auto", limit=3, exclude_keys=None, r
                 selected.append(it)
                 used_cities.add(it["ville"])
 
-    # Compléter si besoin même si une ville revient
     if len(selected) < limit:
         for it in pool:
             if it not in selected:
@@ -455,7 +594,7 @@ def get_recommendations(user_id=None, mood="auto", limit=3, exclude_keys=None, r
                 break
 
     final_list = selected[:limit]
-    return (final_list, profile) if return_profile else final_list
+    return (final_list, profile, villes_names) if return_profile else final_list
 
 
 def generate_personalized_notification(user_id):

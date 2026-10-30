@@ -31,6 +31,11 @@
     window.selectRecMood = selectRecMood;
     window.refreshRecCards = refreshRecCards;
     window.askTrippyAboutRec = askTrippyAboutRec;
+    window.toggleRecTravelEditor = toggleRecTravelEditor;
+    window.changeRecTravelType = changeRecTravelType;
+    window.saveProfileTravelType = saveProfileTravelType;
+    window.selectRecVille = selectRecVille;
+    window.clearRecVille = clearRecVille;
     window.closeSidebar = closeSidebar;
     window.openSidebar = openSidebar;
     window.showGmForgotPassword = showGmForgotPassword;
@@ -2246,7 +2251,7 @@
         display: flex;
         flex-direction: column;
         gap: 0;
-        max-height: 465px;
+        max-height: 495px;
     }
     .rec-quiz-bar {
         background: linear-gradient(180deg, #fdf8f0 0%, #ffffff 100%);
@@ -2262,6 +2267,132 @@
         align-items: center;
         justify-content: space-between;
         gap: 6px;
+    }
+    .rec-edit-btn {
+        border: 1px solid #dfc192;
+        background: #fff9ef;
+        color: #6b1d1d;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2.5px 8px;
+        border-radius: 999px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-family: inherit;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+    .rec-edit-btn:hover,
+    .rec-edit-btn.open {
+        background: #6b1d1d;
+        color: #ffffff;
+        border-color: #6b1d1d;
+    }
+    .rec-travel-editor {
+        display: none;
+        background: #fbf3e4;
+        border: 1px solid #e7d0ab;
+        border-radius: 10px;
+        padding: 7px 8px;
+        margin-bottom: 8px;
+        animation: gmDropdownFade 0.16s ease;
+    }
+    .rec-travel-editor.open {
+        display: block;
+    }
+    .rec-travel-editor-title {
+        font-size: 9.8px;
+        font-weight: 700;
+        color: #6b1d1d;
+        margin-bottom: 5px;
+    }
+    .rec-travel-options {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 5px;
+    }
+    .rec-travel-opt {
+        border: 1px solid #e2c9a0;
+        background: #ffffff;
+        color: #5a341e;
+        font-size: 10.5px;
+        font-weight: 700;
+        padding: 5px 7px;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        font-family: inherit;
+        transition: all 0.18s ease;
+    }
+    .rec-travel-opt:hover {
+        border-color: #c59d5f;
+        background: #fffaf2;
+    }
+    .rec-travel-opt.active {
+        background: linear-gradient(135deg, #6b1d1d, #8e2828);
+        color: #ffffff;
+        border-color: #c59d5f;
+    }
+    .rec-city-filter-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 7px;
+    }
+    .rec-city-select-wrap {
+        position: relative;
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+    .rec-city-icon {
+        position: absolute;
+        left: 9px;
+        font-size: 11px;
+        pointer-events: none;
+    }
+    .rec-city-select {
+        width: 100%;
+        appearance: none;
+        -webkit-appearance: none;
+        background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236b1d1d' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E") no-repeat right 10px center;
+        border: 1px solid #e4cfa9;
+        border-radius: 9px;
+        padding: 5.5px 26px 5.5px 26px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #5a341e;
+        font-family: inherit;
+        cursor: pointer;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .rec-city-select:focus,
+    .rec-city-select:hover {
+        border-color: #c59d5f;
+        box-shadow: 0 0 0 2px rgba(197, 157, 95, 0.15);
+    }
+    .rec-city-clear {
+        border: 1px solid #dfc192;
+        background: #fff5e6;
+        color: #6b1d1d;
+        font-size: 10.5px;
+        font-weight: 800;
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        padding: 0;
+    }
+    .rec-city-clear:hover {
+        background: #6b1d1d;
+        color: #ffffff;
     }
     .rec-mood-pills {
         display: flex;
@@ -3229,6 +3360,18 @@
                 <div class="profile-row">
                     <span class="profile-label"><i class="fa-solid fa-circle-check" style="margin-right: 6px; color: #10b981;"></i>Statut</span>
                     <span class="profile-value" id="gmProfileStatus">Connecté</span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label"><i class="fa-solid fa-compass" style="margin-right: 6px; color: #c59d5f;"></i>Mode de voyage</span>
+                    <span class="profile-value" style="display: inline-flex; align-items: center; gap: 6px;">
+                        <select id="gmProfileTravelSelect" onchange="saveProfileTravelType(this.value)" style="border: 1px solid #dfc192; background: #fffaf2; color: #6b1d1d; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; cursor: pointer; font-family: inherit; outline: none;">
+                            <option value="Solo">🎒 Solo</option>
+                            <option value="Couple">💑 En Couple</option>
+                            <option value="Famille">👨‍👩‍👧 En Famille</option>
+                            <option value="Amis">🎉 Entre Amis</option>
+                        </select>
+                        <span id="gmTravelSavedBadge" style="display: none; font-size: 10.5px; color: #059669; font-weight: 700;">✓</span>
+                    </span>
                 </div>
                 <div class="profile-row">
                     <span class="profile-label"><i class="fa-solid fa-crown" style="margin-right: 6px; color: #c59d5f;"></i>Pack actuel</span>
@@ -4250,6 +4393,7 @@
                 localStorage.setItem('userName', data.nom || data.message || '');
                 localStorage.setItem('userEmail', data.email || email);
                 localStorage.setItem('userTier', data.tier || 'explorer');
+                if (data.travel_type) localStorage.setItem('userTravelType', data.travel_type);
                 localStorage.setItem('userQueriesRemaining', data.remaining_queries != null ? data.remaining_queries : 'Illimité');
                 localStorage.removeItem('activeConversationId');
                 activeConversationId = null;
@@ -4318,6 +4462,7 @@
                 localStorage.setItem('userName', data.nom || nom);
                 localStorage.setItem('userEmail', data.email || email);
                 localStorage.setItem('userTier', data.tier || 'explorer');
+                localStorage.setItem('userTravelType', travel_type || 'Solo');
                 localStorage.setItem('userQueriesRemaining', data.remaining_queries != null ? data.remaining_queries : '50');
                 localStorage.removeItem('activeConversationId');
                 activeConversationId = null;
@@ -4374,6 +4519,10 @@
         }
         const gmPack = document.getElementById('gmProfilePack');
         if (gmPack) gmPack.textContent = 'Pack ' + tierLabel;
+        const gmTravelSelect = document.getElementById('gmProfileTravelSelect');
+        if (gmTravelSelect) {
+            gmTravelSelect.value = localStorage.getItem('userTravelType') || 'Solo';
+        }
         const gmStatus = document.getElementById('gmProfileStatus');
         if (gmStatus) gmStatus.textContent = isAuthenticated ? 'Connecté' : 'Invité';
         const gmQueries = document.getElementById('gmProfileQueriesRemaining');
@@ -4434,6 +4583,7 @@
         localStorage.removeItem('userName');
         localStorage.removeItem('userEmail');
         localStorage.removeItem('userTier');
+        localStorage.removeItem('userTravelType');
         localStorage.removeItem('userQueriesRemaining');
         localStorage.removeItem('activeConversationId');
         localStorage.removeItem(guestMessagesKey);
@@ -4530,6 +4680,7 @@
                     localStorage.setItem('userName', data.nom || '');
                     localStorage.setItem('userEmail', data.email || '');
                     localStorage.setItem('userTier', data.tier || 'explorer');
+                    if (data.travel_type) localStorage.setItem('userTravelType', data.travel_type);
                     localStorage.setItem('userQueriesRemaining', data.remaining_queries != null
                         ? data.remaining_queries
                         : 'Illimité');
@@ -4586,10 +4737,13 @@
 
 
     // ============================================================
-    // GESTION DES RECOMMANDATIONS VISUELLES PAR HUMEUR (MINI-QUIZ + CARTES PHOTO)
+    // GESTION DES RECOMMANDATIONS VISUELLES PAR HUMEUR (MINI-QUIZ + FILTRE VILLE + EDIT PROFIL)
     // ============================================================
     const REC_CDN_BASE = '{{ cdn_url }}';
     let currentRecMood = 'auto';
+    let currentRecVille = '';
+    let cachedRecVilles = [];
+    let isRecTravelEditorOpen = false;
     let shownRecKeysByMood = { auto: [], mer: [], aventure: [], culture: [], gastro: [] };
 
     const REC_MOODS = [
@@ -4599,6 +4753,86 @@
         { id: 'culture', label: '🕌 Culture' },
         { id: 'gastro', label: '🥘 Gastronomie' }
     ];
+
+    const REC_TRAVEL_TYPES = [
+        { id: 'Solo', label: '🎒 Solo' },
+        { id: 'Couple', label: '💑 En Couple' },
+        { id: 'Famille', label: '👨‍👩‍👧 En Famille' },
+        { id: 'Amis', label: '🎉 Entre Amis' }
+    ];
+
+    function getTravelTypeDisplay(typeId) {
+        const found = REC_TRAVEL_TYPES.find(t => t.id === typeId);
+        return found ? found.label : (typeId || '🎒 Solo');
+    }
+
+    function toggleRecTravelEditor(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        isRecTravelEditorOpen = !isRecTravelEditorOpen;
+        document.querySelectorAll('.rec-travel-editor').forEach(el => {
+            el.classList.toggle('open', isRecTravelEditorOpen);
+        });
+        document.querySelectorAll('.rec-edit-btn').forEach(btn => {
+            btn.classList.toggle('open', isRecTravelEditorOpen);
+        });
+    }
+
+    async function saveProfileTravelType(newType) {
+        if (!newType) return;
+        localStorage.setItem('userTravelType', newType);
+        shownRecKeysByMood = { auto: [], mer: [], aventure: [], culture: [], gastro: [] };
+        const gmTravelSelect = document.getElementById('gmProfileTravelSelect');
+        if (gmTravelSelect && gmTravelSelect.value !== newType) {
+            gmTravelSelect.value = newType;
+        }
+        try {
+            await fetch('/api/profile/travel-type', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ travel_type: newType })
+            });
+            const badge = document.getElementById('gmTravelSavedBadge');
+            if (badge) {
+                badge.style.display = 'inline';
+                setTimeout(() => { badge.style.display = 'none'; }, 1800);
+            }
+        } catch (err) {
+            console.error('Erreur mise à jour type de voyage:', err);
+        }
+    }
+
+    async function changeRecTravelType(event, newType) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        isRecTravelEditorOpen = false;
+        await saveProfileTravelType(newType);
+        currentRecMood = 'auto';
+        loadUserNotifications({ mood: 'auto', refresh: false });
+    }
+
+    function selectRecVille(event, villeName) {
+        if (event) {
+            event.stopPropagation();
+        }
+        currentRecVille = (villeName || '').trim();
+        shownRecKeysByMood = { auto: [], mer: [], aventure: [], culture: [], gastro: [] };
+        loadUserNotifications({ mood: currentRecMood, refresh: false });
+    }
+
+    function clearRecVille(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        currentRecVille = '';
+        shownRecKeysByMood = { auto: [], mer: [], aventure: [], culture: [], gastro: [] };
+        loadUserNotifications({ mood: currentRecMood, refresh: false });
+    }
 
     function resolveRecImageUrl(path, cdnBase) {
         const base = cdnBase || REC_CDN_BASE || '';
@@ -4696,6 +4930,19 @@
                 <div class="rec-quiz-bar">
                     <div class="rec-quiz-subtitle">
                         <span class="rec-quiz-user-hint">🧭 Quelle est votre envie du moment ?</span>
+                        <button type="button" class="rec-edit-btn" onclick="toggleRecTravelEditor(event)" title="Changer de mode de voyage (Solo, Couple, Famille, Amis)">
+                            ✏️ Modifier
+                        </button>
+                    </div>
+                    <div class="rec-travel-editor"></div>
+                    <div class="rec-city-filter-row">
+                        <div class="rec-city-select-wrap">
+                            <span class="rec-city-icon">📍</span>
+                            <select class="rec-city-select" onchange="selectRecVille(event, this.value)" onclick="event.stopPropagation()">
+                                <option value="">Toutes les villes du Maroc</option>
+                            </select>
+                        </div>
+                        <button type="button" class="rec-city-clear" onclick="clearRecVille(event)" title="Réinitialiser la ville">✕</button>
                     </div>
                     <div class="rec-mood-pills"></div>
                 </div>
@@ -4712,10 +4959,59 @@
             footerBar = targetEl.querySelector('.rec-footer-bar');
         }
 
+        if (payload && Array.isArray(payload.villes) && payload.villes.length) {
+            cachedRecVilles = payload.villes;
+        }
+
+        const activeTravelType = (payload && payload.user && payload.user.travel_type)
+            ? payload.user.travel_type
+            : (localStorage.getItem('userTravelType') || 'Solo');
+        if (payload && payload.user && payload.user.travel_type) {
+            localStorage.setItem('userTravelType', payload.user.travel_type);
+        }
+
         const hintEl = quizBar.querySelector('.rec-quiz-user-hint');
-        if (hintEl && payload && payload.user && payload.user.logged && payload.user.nom) {
-            const tType = payload.user.travel_type ? ` · ${escapeRecHtml(payload.user.travel_type)}` : '';
-            hintEl.innerHTML = `🧭 Envies pour <strong>${escapeRecHtml(payload.user.nom)}</strong>${tType}`;
+        if (hintEl) {
+            const typeBadge = escapeRecHtml(getTravelTypeDisplay(activeTravelType));
+            if (payload && payload.user && payload.user.logged && payload.user.nom) {
+                hintEl.innerHTML = `🧭 <strong>${escapeRecHtml(payload.user.nom)}</strong> · ${typeBadge}`;
+            } else if (localStorage.getItem('isAuthenticated') === 'true' && localStorage.getItem('userName')) {
+                hintEl.innerHTML = `🧭 <strong>${escapeRecHtml(localStorage.getItem('userName'))}</strong> · ${typeBadge}`;
+            } else {
+                hintEl.innerHTML = `🧭 Mode : <strong>${typeBadge}</strong>`;
+            }
+        }
+
+        const editBtn = quizBar.querySelector('.rec-edit-btn');
+        if (editBtn) editBtn.classList.toggle('open', isRecTravelEditorOpen);
+
+        const editorEl = quizBar.querySelector('.rec-travel-editor');
+        if (editorEl) {
+            editorEl.classList.toggle('open', isRecTravelEditorOpen);
+            editorEl.innerHTML = `
+                <div class="rec-travel-editor-title">Choisissez votre style de voyage :</div>
+                <div class="rec-travel-options">
+                    ${REC_TRAVEL_TYPES.map(t => `
+                        <button type="button"
+                            class="rec-travel-opt ${t.id === activeTravelType ? 'active' : ''}"
+                            onclick="changeRecTravelType(event, '${t.id}')">${t.label}</button>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        const citySelect = quizBar.querySelector('.rec-city-select');
+        if (citySelect && cachedRecVilles.length) {
+            citySelect.innerHTML = '<option value="">Toutes les villes du Maroc</option>' +
+                cachedRecVilles.map(v => {
+                    const esc = escapeRecHtml(v);
+                    const sel = (v === currentRecVille) ? ' selected' : '';
+                    return `<option value="${esc}"${sel}>${esc}</option>`;
+                }).join('');
+        }
+        const clearBtn = quizBar.querySelector('.rec-city-clear');
+        if (clearBtn) {
+            clearBtn.style.display = currentRecVille ? 'inline-flex' : 'none';
         }
 
         const pillsContainer = quizBar.querySelector('.rec-mood-pills');
@@ -4839,9 +5135,12 @@
 
         const prevKeys = shownRecKeysByMood[mood] || [];
         const excludeParam = opts.refresh && prevKeys.length ? `&exclude=${encodeURIComponent(prevKeys.join(','))}` : '';
+        const villeParam = currentRecVille ? `&ville=${encodeURIComponent(currentRecVille)}` : '';
+        const localTravelType = localStorage.getItem('userTravelType') || '';
+        const travelParam = localTravelType ? `&travel_type=${encodeURIComponent(localTravelType)}` : '';
 
         try {
-            const res = await fetch(`/api/recommendations?mood=${encodeURIComponent(mood)}&limit=3${excludeParam}`);
+            const res = await fetch(`/api/recommendations?mood=${encodeURIComponent(mood)}&limit=3${villeParam}${travelParam}${excludeParam}`);
             const data = await res.json();
 
             if (data.status === 'success' && Array.isArray(data.recommendations)) {
@@ -5224,6 +5523,7 @@
                 localStorage.setItem('userName', data.nom || data.message || '');
                 localStorage.setItem('userEmail', data.email || email);
                 localStorage.setItem('userTier', data.tier || 'explorer');
+                if (data.travel_type) localStorage.setItem('userTravelType', data.travel_type);
                 localStorage.setItem('userQueriesRemaining', data.remaining_queries != null ? data.remaining_queries : 'Illimité');
                 updateProfileView();
                 showGmView('profile');
@@ -5281,6 +5581,7 @@
                 localStorage.setItem('userName', data.nom || nom);
                 localStorage.setItem('userEmail', data.email || email);
                 localStorage.setItem('userTier', data.tier || 'explorer');
+                localStorage.setItem('userTravelType', travel_type || 'Solo');
                 localStorage.setItem('userQueriesRemaining', data.remaining_queries != null ? data.remaining_queries : '50');
                 updateProfileView();
                 showGmView('profile');
@@ -5467,6 +5768,11 @@
     window.selectRecMood = selectRecMood;
     window.refreshRecCards = refreshRecCards;
     window.askTrippyAboutRec = askTrippyAboutRec;
+    window.toggleRecTravelEditor = toggleRecTravelEditor;
+    window.changeRecTravelType = changeRecTravelType;
+    window.saveProfileTravelType = saveProfileTravelType;
+    window.selectRecVille = selectRecVille;
+    window.clearRecVille = clearRecVille;
     window.closeSidebar = closeSidebar;
     window.openSidebar = openSidebar;
     window.showGmForgotPassword = showGmForgotPassword;
