@@ -26,11 +26,13 @@ env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
 load_dotenv(dotenv_path=env_path)
 
 try:
-    from rag_engine import rag_retrieve_and_augment
+    from rag_engine import rag_retrieve_and_augment, localize_fallback_response
 except ImportError:
-    def rag_retrieve_and_augment(message, limit_info=None, history=None):
+    def rag_retrieve_and_augment(message, limit_info=None, history=None, ui_lang=None):
         return {"system_prompt": "Expert Maroc", "user_prompt": message,
                 "has_context": False, "ville_detec": None, "intent_detec": None}
+    def localize_fallback_response(text, message, ui_lang=None):
+        return text
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # app.py est dans /backend — frontend est au niveau parent (root)
@@ -155,38 +157,46 @@ def hash_password(password):
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 def call_groq(system_prompt, user_message, history=None):
-    if not GROQ_API_KEY:
+    api_key = (os.getenv('GROQ_API_KEY') or GROQ_API_KEY or '').strip()
+    if not api_key:
         app.logger.error("chatbot configuration error: GROQ_API_KEY is not set")
         return None
 
     headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type":  "application/json"
     }
-    payload = {
-        "model":    GROQ_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            *(history or []),
-            {"role": "user",   "content": user_message}
-        ],
-        "temperature": 0.3,
-        "max_tokens":  800
-    }
-    try:
-        resp = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers=headers, json=payload, timeout=20
-        )
-        if resp.status_code == 200:
-            return resp.json()["choices"][0]["message"]["content"]
-        app.logger.error("Groq API returned HTTP %s: %s", resp.status_code, resp.text[:300])
-    except requests.Timeout:
-        app.logger.exception("Groq API request timed out")
-    except requests.RequestException:
-        app.logger.exception("Groq API request failed")
-    except (KeyError, IndexError, TypeError, ValueError):
-        app.logger.exception("Groq API returned an invalid response")
+    models_to_try = list(dict.fromkeys([GROQ_MODEL, "llama-3.3-70b-versatile"]))
+
+    for model_name in models_to_try:
+        payload = {
+            "model":    model_name,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                *(history or []),
+                {"role": "user",   "content": user_message}
+            ],
+            "temperature": 0.3,
+            "max_tokens":  900
+        }
+        try:
+            resp = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=headers, json=payload, timeout=20
+            )
+            if resp.status_code == 200:
+                content = resp.json()["choices"][0]["message"]["content"]
+                if content and content.strip():
+                    return content.strip()
+            app.logger.error("Groq API (%s) returned HTTP %s: %s", model_name, resp.status_code, resp.text[:300])
+            if resp.status_code == 401:
+                break
+        except requests.Timeout:
+            app.logger.exception("Groq API (%s) request timed out", model_name)
+        except requests.RequestException:
+            app.logger.exception("Groq API (%s) request failed", model_name)
+        except (KeyError, IndexError, TypeError, ValueError):
+            app.logger.exception("Groq API (%s) returned an invalid response", model_name)
     return None
 
 def save_message(user_id, role, message, ville=None):
@@ -1408,10 +1418,11 @@ def chat():
             if remaining <= 2:
                 limit_info = f"Il reste {remaining} requêtes gratuites à l'utilisateur aujourd'hui. Propose-lui de consulter les offres."
 
-        rag = rag_retrieve_and_augment(message, limit_info, history=history)
+        ui_lang = (data.get('lang') or '').strip()[:10] if isinstance(data.get('lang'), str) else ''
+        rag = rag_retrieve_and_augment(message, limit_info, history=history, ui_lang=ui_lang)
         response_text = call_groq(rag['system_prompt'], rag['user_prompt'], history)
         if not response_text:
-            response_text = rag.get('fallback_response')
+            response_text = localize_fallback_response(rag.get('fallback_response'), message, ui_lang)
         if not response_text:
             return jsonify({
                 'error': "Trippy ne peut pas répondre pour le moment. Réessayez plus tard."

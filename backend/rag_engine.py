@@ -12,6 +12,9 @@ Fonctionnement :
 import pymysql
 import re
 import os
+import json
+import urllib.parse
+import urllib.request
 import traceback
 import unicodedata
 from difflib import SequenceMatcher
@@ -44,25 +47,42 @@ def get_db_connection():
 # ============================================================
 
 INTENT_KEYWORDS = {
-    'restaurants':  ['restaurant', 'manger', 'resto', 'cuisine', 'diner', 'dîner',
-                     'dejeuner', 'déjeuner', 'nourriture', 'gastronomie', 'food', 'eat', 'makla', 'مطعم', 'أكل'],
-    'attractions':  ['attraction', 'visiter', 'monument', 'voir', 'touriste',
-                     'site', 'musee', 'musée', 'palais', 'mosquee', 'mosquée', 'medina', 'médina', 'visite', 'معالم', 'زيارة'],
-    'hebergements': ['hebergement', 'hébergement', 'hotel', 'hôtel', 'dormir', 'riad',
-                     'auberge', 'chambre', 'nuit', 'sejour', 'séjour', 'loger', 'فندق', 'رياض'],
+    'restaurants':  ['restaurant', 'restaurants', 'manger', 'resto', 'cuisine', 'diner', 'dîner',
+                     'dejeuner', 'déjeuner', 'nourriture', 'gastronomie', 'food', 'eat', 'where to eat',
+                     'comer', 'restaurante', 'restaurantes', 'cena', 'almuerzo', 'essen', 'ristorante', 'mangiare',
+                     'makla', 'فين ناكل', 'مطعم', 'مطاعم', 'أكل'],
+    'attractions':  ['attraction', 'attractions', 'visiter', 'monument', 'monuments', 'voir', 'touriste',
+                     'site', 'musee', 'musée', 'palais', 'mosquee', 'mosquée', 'medina', 'médina', 'visite',
+                     'visit', 'places', 'sightseeing', 'museum', 'palace', 'mosque', 'que ver', 'visitar',
+                     'monumentos', 'lugares', 'sehenswürdigkeiten', 'besuchen', 'cosa vedere',
+                     'شنو نشوف', 'معالم', 'زيارة', 'أماكن', 'مآثر'],
+    'hebergements': ['hebergement', 'hébergement', 'hotel', 'hôtel', 'hotels', 'dormir', 'riad',
+                     'auberge', 'chambre', 'nuit', 'sejour', 'séjour', 'loger', 'stay', 'accommodation',
+                     'sleep', 'where to stay', 'alojamiento', 'hoteles', 'donde dormir', 'unterkunft',
+                     'übernachten', 'alloggio', 'فين نبات', 'فندق', 'فنادق', 'رياض'],
     'activites':    ['activite', 'activité', 'activites', 'activités', 'faire', 'sport', 'balade', 'randonnee', 'randonnée',
-                     'excursion', 'loisir', 'promenade', 'aventure', 'أنشطة'],
-    'specialites':  ['specialite', 'spécialité', 'plat', 'tajine', 'couscous', 'pastilla', 'tanjia',
-                     'gastronomie', 'local', 'typique', 'cuisine locale', 'طاجين', 'كسكس', 'طبخ'],
+                     'excursion', 'loisir', 'promenade', 'aventure', 'activity', 'activities', 'things to do',
+                     'what to do', 'hiking', 'trekking', 'adventure', 'actividades', 'que hacer', 'senderismo',
+                     'aktivitäten', 'cosa fare', 'ach ndir', 'شنو ندير', 'أنشطة', 'نشاط'],
+    'specialites':  ['specialite', 'spécialité', 'plat', 'tajine', 'tagine', 'couscous', 'pastilla', 'tanjia',
+                     'gastronomie', 'local', 'typique', 'cuisine locale', 'specialties', 'dishes', 'dish',
+                     'traditional food', 'platos', 'comida tipica', 'especialidades', 'spezialitäten', 'piatti tipici',
+                     'طاجين', 'كسكس', 'طبخ', 'أطباق', 'شهيوات'],
     'evenements':   ['evenement', 'événement', 'festival', 'fete', 'fête', 'celebration', 'célébration',
-                     'agenda', 'manifestation', 'concert', 'مهرجان'],
+                     'agenda', 'manifestation', 'concert', 'event', 'events', 'festivals', 'evento', 'eventos',
+                     'festivales', 'fiesta', 'veranstaltungen', 'eventi', 'مهرجان', 'مهرجانات', 'أحداث'],
     'transports':   ['transport', 'deplacer', 'déplacer', 'aller', 'train', 'bus', 'avion',
-                     'taxi', 'voiture', 'comment arriver', 'route', 'tramway', 'tgv', 'al boraq', 'نقل', 'مواصلات'],
-    'vetements':    ['vetement', 'vêtement', 'habit', 'tenue', 'djellaba', 'caftan', 'takchita',
-                     'babouche', 'habit traditionnel', 'costume', 'جلابة', 'قفطان'],
+                     'taxi', 'voiture', 'comment arriver', 'route', 'tramway', 'tgv', 'al boraq',
+                     'getting around', 'airport', 'flight', 'tram', 'transporte', 'como moverse', 'tren',
+                     'autobus', 'verkehr', 'trasporti', 'كيفاش نمشي', 'نقل', 'مواصلات', 'طاكسي', 'قطار'],
+    'vetements':    ['vetement', 'vêtement', 'habit', 'tenue', 'djellaba', 'caftan', 'kaftan', 'takchita',
+                     'babouche', 'habit traditionnel', 'costume', 'clothing', 'clothes', 'traditional dress',
+                     'ropa', 'vestimenta', 'kleidung', 'abbigliamento', 'جلابة', 'قفطان', 'لباس', 'ملابس تقليدية'],
     'artisanat':    ['artisanat', 'artisanal', 'souk', 'poterie', 'zellige', 'tapis', 'ceramique', 'céramique',
-                     'cuir', 'bijoux', 'craft', 'marche', 'marché', 'bois', 'textile', 'broderie', 'damasquinage',
-                     'صناعة تقليدية', 'تراث', 'حرفي', 'حرف', 'الحرفي', 'التراث', 'نسيج', 'طرز', 'زليج', 'فخار'],
+                     'cuir', 'bijoux', 'craft', 'crafts', 'handicraft', 'handicrafts', 'pottery', 'carpet', 'rug',
+                     'leather', 'jewelry', 'embroidery', 'marche', 'marché', 'bois', 'textile', 'broderie', 'damasquinage',
+                     'artesania', 'alfombra', 'ceramica', 'kunsthandwerk', 'artigianato',
+                     'صناعة تقليدية', 'تراث', 'حرفي', 'حرف', 'الحرفي', 'التراث', 'نسيج', 'طرز', 'زليج', 'فخار', 'زرابي'],
     'general':      []
 }
 
@@ -85,18 +105,34 @@ def detect_intent(message: str) -> str:
 CITY_ALIASES = {
     'marakech': 'Marrakech',
     'marrakesh': 'Marrakech',
+    'marraquech': 'Marrakech',
     'fez': 'Fès',
     'fes': 'Fès',
     'meknes': 'Meknès',
     'tetouan': 'Tétouan',
+    'tetuan': 'Tétouan',
+    'tangier': 'Tanger',
+    'tangiers': 'Tanger',
+    'essouira': 'Essaouira',
+    'mogador': 'Essaouira',
     'laayoune': 'Laâyoune',
     'layoune': 'Laâyoune',
+    'el aaiun': 'Laâyoune',
     'saidia': 'Saïdia',
     'kenitra': 'Kénitra',
     'oukaimeden': 'Oukaïmeden',
     'casa': 'Casablanca',
     'chaouen': 'Chefchaouen',
+    'xauen': 'Chefchaouen',
     'taghazout': 'Agadir',
+    'alhoceima': 'Al Hoceima',
+    'alhucemas': 'Al Hoceima',
+    'arcila': 'Asilah',
+    'mazagan': 'El Jadida',
+    'high atlas': 'Haut Atlas',
+    'alto atlas': 'Haut Atlas',
+    'middle atlas': 'Moyen Atlas',
+    'medio atlas': 'Moyen Atlas',
     'مكناس': 'Meknès',
     'مراكش': 'Marrakech',
     'فاس': 'Fès',
@@ -159,10 +195,10 @@ def detect_ville(message: str, villes_list: list) -> str | None:
         if ville.lower() in msg_lower or (len(v_norm) >= 3 and re.search(r'\b' + re.escape(v_norm) + r'\b', msg_norm)):
             return ville
 
-    # 2. Alias (Latin words + Arabic substring match)
+    # 2. Alias (Latin words/phrases + Arabic substring match)
     words_norm = re.findall(r'\b\w+\b', msg_norm)
     for alias, target in CITY_ALIASES.items():
-        if alias in words_norm or (any('\u0600' <= ch <= '\u06FF' for ch in alias) and alias in msg_lower):
+        if (' ' in alias and alias in msg_norm) or alias in words_norm or (any('\u0600' <= ch <= '\u06FF' for ch in alias) and alias in msg_lower):
             for ville in villes_list:
                 if _strip_accents(ville) == _strip_accents(target):
                     return ville
@@ -193,7 +229,12 @@ def _is_global_category_question(message: str) -> bool:
         'toutes les villes', 'liste des villes', 'quelles sont les villes',
         'montre-moi les attractions', 'montre moi les attractions',
         'meilleure periode', 'quand visiter', 'informations sur le desert',
-        'gastronomie marocaine', 'me deplacer au maroc', 'deplacer au maroc'
+        'gastronomie marocaine', 'me deplacer au maroc', 'deplacer au maroc',
+        'coastal cities', 'show me the cities', 'show me cities', 'show me attractions',
+        'best time to visit', 'desert information', 'moroccan gastronomy', 'moroccan food',
+        'get around morocco', 'ciudades costeras', 'mostrar las ciudades', 'muestrame las ciudades',
+        'mostrar atracciones', 'mejor epoca', 'informacion sobre el desierto', 'gastronomia marroqui',
+        'moverse por marruecos', 'المدن الساحلية', 'أفضل وقت', 'الصحراء', 'الطبخ المغربي'
     ]
     return any(t in msg for t in global_triggers)
 
@@ -366,11 +407,101 @@ def retrieve_context(message: str, history: list = None) -> dict:
     return context
 
 
+LANG_NAMES = {
+    'fr': 'français',
+    'en': 'anglais (English)',
+    'es': 'espagnol (Español)',
+    'ar': 'arabe (العربية)',
+    'de': 'allemand (Deutsch)',
+    'it': 'italien (Italiano)',
+    'pt': 'portugais (Português)',
+    'ru': 'russe (Русский)',
+    'zh-CN': 'chinois simplifié (简体中文)',
+    'ja': 'japonais (日本語)',
+    'ko': 'coréen (한국어)',
+}
+
+
+def _normalize_lang_code(lang: str | None) -> str:
+    if not lang:
+        return 'fr'
+    code = lang.strip().lower()
+    if code in ('zh', 'zh-cn', 'zh_cn'):
+        return 'zh-CN'
+    base = code.split('-')[0]
+    if base in ('fr', 'en', 'es', 'ar', 'de', 'it', 'pt', 'ru', 'ja', 'ko'):
+        return base
+    return 'fr'
+
+
+def _detect_target_lang(user_message: str, ui_lang: str | None = None) -> str:
+    """Détecte la langue cible de réponse à partir du message utilisateur ou de la langue active du site."""
+    msg = (user_message or '').strip()
+    if any('\u0600' <= ch <= '\u06FF' for ch in msg):
+        return 'ar'
+    if any('\u3040' <= ch <= '\u30FF' for ch in msg):
+        return 'ja'
+    if any('\uAC00' <= ch <= '\uD7AF' for ch in msg):
+        return 'ko'
+    if any('\u4E00' <= ch <= '\u9FFF' for ch in msg):
+        return 'zh-CN'
+    if any('\u0400' <= ch <= '\u04FF' for ch in msg):
+        return 'ru'
+
+    norm = _strip_accents(msg)
+    words = set(re.findall(r'\b[a-z]+\b', norm))
+
+    if words & {'bonjour', 'salut', 'quelles', 'quels', 'comment', 'meilleure', 'ou', 'que', 'quoi', 'hebergement', 'cotiere', 'cotieres'} or 'puis-je' in norm or 'montre-moi' in norm:
+        return 'fr'
+    if words & {'hello', 'hi', 'what', 'which', 'where', 'when', 'how', 'coastal', 'cities', 'activities', 'things', 'best', 'tell', 'show', 'hotels', 'food', 'desert', 'around'}:
+        return 'en'
+    if words & {'hola', 'cuales', 'donde', 'cuando', 'como', 'mejor', 'epoca', 'ciudades', 'costeras', 'actividades', 'comida', 'desierto', 'transporte', 'mostrar', 'muestrame', 'ver'}:
+        return 'es'
+    if words & {'hallo', 'welche', 'wo', 'wann', 'wie', 'stadte', 'aktivitaten', 'wuste', 'beste', 'reisezeit', 'essen'}:
+        return 'de'
+    if words & {'ciao', 'quali', 'dove', 'quando', 'citta', 'attivita', 'deserto', 'migliore', 'periodo', 'mangiare'}:
+        return 'it'
+    if words & {'ola', 'quais', 'onde', 'cidades', 'costeiras', 'atividades', 'melhor', 'deserto'}:
+        return 'pt'
+
+    return _normalize_lang_code(ui_lang)
+
+
+def localize_fallback_response(text: str | None, user_message: str, ui_lang: str | None = None) -> str | None:
+    """Traduit la réponse de secours MySQL (rédigée en français) vers la langue cible si nécessaire."""
+    if not text:
+        return text
+    target_lang = _detect_target_lang(user_message, ui_lang)
+    if not target_lang or target_lang == 'fr':
+        return text
+    try:
+        params = urllib.parse.urlencode({
+            'client': 'gtx',
+            'sl': 'fr',
+            'tl': target_lang,
+            'dt': 't',
+            'q': text,
+        })
+        req = urllib.request.Request(
+            f"https://translate.googleapis.com/translate_a/single?{params}",
+            headers={'User-Agent': 'Mozilla/5.0'}
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            payload = json.loads(resp.read().decode('utf-8'))
+        if isinstance(payload, list) and payload and isinstance(payload[0], list):
+            translated = ''.join(seg[0] for seg in payload[0] if isinstance(seg, list) and seg and seg[0])
+            if translated.strip():
+                return translated.strip()
+    except Exception as exc:
+        print(f"[RAG fallback translate] failed ({target_lang}): {exc}")
+    return text
+
+
 # ============================================================
 # AUGMENTATION — Construction du prompt enrichi
 # ============================================================
 
-def build_augmented_prompt(user_message: str, context: dict, limit_info: str = None) -> tuple[str, str]:
+def build_augmented_prompt(user_message: str, context: dict, limit_info: str = None, ui_lang: str = None) -> tuple[str, str]:
     """
     Construit le system_prompt avec les données MySQL injectées.
     Retourne (system_prompt, user_prompt).
@@ -378,19 +509,26 @@ def build_augmented_prompt(user_message: str, context: dict, limit_info: str = N
     ville      = context.get('ville')
     data       = context.get('data', {})
     all_villes = context.get('all_villes', [])
+    norm_ui_lang = _normalize_lang_code(ui_lang)
+    ui_lang_label = LANG_NAMES.get(norm_ui_lang, 'français')
 
-    system_prompt = """Tu es Trippy, le guide touristique de Morocco Secrets.
+    system_prompt = f"""Tu es Trippy, le guide touristique officiel et multilingue de Morocco Secrets.
 
-RÈGLES DE RÉPONSE
+RÈGLES DE LANGUE (PRIORITÉ ABSOLUE)
+- Détecte la langue exacte du dernier message de l'utilisateur et réponds OBLIGATOIREMENT dans cette même langue (français, arabe standard, darija marocaine, anglais, espagnol, allemand, italien, portugais, russe, chinois, japonais, coréen, etc.).
+- Même si les données du contexte ci-dessous sont rédigées en français, traduis et adapte naturellement les descriptions et explications dans la langue de réponse tout en conservant les noms propres des villes, monuments et établissements.
+- Si le message de l'utilisateur est très court ou neutre (par exemple juste le nom d'une ville comme « Marrakech » ou « Agadir »), réponds dans la langue active de l'interface du site : {ui_lang_label}.
+- Si l'utilisateur change de langue d'un message à l'autre, change immédiatement de langue pour suivre son dernier message.
+
+RÈGLES DE CONTENU
 - Réponds uniquement à partir des données de la plateforme incluses dans le contexte et de l'historique fourni. L'historique sert à comprendre les références et préférences, pas à confirmer un fait absent des données.
 - N'utilise pas tes connaissances générales pour compléter une information manquante.
 - N'invente jamais de prix, horaires, adresses, coordonnées, disponibilités ou détails pratiques.
-- Si les données ne répondent pas à la question, dis clairement que l'information n'est pas disponible sur Morocco Secrets et invite l'utilisateur à préciser sa demande ou à consulter l'établissement.
+- Si les données ne répondent pas à la question, dis clairement (dans la langue de l'utilisateur) que l'information n'est pas disponible sur Morocco Secrets et invite l'utilisateur à préciser sa demande ou à consulter l'établissement.
 - Pour toute question sur un prix, un horaire ou une adresse, ne donne une valeur que si elle figure explicitement dans les données fournies.
 - Réponds aux questions liées au tourisme au Maroc. Pour les autres sujets, indique brièvement que tu peux aider à préparer un voyage au Maroc.
-- Réponds toujours dans la langue du dernier message de l'utilisateur, y compris en arabe, darija, anglais ou toute autre langue. Si l'utilisateur change de langue, change immédiatement.
 - Pour une demande de traduction, fournis uniquement la traduction du texte donné.
-- Reste chaleureux, clair et concis; utilise des listes si elles améliorent la lisibilité."""
+- Reste chaleureux, clair et concis; utilise des listes à puces si elles améliorent la lisibilité."""
 
     if limit_info:
         system_prompt += f"\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n⚠️ INFOS SUR LES LIMITES (À inclure en fin de réponse dans la même langue que la réponse)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n{limit_info}\n"
@@ -632,19 +770,12 @@ def generate_fallback_response(user_message: str, context: dict, limit_info: str
         elif intent == 'artisanat':
             arts = data.get('artisanat', [])
             tcrafts = data.get('textile_crafts', [])
-            is_ar = any('\u0600' <= ch <= '\u06FF' for ch in user_message)
-            if is_ar:
-                lines.append(f"🏺 **التراث الحرفي والصناعة التقليدية بمدينة {nom_v} :**")
-            else:
-                lines.append(f"🏺 **Artisanat et Patrimoine Textile de {nom_v} :**")
+            lines.append(f"🏺 **Artisanat et Patrimoine Textile de {nom_v} :**")
             if arts:
                 for a in arts:
                     lines.append(f"• **{a['nom_artisanat']}** : {a.get('description', '')}")
             if tcrafts:
-                if is_ar:
-                    lines.append(f"\n🧵 **ورشات التراث النسيجي والحرفي في {nom_v} :**")
-                else:
-                    lines.append(f"\n🧵 **Ateliers & Patrimoine Textile à {nom_v} :**")
+                lines.append(f"\n🧵 **Ateliers & Patrimoine Textile à {nom_v} :**")
                 for tc in tcrafts:
                     meta = []
                     if tc.get('atelier_nom'): meta.append(tc['atelier_nom'])
@@ -675,7 +806,7 @@ def generate_fallback_response(user_message: str, context: dict, limit_info: str
                 lines.append("🏨 **Hébergements :** " + ", ".join(h['nom'] for h in hebs[:4]) + ".")
 
     # ── 2. Questions par catégories de villes (Côtières, Désert, Montagne, Culturelles, Agricoles) ──
-    elif any(k in msg_norm for k in ['cotiere', 'cotieres', 'cotier', 'mer', 'plage', 'ocean', 'atlantique', 'mediterranee', 'coastal', 'beach', 'bhar']):
+    elif any(k in msg_norm for k in ['cotiere', 'cotieres', 'cotier', 'mer', 'plage', 'ocean', 'atlantique', 'mediterranee', 'coastal', 'beach', 'costera', 'costeras', 'playa', 'costeira', 'kuste', 'costiera', 'bhar', 'ساحل', 'بحر', 'شاطئ']):
         cotieres = [
             v for v in toutes_villes
             if any(p in _strip_accents(v.get('type_ville', '')) for p in ['cotier', 'cotiere'])
@@ -686,7 +817,7 @@ def generate_fallback_response(user_message: str, context: dict, limit_info: str
             lines.append(f"• **{v['nom_ville']}**{slogan}")
         lines.append("\n💡 *Dites-moi le nom d'une ville (ex. Agadir, Essaouira, Tanger, Dakhla, Al Hoceima...) pour découvrir ses plages, activités, restaurants et hôtels !*")
 
-    elif any(k in msg_norm for k in ['desert', 'sahara', 'saharienne', 'sahariennes', 'dune', 'dunes', 'merzouga', 'bivouac']):
+    elif any(k in msg_norm for k in ['desert', 'sahara', 'saharienne', 'sahariennes', 'dune', 'dunes', 'merzouga', 'bivouac', 'desierto', 'deserto', 'wuste', 'صحراء', 'الصحراء']):
         sahariennes = [
             v for v in toutes_villes
             if 'sahar' in _strip_accents(v.get('type_ville', ''))
@@ -698,7 +829,7 @@ def generate_fallback_response(user_message: str, context: dict, limit_info: str
             lines.append(f"• **{v['nom_ville']}**{slogan}{desc_short}")
         lines.append("\n✨ **Expériences phares dans le désert :** excursion à dos de chameau au coucher du soleil, nuit en bivouac berbère sous les étoiles à Merzouga ou Zagora, balade en 4x4 ou quad dans les dunes de l'Erg Chebbi, et découverte des kasbahs d'Ouarzazate.")
 
-    elif any(k in msg_norm for k in ['montagne', 'atlas', 'rif', 'neige', 'ski', 'randonnee', 'trek']):
+    elif any(k in msg_norm for k in ['montagne', 'mountain', 'montana', 'montagna', 'atlas', 'rif', 'neige', 'ski', 'randonnee', 'trek', 'جبل', 'جبال', 'الأطلس']):
         montagnes = [
             v for v in toutes_villes
             if 'mont' in _strip_accents(v.get('type_ville', ''))
@@ -709,7 +840,7 @@ def generate_fallback_response(user_message: str, context: dict, limit_info: str
             lines.append(f"• **{v['nom_ville']}**{slogan}")
         lines.append("\n💡 *Idéal pour le trekking dans le Haut Atlas (Imlil), la fraîcheur des forêts de cèdres (Ifrane, Moyen Atlas) ou le ski à Oukaïmeden !*")
 
-    elif any(k in msg_norm for k in ['culturelle', 'culturelles', 'imperiale', 'historique', 'patrimoine']):
+    elif any(k in msg_norm for k in ['culturelle', 'culturelles', 'cultural', 'imperiale', 'imperial', 'historique', 'historical', 'patrimoine', 'ثقاف', 'تاريخ']):
         culturelles = [
             v for v in toutes_villes
             if any(p in _strip_accents(v.get('type_ville', '')) for p in ['cultur', 'histor'])
@@ -720,7 +851,7 @@ def generate_fallback_response(user_message: str, context: dict, limit_info: str
             lines.append(f"• **{v['nom_ville']}**{slogan}")
         lines.append("\n💡 *Posez-moi une question sur l'une de ces villes (ex. Marrakech, Fès, Chefchaouen, Meknès) pour découvrir ses monuments, souks et riads !*")
 
-    elif any(k in msg_norm for k in ['agricole', 'agricoles', 'agriculture', 'berkane']):
+    elif any(k in msg_norm for k in ['agricole', 'agricoles', 'agricultural', 'agricola', 'agriculture', 'berkane', 'فلاح']):
         agricoles = [
             v for v in toutes_villes
             if 'agric' in _strip_accents(v.get('type_ville', ''))
@@ -731,7 +862,7 @@ def generate_fallback_response(user_message: str, context: dict, limit_info: str
             lines.append(f"• **{v['nom_ville']}**{slogan}")
 
     # ── 3. Meilleure période pour visiter ────────────────────────────────────
-    elif any(k in msg_norm for k in ['meilleure periode', 'quand visiter', 'periode', 'saison', 'climat', 'meteo', 'when to visit']):
+    elif any(k in msg_norm for k in ['meilleure periode', 'quand visiter', 'periode', 'saison', 'climat', 'meteo', 'when to visit', 'best time', 'mejor epoca', 'melhor epoca', 'migliore periodo', 'beste reisezeit', 'أفضل وقت', 'متى أزور', 'موسم', 'طقس']):
         lines.append("☀️ **Meilleure période pour visiter le Maroc selon votre destination :**\n")
         lines.append("• **Printemps (mars à mai) & Automne (septembre à novembre) :** La période idéale pour tout le Maroc ! Températures douces parfaites pour les villes culturelles (**Marrakech, Fès, Meknès, Chefchaouen**) et les excursions dans le **Sahara (Merzouga, Zagora, Ouarzazate)**.")
         lines.append("• **Été (juin à août) :** Parfait pour profiter des **villes côtières** (**Agadir, Essaouira, Tanger, Al Hoceima, Saïdia, Dakhla, Oualidia**) et de la fraîcheur des **montagnes de l'Atlas (Ifrane, Imlil)**.")
@@ -744,7 +875,7 @@ def generate_fallback_response(user_message: str, context: dict, limit_info: str
                 lines.append(f"• **{e['nom']}** à {e['nom_ville']}{per}")
 
     # ── 4. Gastronomie marocaine (général) ───────────────────────────────────
-    elif intent in ('restaurants', 'specialites') or any(k in msg_norm for k in ['gastronomie', 'cuisine marocaine', 'plats marocains', 'que manger']):
+    elif intent in ('restaurants', 'specialites') or any(k in msg_norm for k in ['gastronomie', 'gastronomy', 'gastronomia', 'cuisine marocaine', 'plats marocains', 'que manger', 'moroccan food', 'comida marroqui', 'الطبخ المغربي', 'أكل مغربي']):
         lines.append("🥘 **La Gastronomie Marocaine sur Morocco Secrets :**\n")
         lines.append("Chaque région du Maroc possède ses spécialités emblématiques :")
         specs = data.get('global_specialites', [])
@@ -762,7 +893,7 @@ def generate_fallback_response(user_message: str, context: dict, limit_info: str
         lines.append("\n💡 *Indiquez-moi une ville pour voir tous ses restaurants et spécialités !*")
 
     # ── 5. Transports au Maroc (général) ─────────────────────────────────────
-    elif intent == 'transports' or any(k in msg_norm for k in ['deplacer', 'transport', 'comment voyager', 'train', 'bus', 'taxi']):
+    elif intent == 'transports' or any(k in msg_norm for k in ['deplacer', 'transport', 'comment voyager', 'train', 'bus', 'taxi', 'get around', 'moverse', 'المواصلات', 'التنقل']):
         lines.append("🚄 **Comment se déplacer au Maroc ?**\n")
         lines.append("Voici les principaux moyens de transport répertoriés dans nos villes :")
         lines.append("• **Train (ONCF & Al Boraq TGV) :** Relie rapidement Tanger, Kénitra, Rabat, Casablanca, Meknès, Fès, Marrakech et Oujda.")
@@ -773,7 +904,7 @@ def generate_fallback_response(user_message: str, context: dict, limit_info: str
         lines.append("\n💡 *Précisez une ville pour connaître ses transports spécifiques !*")
 
     # ── 6. Attractions (général / bouton "Voir les attractions") ─────────────
-    elif intent == 'attractions' or any(k in msg_norm for k in ['montre-moi les attractions', 'montre moi les attractions', 'voir les attractions']):
+    elif intent == 'attractions' or any(k in msg_norm for k in ['montre-moi les attractions', 'montre moi les attractions', 'voir les attractions', 'show me attractions', 'mostrar atracciones', 'المعالم السياحية']):
         atts = data.get('global_attractions', [])
         lines.append("🏛️ **Attractions incontournables au Maroc sur Morocco Secrets :**\n")
         for a in atts[:10]:
@@ -782,7 +913,7 @@ def generate_fallback_response(user_message: str, context: dict, limit_info: str
         lines.append("\n💡 *Vous pouvez demander les attractions d'une ville précise (ex. « Attractions à Fès » ou « Que visiter à Chefchaouen ») !*")
 
     # ── 7. Liste de toutes les villes (bouton "Explorer les villes") ─────────
-    elif any(k in msg_norm for k in ['ville', 'villes', 'destinations', 'ou aller', 'explorer']):
+    elif any(k in msg_norm for k in ['ville', 'villes', 'cities', 'ciudades', 'cidades', 'stadte', 'citta', 'destinations', 'ou aller', 'explorer', 'مدن', 'المدن']):
         lines.append(f"🇲🇦 **Morocco Secrets vous fait découvrir {len(toutes_villes)} destinations au Maroc :**\n")
         cats = {
             '🌊 Villes côtières': ['cotier', 'cotiere'],
@@ -825,7 +956,7 @@ def generate_fallback_response(user_message: str, context: dict, limit_info: str
 # POINT D'ENTRÉE PRINCIPAL
 # ============================================================
 
-def rag_retrieve_and_augment(user_message: str, limit_info: str = None, history: list = None) -> dict:
+def rag_retrieve_and_augment(user_message: str, limit_info: str = None, history: list = None, ui_lang: str = None) -> dict:
     """
     Appelé par app.py pour chaque message du chatbot.
     Retourne : system_prompt, user_prompt, fallback_response, ville_detec, intent_detec, has_context
@@ -834,7 +965,7 @@ def rag_retrieve_and_augment(user_message: str, limit_info: str = None, history:
     context = retrieve_context(user_message, history=history)
 
     # 2. Augmentation — construire le prompt enrichi
-    system_prompt, user_prompt = build_augmented_prompt(user_message, context, limit_info)
+    system_prompt, user_prompt = build_augmented_prompt(user_message, context, limit_info, ui_lang=ui_lang)
 
     # 3. Réponse directe basée sur MySQL (utilisée si l'API Groq est indisponible ou expirée)
     fallback_response = generate_fallback_response(user_message, context, limit_info)

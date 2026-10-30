@@ -2549,15 +2549,15 @@
 
         <!-- ── Suggestions ── -->
         <div class="suggestions" id="suggestionsArea">
-            <button class="suggestion-chip" onclick="sendSuggestion('Quelles sont les villes côtières ?')">Villes
+            <button class="suggestion-chip" onclick="sendSuggestion('coastal')">Villes
                 côtières</button>
-            <button class="suggestion-chip" onclick="sendSuggestion('Activités à Marrakech')">Activités à
+            <button class="suggestion-chip" onclick="sendSuggestion('marrakech_activities')">Activités à
                 Marrakech</button>
-            <button class="suggestion-chip" onclick="sendSuggestion('Meilleure période pour visiter')">Meilleure période
+            <button class="suggestion-chip" onclick="sendSuggestion('best_time')">Meilleure période
                 ?</button>
-            <button class="suggestion-chip" onclick="sendSuggestion('Informations sur le désert')">Désert</button>
-            <button class="suggestion-chip" onclick="sendSuggestion('Gastronomie marocaine')">Gastronomie</button>
-            <button class="suggestion-chip" onclick="sendSuggestion('Comment puis-je me déplacer au Maroc ?')">Transport
+            <button class="suggestion-chip" onclick="sendSuggestion('desert')">Désert</button>
+            <button class="suggestion-chip" onclick="sendSuggestion('gastronomy')">Gastronomie</button>
+            <button class="suggestion-chip" onclick="sendSuggestion('transport')">Transport
                 ?</button>
         </div>
 
@@ -3495,7 +3495,7 @@
             localStorage.setItem('activeConversationId', activeConversationId);
             messagesArea.replaceChildren();
             (data.conversation.messages || []).forEach(message => {
-                appendMessage(message.content, message.role === 'assistant' ? 'bot' : 'user');
+                appendMessage(message.content, message.role === 'assistant' ? 'bot' : 'user', true);
             });
             conversationSidebar.classList.remove('open');
         } catch (error) {
@@ -3552,7 +3552,7 @@
             if (!Array.isArray(messages)) return;
             messages.forEach(message => {
                 if (message && typeof message.content === 'string' && ['user', 'assistant'].includes(message.role)) {
-                    appendMessage(message.content, message.role === 'assistant' ? 'bot' : 'user');
+                    appendMessage(message.content, message.role === 'assistant' ? 'bot' : 'user', true);
                 }
             });
         } catch (error) {
@@ -3609,7 +3609,7 @@
         if (message === '') return;
 
         console.info('[Trippy] Sending chat message.', { length: message.length });
-        appendMessage(message, 'user');
+        appendMessage(message, 'user', true);
         saveGuestMessage('user', message);
         userInput.value = '';
         showTypingIndicator();
@@ -3623,6 +3623,7 @@
                 },
                 body: JSON.stringify({
                     message: message,
+                    lang: getChatActiveLang(),
                     session_id: getSessionId(),
                     conversation_id: activeConversationId,
                     history: localStorage.getItem('isAuthenticated') === 'true'
@@ -3658,7 +3659,7 @@
             }
 
             if (data.response) {
-                appendMessage(data.response, 'bot');
+                appendMessage(data.response, 'bot', true);
                 saveGuestMessage('assistant', data.response);
                 if (data.need_register) {
                     appendMessage('Créez un compte pour sauvegarder cette conversation et continuer.', 'bot');
@@ -3715,9 +3716,16 @@
         banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    function appendMessage(text, sender) {
+    function appendMessage(text, sender, isNativeLang = false) {
         const messageElement = document.createElement('div');
         messageElement.classList.add('msg', sender);
+        if (isNativeLang) {
+            messageElement.classList.add('notranslate');
+        }
+        if (typeof text === 'string' && /[\u0600-\u06FF]/.test(text)) {
+            messageElement.setAttribute('dir', 'rtl');
+            messageElement.style.textAlign = 'right';
+        }
 
         // Process special commands for image or button
         if (text.startsWith('/img')) {
@@ -3809,8 +3817,132 @@
         typingIndicator.classList.remove('visible');
     }
 
+    function getChatActiveLang() {
+        if (window._currentLang) return window._currentLang;
+        try {
+            const saved = localStorage.getItem('ms_lang');
+            if (saved) return saved;
+        } catch (e) {}
+        const m = document.cookie.match(/(^|;) ?googtrans=([^;]*)(;|$)/);
+        if (m && m[2]) {
+            const parts = m[2].split('/');
+            const code = parts[parts.length - 1];
+            if (code) return code;
+        }
+        return 'fr';
+    }
+
+    const SUGGESTION_QUERIES = {
+        coastal: {
+            fr: 'Quelles sont les villes côtières ?',
+            en: 'What are the coastal cities in Morocco?',
+            es: '¿Cuáles son las ciudades costeras de Marruecos?',
+            ar: 'ما هي المدن الساحلية في المغرب؟',
+            de: 'Welche Küstenstädte gibt es in Marokko?',
+            it: 'Quali sono le città costiere del Marocco?',
+            pt: 'Quais são as cidades costeiras de Marrocos?',
+            ru: 'Какие прибрежные города есть в Марокко?',
+            'zh-CN': '摩洛哥有哪些沿海城市？',
+            ja: 'モロッコの沿岸都市はどこですか？',
+            ko: '모로코의 해안 도시는 어디인가요?'
+        },
+        marrakech_activities: {
+            fr: 'Activités à Marrakech',
+            en: 'Activities in Marrakech',
+            es: 'Actividades en Marrakech',
+            ar: 'ما هي الأنشطة في مراكش؟',
+            de: 'Aktivitäten in Marrakesch',
+            it: 'Attività a Marrakech',
+            pt: 'Atividades em Marraquexe',
+            ru: 'Чем заняться в Марракеше?',
+            'zh-CN': '马拉喀什有哪些活动？',
+            ja: 'マラケシュでのアクティビティは？',
+            ko: '마라케시에서 할 수 있는 활동은?'
+        },
+        best_time: {
+            fr: 'Meilleure période pour visiter le Maroc',
+            en: 'Best time to visit Morocco',
+            es: 'Mejor época para visitar Marruecos',
+            ar: 'ما هو أفضل وقت لزيارة المغرب؟',
+            de: 'Beste Reisezeit für Marokko',
+            it: 'Migliore periodo per visitare il Marocco',
+            pt: 'Melhor época para visitar Marrocos',
+            ru: 'Лучшее время для посещения Марокко',
+            'zh-CN': '游览摩洛哥的最佳时间是什么时候？',
+            ja: 'モロッコを訪れるベストシーズンは？',
+            ko: '모로코를 방문하기 가장 좋은 시기는?'
+        },
+        desert: {
+            fr: 'Informations sur le désert',
+            en: 'Information about the desert in Morocco',
+            es: 'Información sobre el desierto en Marruecos',
+            ar: 'معلومات عن الصحراء المغربية',
+            de: 'Informationen über die Wüste in Marokko',
+            it: 'Informazioni sul deserto in Marocco',
+            pt: 'Informações sobre o deserto em Marrocos',
+            ru: 'Информация о пустыне Сахара в Марокко',
+            'zh-CN': '关于摩洛哥撒哈拉沙漠的信息',
+            ja: 'モロッコの砂漠についての情報',
+            ko: '모로코 사막에 대한 정보'
+        },
+        gastronomy: {
+            fr: 'Gastronomie marocaine',
+            en: 'Moroccan gastronomy and specialties',
+            es: 'Gastronomía marroquí',
+            ar: 'الطبخ المغربي والأطباق التقليدية',
+            de: 'Marokkanische Gastronomie',
+            it: 'Gastronomia marocchina',
+            pt: 'Gastronomia marroquina',
+            ru: 'Марокканская кухня и блюда',
+            'zh-CN': '摩洛哥美食与特色菜',
+            ja: 'モロッコ料理と名物グルメ',
+            ko: '모로코 미식과 전통 요리'
+        },
+        transport: {
+            fr: 'Comment puis-je me déplacer au Maroc ?',
+            en: 'How can I get around in Morocco?',
+            es: '¿Cómo puedo moverme por Marruecos?',
+            ar: 'كيف يمكنني التنقل في المغرب؟',
+            de: 'Wie kann ich mich in Marokko fortbewegen?',
+            it: 'Come posso spostarmi in Marocco?',
+            pt: 'Como posso me locomover em Marrocos?',
+            ru: 'Как передвигаться по Марокко?',
+            'zh-CN': '在摩洛哥如何出行？',
+            ja: 'モロッコ国内の移動手段は？',
+            ko: '모로코에서 어떻게 이동할 수 있나요?'
+        },
+        cities: {
+            fr: 'Montre-moi les villes',
+            en: 'Show me the cities in Morocco',
+            es: 'Muéstrame las ciudades de Marruecos',
+            ar: 'أرني المدن المغربية',
+            de: 'Zeig mir die Städte in Marokko',
+            it: 'Mostrami le città del Marocco',
+            pt: 'Mostre-me as cidades de Marrocos',
+            ru: 'Покажи мне города Марокко',
+            'zh-CN': '向我展示摩洛哥的城市',
+            ja: 'モロッコの都市を見せてください',
+            ko: '모로코의 도시들을 보여주세요'
+        },
+        attractions: {
+            fr: 'Montre-moi les attractions',
+            en: 'Show me the attractions in Morocco',
+            es: 'Muéstrame las atracciones de Marruecos',
+            ar: 'أرني المعالم السياحية في المغرب',
+            de: 'Zeig mir die Sehenswürdigkeiten in Marokko',
+            it: 'Mostrami le attrazioni del Marocco',
+            pt: 'Mostre-me as atrações de Marrocos',
+            ru: 'Покажи достопримечательности Марокко',
+            'zh-CN': '向我展示摩洛哥的景点',
+            ja: 'モロッコの観光スポットを見せてください',
+            ko: '모로코의 관광 명소를 보여주세요'
+        }
+    };
+
     function sendSuggestion(suggestion) {
-        userInput.value = suggestion;
+        const lang = getChatActiveLang();
+        const entry = SUGGESTION_QUERIES[suggestion];
+        userInput.value = entry ? (entry[lang] || entry.fr) : suggestion;
         sendMessage();
     }
 
@@ -3847,11 +3979,11 @@
     }
 
     function showCities() {
-        sendSuggestion('Montre-moi les villes');
+        sendSuggestion('cities');
     }
 
     function showAttractions() {
-        sendSuggestion('Montre-moi les attractions');
+        sendSuggestion('attractions');
     }
 
     // SESSION MANAGEMENT
