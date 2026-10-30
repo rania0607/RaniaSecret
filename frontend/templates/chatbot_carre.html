@@ -43,6 +43,8 @@
     window.sendGmForgotCode = sendGmForgotCode;
     window.verifyGmForgotCode = verifyGmForgotCode;
     window.submitGmResetPassword = submitGmResetPassword;
+    window.togglePwdVisibility = togglePwdVisibility;
+    window.openAuthFromRecs = openAuthFromRecs;
 
 </script>
 
@@ -2774,6 +2776,91 @@
         color: #111;
     }
 
+    /* ── Afficher / masquer le mot de passe ── */
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear {
+        display: none;
+    }
+    .cb-input-group.has-pwd-toggle input {
+        padding-right: 46px !important;
+    }
+    .cb-pwd-toggle {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 34px;
+        height: 34px;
+        border: none;
+        background: transparent;
+        color: #9a7b5a;
+        font-size: 15px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        padding: 0;
+        z-index: 2;
+        transition: color 0.2s, background 0.2s;
+        touch-action: manipulation;
+    }
+    .cb-pwd-toggle:hover {
+        color: #6b1d1d;
+        background: rgba(197, 157, 95, 0.15);
+    }
+
+    /* ── Recommandations : écran verrouillé pour les invités ── */
+    .rec-locked-card {
+        text-align: center;
+        padding: 26px 20px 22px;
+        background: linear-gradient(180deg, #fffaf2, #ffffff);
+    }
+    .rec-locked-icon {
+        width: 58px;
+        height: 58px;
+        margin: 0 auto 12px;
+        border-radius: 50%;
+        background: rgba(197, 157, 95, 0.18);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+    }
+    .rec-locked-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 16px;
+        font-weight: 800;
+        color: #6b1d1d;
+        margin-bottom: 6px;
+    }
+    .rec-locked-text {
+        font-size: 12px;
+        color: #7c6a58;
+        line-height: 1.5;
+        margin: 0 auto 16px;
+        max-width: 270px;
+    }
+    .rec-locked-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border: none;
+        background: linear-gradient(135deg, #6b1d1d, #8f2a2a);
+        color: #ffffff;
+        font-size: 12.5px;
+        font-weight: 700;
+        padding: 10px 18px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-family: inherit;
+        box-shadow: 0 6px 16px rgba(107, 29, 29, 0.25);
+        transition: transform 0.2s;
+    }
+    .rec-locked-btn:hover {
+        transform: translateY(-2px);
+    }
+
     /* Force chatbot closed by default unless .visible */
     .chatbot-window {
         display: none !important;
@@ -2987,7 +3074,7 @@
                     <i class="fa-solid fa-compass cb-input-icon"></i>
                     <select id="registerTravelType" onchange="toggleChildrenField(this.value)" style="width:100%; padding:12px 12px 12px 42px; border:1.5px solid #e5e7eb; border-radius:12px; font-size:14px; background:#f9fafb; color:#333; outline:none;">
                         <option value="Solo">Voyageur Solo 🎒</option>
-                        <option value="Couple">En Couple 💑</option>
+                        <option value="Couple">Marié(e) 💍</option>
                         <option value="Famille">En Famille 👨‍👩‍👧‍👦</option>
                         <option value="Amis">Entre Amis 🎉</option>
                     </select>
@@ -3261,7 +3348,7 @@
                     <i class="fa-solid fa-compass cb-input-icon"></i>
                     <select id="gmRegisterTravelType" onchange="toggleGmChildrenField(this.value)" class="gm-select-input">
                         <option value="Solo">Voyageur Solo 🎒</option>
-                        <option value="Couple">En Couple 💑</option>
+                        <option value="Couple">Marié(e) 💍</option>
                         <option value="Famille">En Famille 👨‍👩‍👧‍👦</option>
                         <option value="Amis">Entre Amis 🎉</option>
                     </select>
@@ -3366,7 +3453,7 @@
                     <span class="profile-value" style="display: inline-flex; align-items: center; gap: 6px;">
                         <select id="gmProfileTravelSelect" onchange="saveProfileTravelType(this.value)" style="border: 1px solid #dfc192; background: #fffaf2; color: #6b1d1d; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; cursor: pointer; font-family: inherit; outline: none;">
                             <option value="Solo">🎒 Solo</option>
-                            <option value="Couple">💑 En Couple</option>
+                            <option value="Couple">💍 Marié(e)</option>
                             <option value="Famille">👨‍👩‍👧 En Famille</option>
                             <option value="Amis">🎉 Entre Amis</option>
                         </select>
@@ -4756,7 +4843,7 @@
 
     const REC_TRAVEL_TYPES = [
         { id: 'Solo', label: '🎒 Solo' },
-        { id: 'Couple', label: '💑 En Couple' },
+        { id: 'Couple', label: '💍 Marié(e)' },
         { id: 'Famille', label: '👨‍👩‍👧 En Famille' },
         { id: 'Amis', label: '🎉 Entre Amis' }
     ];
@@ -4930,7 +5017,7 @@
                 <div class="rec-quiz-bar">
                     <div class="rec-quiz-subtitle">
                         <span class="rec-quiz-user-hint">🧭 Quelle est votre envie du moment ?</span>
-                        <button type="button" class="rec-edit-btn" onclick="toggleRecTravelEditor(event)" title="Changer de mode de voyage (Solo, Couple, Famille, Amis)">
+                        <button type="button" class="rec-edit-btn" onclick="toggleRecTravelEditor(event)" title="Changer de mode de voyage (Solo, Marié(e), Famille, Amis)">
                             ✏️ Modifier
                         </button>
                     </div>
@@ -5118,6 +5205,70 @@
         }
     }
 
+    function renderRecLockedState(navContainer, container) {
+        const html = `
+            <div class="rec-locked-card">
+                <div class="rec-locked-icon">🔒</div>
+                <div class="rec-locked-title">Recommandations réservées aux membres</div>
+                <p class="rec-locked-text">Créez votre compte gratuit ou connectez-vous pour recevoir des suggestions personnalisées selon votre style de voyage.</p>
+                <button type="button" class="rec-locked-btn" onclick="openAuthFromRecs(event)">
+                    <i class="fa-solid fa-right-to-bracket"></i> Se connecter / Créer un compte
+                </button>
+            </div>`;
+        if (navContainer) navContainer.innerHTML = html;
+        if (container) container.innerHTML = html;
+    }
+
+    function openAuthFromRecs(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        const navBox = document.getElementById('navNotifBox');
+        const cbBox = document.getElementById('cbNotifBox');
+        if (navBox) navBox.style.display = 'none';
+        if (cbBox) cbBox.style.display = 'none';
+        openGlobalAuthOrProfile();
+    }
+
+    // Bouton œil pour afficher / masquer les mots de passe (PC + mobile)
+    function togglePwdVisibility(btn) {
+        const group = btn.closest('.cb-input-group');
+        const input = group ? group.querySelector('input') : null;
+        if (!input) return;
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+        btn.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+        btn.title = show ? 'Masquer le mot de passe' : 'Afficher le mot de passe';
+    }
+
+    function initPasswordToggles() {
+        document.querySelectorAll('.cb-input-group input[type="password"]').forEach(input => {
+            const group = input.closest('.cb-input-group');
+            if (!group || group.querySelector('.cb-pwd-toggle')) return;
+            group.classList.add('has-pwd-toggle');
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'cb-pwd-toggle';
+            btn.title = 'Afficher le mot de passe';
+            btn.setAttribute('aria-label', 'Afficher le mot de passe');
+            btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                togglePwdVisibility(btn);
+            });
+            group.appendChild(btn);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPasswordToggles);
+    } else {
+        initPasswordToggles();
+    }
+
     async function loadUserNotifications(options) {
         const opts = options || {};
         const mood = opts.mood || currentRecMood || 'auto';
@@ -5130,6 +5281,13 @@
         const badge = document.getElementById('notifCountBadge');
         if (!navContainer && !container) return;
 
+        // Réservé aux membres connectés
+        if (localStorage.getItem('isAuthenticated') !== 'true') {
+            renderRecLockedState(navContainer, container);
+            [badge, navBadge, sidebarBadge].forEach(b => { if (b) b.style.display = 'none'; });
+            return;
+        }
+
         if (navContainer) renderRecWidgetInto(navContainer, null, true);
         if (container) renderRecWidgetInto(container, null, true);
 
@@ -5141,6 +5299,11 @@
 
         try {
             const res = await fetch(`/api/recommendations?mood=${encodeURIComponent(mood)}&limit=3${villeParam}${travelParam}${excludeParam}`);
+            if (res.status === 401) {
+                localStorage.removeItem('isAuthenticated');
+                renderRecLockedState(navContainer, container);
+                return;
+            }
             const data = await res.json();
 
             if (data.status === 'success' && Array.isArray(data.recommendations)) {

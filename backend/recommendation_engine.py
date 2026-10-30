@@ -205,9 +205,9 @@ def _profile_badge_and_regex(travel_type, ctx):
             "LOWER(type_ville) REGEXP 'côtier|cotier|cotiere|cultur'",
             "parc|jardin|zoo|plage|famille|nature|musée|musee",
         )
-    if travel_type == "Couple":
+    if travel_type in ("Couple", "Marié", "Marie", "Marié(e)"):
         return (
-            "💑 En Couple",
+            "💍 Marié(e)",
             "LOWER(type_ville) REGEXP 'cultur|côtier|cotier|sahar'",
             "jardin|palais|plage|coucher|panorama|kasbah|médina|medina",
         )
@@ -269,13 +269,25 @@ def get_recommendations(
 
     try:
         profile = get_user_profile(user_id, conn=conn) if user_id else None
-        valid_types = ("Solo", "Couple", "Famille", "Amis")
-        if override_travel_type in valid_types:
-            travel_type = override_travel_type
+        type_aliases = {
+            "Solo": "Solo",
+            "Couple": "Couple",
+            "Marié": "Couple",
+            "Marie": "Couple",
+            "Marié(e)": "Couple",
+            "Famille": "Famille",
+            "Amis": "Amis",
+        }
+        norm_override = type_aliases.get(override_travel_type)
+        if norm_override:
+            travel_type = norm_override
             if profile:
-                profile["travel_type"] = override_travel_type
+                profile["travel_type"] = norm_override
         else:
-            travel_type = profile.get("travel_type", "Solo") if profile else None
+            raw_prof_type = profile.get("travel_type", "Solo") if profile else None
+            travel_type = type_aliases.get(raw_prof_type, raw_prof_type) if raw_prof_type else None
+            if profile and travel_type:
+                profile["travel_type"] = travel_type
 
         preferred_type = get_user_preferred_type(user_id, conn=conn) if (user_id and mood == "auto" and not ville_clean) else None
         chat_cities = get_user_recent_chat_cities(user_id, conn=conn) if (user_id and mood == "auto" and not ville_clean) else []
@@ -616,8 +628,8 @@ def generate_personalized_notification(user_id):
             message = f"Découvrez nos activités et parcs recommandés pour vous et vos {children_count} enfants."
         else:
             message = "Découvrez les meilleures attractions sécurisées et divertissantes pour toute la famille."
-    elif travel_type == "Couple":
-        title = "Escapade Romantique"
+    elif travel_type in ("Couple", "Marié", "Marie", "Marié(e)"):
+        title = "Séjour Mariés & Escapade à Deux"
         message = "Explorez des panoramas uniques et des lieux magiques pour un séjour inoubliable à deux."
     elif travel_type == "Amis":
         title = "Aventure entre Amis"

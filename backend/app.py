@@ -986,7 +986,7 @@ def register():
 
     travel_type = (data.get('travel_type') or 'Solo').strip()
     # Normalize valid values
-    valid_types = {'Solo': 'Solo', 'Couple': 'Couple', 'Famille': 'Famille', 'Amis': 'Amis', 'Family': 'Famille', 'Friends': 'Amis'}
+    valid_types = {'Solo': 'Solo', 'Couple': 'Couple', 'Marié': 'Couple', 'Marie': 'Couple', 'Marié(e)': 'Couple', 'Married': 'Couple', 'Famille': 'Famille', 'Amis': 'Amis', 'Family': 'Famille', 'Friends': 'Amis'}
     travel_type = valid_types.get(travel_type, 'Solo')
 
     children_raw = data.get('children_count')
@@ -1561,12 +1561,26 @@ def set_tier(tier):
 # API RECOMMANDATIONS & NOTIFICATIONS
 # ============================================================
 
+# Valeurs acceptées pour le mode de voyage ("Marié" est stocké en interne sous 'Couple')
+TRAVEL_TYPE_ALIASES = {
+    'Solo': 'Solo',
+    'Couple': 'Couple',
+    'Marié': 'Couple',
+    'Marie': 'Couple',
+    'Marié(e)': 'Couple',
+    'Famille': 'Famille',
+    'Amis': 'Amis',
+}
+
 @app.route('/api/profile/travel-type', methods=['POST'])
 def api_update_travel_type():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'status': 'unauthorized', 'logged': False, 'message': 'Connexion requise.'}), 401
+
     data = request.get_json(silent=True) or {}
-    travel_type = (data.get('travel_type') or '').strip()
-    valid_types = ('Solo', 'Couple', 'Famille', 'Amis')
-    if travel_type not in valid_types:
+    travel_type = TRAVEL_TYPE_ALIASES.get((data.get('travel_type') or '').strip())
+    if not travel_type:
         return jsonify({'status': 'error', 'message': 'Type de voyage invalide.'}), 400
 
     try:
@@ -1575,10 +1589,6 @@ def api_update_travel_type():
         children_count = 0
     if travel_type != 'Famille':
         children_count = 0
-
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'status': 'success', 'logged': False, 'travel_type': travel_type})
 
     conn = get_db()
     if not conn:
@@ -1605,10 +1615,19 @@ def api_update_travel_type():
 
 @app.route('/api/recommendations', methods=['GET'])
 def api_recommendations():
+    # Recommandations réservées aux membres connectés
     user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({
+            'status': 'unauthorized',
+            'logged': False,
+            'message': 'Connectez-vous ou créez un compte pour accéder à vos recommandations personnalisées.',
+            'recommendations': []
+        }), 401
+
     mood = (request.args.get('mood') or 'auto').strip().lower()
     ville = (request.args.get('ville') or '').strip()
-    override_travel_type = (request.args.get('travel_type') or '').strip()
+    override_travel_type = TRAVEL_TYPE_ALIASES.get((request.args.get('travel_type') or '').strip(), '')
     try:
         limit = min(max(int(request.args.get('limit', 3) or 3), 1), 8)
     except ValueError:
@@ -1625,11 +1644,15 @@ def api_recommendations():
         ville_filter=ville,
         override_travel_type=override_travel_type,
     )
-    effective_type = (
-        override_travel_type
-        if override_travel_type in ('Solo', 'Couple', 'Famille', 'Amis')
-        else (profile.get('travel_type') if profile else None)
-    )
+    if not profile:
+        return jsonify({
+            'status': 'unauthorized',
+            'logged': False,
+            'message': 'Compte introuvable. Veuillez vous reconnecter.',
+            'recommendations': []
+        }), 401
+
+    effective_type = override_travel_type or profile.get('travel_type') or 'Solo'
     return jsonify({
         'status': 'success',
         'mood': mood,
@@ -1637,8 +1660,8 @@ def api_recommendations():
         'villes': villes_list,
         'cdn_url': CDN_URL,
         'user': {
-            'logged': bool(profile),
-            'nom': profile.get('nom') if profile else None,
+            'logged': True,
+            'nom': profile.get('nom'),
             'travel_type': effective_type,
         },
         'recommendations': recs
